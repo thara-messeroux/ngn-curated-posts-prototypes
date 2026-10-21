@@ -64,10 +64,10 @@ footer.pf a { color: var(--wp-blue); }
   </div>
 
   <div class="stats">
-    <div class="stat"><b>5,372px <span class="delta">&rarr; 1,659px</span></b><span>page height, a 69% reduction</span></div>
+    <div class="stat"><b>5,372px <span class="delta">&rarr; 1,636px</span></b><span>page height, a 70% reduction</span></div>
     <div class="stat"><b>6.0 <span class="delta">&rarr; 1.8</span></b><span>screens of scroll at 900px</span></div>
-    <div class="stat"><b>0 <span class="delta">&rarr; 1</span></b><span>search field</span></div>
-    <div class="stat"><b>6</b><span>the same rows on every card, empty ones marked</span></div>
+    <div class="stat"><b>held</b><span>your place in the list, across an edit</span></div>
+    <div class="stat"><b>live</b><span>stories shown per slot, linked</span></div>
   </div>
 
   <h2 class="sec">Side by side</h2>
@@ -82,12 +82,12 @@ footer.pf a { color: var(--wp-blue); }
       </figcaption>
     </figure>
     <figure>
-      <img src="after-01-viewport-1440.png" alt="Curated Posts after: a search toolbar above collapsed single-line cards">
+      <img src="c-01-two-pane-1440.png" alt="After: a searchable index on the left and the selected shelf's live stories on the right">
       <figcaption>
-        <b>After</b>
-        A search field, a group filter, a visible count and collapse all. Each card is one
-        line: story count, post types, include terms, whether it rotates.
-        <a href="after-02-fullpage-1440.png">See the full page, 1,659px</a>
+        <b>After &mdash; the two-pane workbench</b>
+        A searchable index that stays put, and the selected shelf on the right leading with
+        what it is publishing right now, one card per slot, each linking to the story.
+        1,636px.
       </figcaption>
     </figure>
   </div>
@@ -95,56 +95,54 @@ footer.pf a { color: var(--wp-blue); }
   <h2 class="sec">The new behaviour</h2>
   <div class="ba">
     <figure>
-      <img src="after-03-search-1440.png" alt="Typing featured in the search box leaves one card and the count reads 1 of 14">
+      <img src="c-02-selected-1440.png" alt="A different instance selected with the index unmoved">
       <figcaption>
-        <b>Search</b>
-        Typing <code>featured</code> leaves one card. The count reads "1 of 14" and is
-        announced through aria-live.
+        <b>Your place survives an edit</b>
+        Selecting swaps the right pane only. Verified rather than assumed: the index scroll
+        offset is identical before and after.
       </figcaption>
     </figure>
     <figure>
-      <img src="after-04-expanded-1440.png" alt="One card expanded, showing only the settings that hold a value">
+      <img src="c-03-filtered-1440.png" alt="The index filtered, with the footer count following">
       <figcaption>
-        <b>One card opened</b>
-        The same six rows on every card, in the same order, so two cards read against
-        each other. A setting holding no value keeps its row and says so in italic.
+        <b>Filtering</b>
+        The index narrows as you type, the footer count follows, and the detail pane
+        follows if the selection drops out of view.
       </figcaption>
     </figure>
   </div>
 
-  <h2 class="sec">Rows line up card to card</h2>
+  <h2 class="sec">Why the live stories are affordable here</h2>
   <p class="note">
-    Every instance renders the same six rows in the same order. An empty setting keeps its
-    row and says so in italic, because "none set" and "not checked" are different things.
-    Rotation start and upcoming rotations appear only when rotation is on.
+    This nearly did not ship. The index endpoint returns configuration, not stories, and
+    the codebase already notes that <em>"behind one request per instance on the page, is
+    seconds"</em>. That is a cost of the single-column layout, not of the data: in two
+    panes only the selected shelf needs stories, so it is one request on selection rather
+    than 47 on load. Measured at 1.5s for one instance against a cold cache, which is fine
+    once and would not have been fine forty-seven times.
   </p>
-  <div class="ba wide">
-    <figure>
-      <img src="after-07-aligned-rows.png" alt="Two expanded cards whose settings rows align with each other">
-      <figcaption>
-        <b>Aligned</b>
-        Collapsed the page is unchanged at 1,659px. With all fourteen cards open it is
-        5,022px, still shorter than the 5,372px the screen occupied at rest before.
-      </figcaption>
-    </figure>
-  </div>
+  <p class="note">
+    One new read-only endpoint carries it, wrapping a method the PHP suite already covers.
+    The layout is what makes the feature possible, rather than the feature being blocked by
+    the layout.
+  </p>
 
   <h2 class="sec">Tested at both widths, and by keyboard</h2>
   <div class="ba">
     <figure>
-      <img src="after-05-1280px.png" alt="The same screen at 1280 pixels wide with no horizontal scroll">
+      <img src="c-05-1280.png" alt="The same screen at 1280 pixels wide, still two columns">
       <figcaption>
         <b>1280 wide</b>
-        Same 1,659px height, no horizontal page scroll, toolbar does not wrap.
-        <a href="after-05-1280-fullpage.png">Full page</a>
+        Still two columns, same 1,636px height, no horizontal page scroll. The layout
+        drops to one column below 960px.
       </figcaption>
     </figure>
     <figure>
-      <img src="after-06-keyboard-focus.png" alt="The first card header focused by keyboard with a visible focus ring">
+      <img src="c-04-keyboard.png" alt="An index row focused by keyboard with a visible focus ring">
       <figcaption>
         <b>Keyboard</b>
-        Tab reaches the card header, which shows a 2px focus ring, opens on Enter and
-        reports aria-expanded. The header is a real button now.
+        Two presses from the search field reach a row. Rows are options inside a listbox,
+        so focus is visible, Enter selects, and aria-selected reports the state.
       </figcaption>
     </figure>
   </div>
@@ -155,10 +153,11 @@ footer.pf a { color: var(--wp-blue); }
     <tbody>
       <tr><td>JavaScript unit tests</td><td class="good">1,275 passed</td></tr>
       <tr><td>axe-core, WCAG 2.1 AA, three states</td><td class="good">no violations</td></tr>
+    <tr><td>New REST route</td><td class="good">php -l clean, 200 live, 1.5s cold</td></tr>
       <tr><td>1280 and 1440</td><td class="good">identical, no horizontal scroll</td></tr>
       <tr><td>Keyboard only</td><td class="good">reachable, focus visible, Enter works</td></tr>
       <tr><td>Console errors</td><td class="good">none</td></tr>
-      <tr><td>PHP tests</td><td>not run — no Composer autoload in this environment. The branch changes no PHP.</td></tr>
+      <tr><td>PHP suite</td><td>not run — no Composer autoload in this environment. The one new route is a thin read over an already-tested method.</td></tr>
     </tbody>
   </table>
 

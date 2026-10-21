@@ -14,13 +14,12 @@ Chromium, 1440 x 900, deviceScaleFactor 2, on 21 October 2026.
 
 | | Before | After | Change |
 | --- | ---: | ---: | ---: |
-| **Page height at 1440 wide** | 5,372px | **1,659px** | **-69%** |
+| **Page height at 1440 wide** | 5,372px | **1,636px** | **-70%** |
 | **Screens of scroll at 900px** | 6.0 | **1.8** | -70% |
-| Search controls | 0 | **1** | — |
-| Group filter | none | **1** | — |
-| Visible count | none | "14 of 14" | — |
-| Settings rows on an open card | 8, all always shown | **6**, same six every time | rotation rows only when it rotates |
-| Rename / Duplicate / Delete | 14 each | 14 each | unchanged |
+| Search and group filter | none | **both** | — |
+| **Stories a shelf is publishing** | not shown anywhere | **shown, linked, per slot** | — |
+| Place in the list after an edit | lost | **held** | index scroll unchanged |
+| Settings rows | 8, all always shown | same rows every time, empty ones marked | rotation rows only when it rotates |
 
 The local database holds **14 instances**; production holds **47**. The problems are the
 same in kind and smaller in degree here — six screens of scroll instead of roughly forty.
@@ -38,46 +37,51 @@ each card is the absence of a setting: rows reading `None`, `N/A` and `Off`.
 
 [Full page](before-02-fullpage-1440.png) — 5,372px tall.
 
-## After
+## After — the two-pane workbench
 
-A search field, a group filter, a visible count and a collapse-all toggle. Every card
-collapsed to its name plus the one line that tells two instances apart: story count,
-post types, include terms, and whether it rotates.
+A searchable index on the left that stays put, the selected instance on the right. The
+detail pane leads with **what the shelf is publishing right now**, one card per slot,
+each linking to the story. The rules that produced them sit below.
 
-![The same screen after: a toolbar with search, and collapsed single-line cards](after-01-viewport-1440.png)
+![After: a searchable index on the left and the selected shelf's live stories on the right](c-01-two-pane-1440.png)
 
-[Full page](after-02-fullpage-1440.png) — 1,659px tall.
+This is Direction C from the prototypes, and it is the one design review chose.
 
-### Search
+### Your place in the list survives an edit
 
-Typing `featured` leaves one card. The count reads "1 of 14" and is announced through
-`aria-live="polite"`.
+Selecting swaps the right pane only. Verified rather than assumed: the index scroll
+offset is identical before and after a selection.
 
-![Searching for featured: one card remains, count reads 1 of 14](after-03-search-1440.png)
+![A different instance selected, with the index unmoved](c-02-selected-1440.png)
 
-### One card opened
+### Filtering
 
-Clicking a card header opens that card only.
+![The index filtered, with the footer count following](c-03-filtered-1440.png)
 
-Every card shows **the same six rows in the same order** — stories, post types, include
-terms, exclude terms, search post types, rotation — so two cards read against each other.
-A setting holding no value keeps its row and says so in italic rather than disappearing,
-because "none set" and "not checked" are different things. Rotation start and upcoming
-rotations appear only when rotation is on, since they are meaningless otherwise.
+### Why the live stories are affordable here
 
-![One card expanded, showing the same six rows with rotation marked off in italic](after-04-expanded-1440.png)
+This nearly did not ship. The index endpoint returns configuration, not stories, and the
+codebase already notes in `instance-card.tsx` that *"behind one request per instance on
+the page, is seconds"*.
 
-Two cards side by side, labels aligned:
+That is a cost of the single-column layout, not of the data. In two panes only the
+selected shelf needs stories — **one request on selection, not 47 on load**. Measured at
+**1.5s for one instance against a cold cache**, which is fine once and would not have
+been fine forty-seven times.
 
-![Two expanded cards whose settings rows line up with each other](after-07-aligned-rows.png)
+The layout is what makes the feature possible, rather than the feature being blocked by
+the layout.
+
+One new endpoint carries it: `GET ngn/v1/curated-posts/<key>/preview`, read-only, editor
+permission, wrapping `Curated_Posts::get_wp_posts()` which already existed and is already
+covered by the PHP suite.
 
 ### Keyboard
 
-Tab order runs search, group, collapse all, then the first card header. The header is a
-real `button`, so it takes focus, shows a 2px ring, responds to Enter, and reports
-`aria-expanded`.
+Two presses from the search field reach an index row. Rows are `option` elements inside
+a `listbox`, so focus is visible, Enter selects, and `aria-selected` reports the state.
 
-![The first card header focused by keyboard with a visible focus ring](after-06-keyboard-focus.png)
+![An index row focused by keyboard with a visible focus ring](c-04-keyboard.png)
 
 ---
 
@@ -105,34 +109,32 @@ read back from the live DOM with Playwright, at two widths.
 
 | | 1280 | 1440 |
 | --- | --- | --- |
-| Page height | 1,659px | 1,659px |
+| Page height | 1,636px | 1,636px |
+| Two columns held | yes | yes |
 | Horizontal page scroll | none | none |
-| Toolbar wraps to a second row | no | no |
 | JavaScript errors | none | none |
 
-[1280 viewport](after-05-1280px.png) · [1280 full page](after-05-1280-fullpage.png) · [1440 viewport](after-05-1440px.png)
+[1280](c-05-1280.png) · the layout drops to one column below 960px.
 
 ### 3. Accessibility
 
 axe-core 4.10.2 against `.ngn-cpa` with `wcag2a, wcag2aa, wcag21a, wcag21aa`, in three
-states — collapsed, one card expanded, filtered. **No violations in any state**, which
-covers colour contrast.
+states — default, after selecting, filtered. **No violations in any state**, which covers
+colour contrast.
 
 | Keyboard check | Result |
 | --- | --- |
-| Search reachable and typeable | yes, typing `featured` filtered to 1 card |
-| Result count announced | yes, `aria-live="polite"` reads "1 of 14" |
-| Tab order reaches a card header | yes: search, group, collapse all, first card |
-| Focus visible on the card header | yes, `outline: solid 2px` |
-| Enter expands the card | yes, 0 settings blocks to 1 |
-| State exposed to assistive tech | yes, `aria-expanded` flips to `true` |
+| Search reachable and typeable | yes, typing filtered to 8 of 14 |
+| Tab reaches an index row | yes, two presses from the search field |
+| Focus visible on a row | yes, `outline: solid 2px` |
+| Enter selects it | yes, detail pane swapped |
+| State exposed to assistive tech | yes, `role="option"` with `aria-selected` |
 
 ### Not run
 
 **PHP tests.** `bin/test-php.sh` stops at `env: php: No such file or directory`, and
 inside the `ngn-php-1` container `themes/ngn-theme/vendor/autoload.php` is absent, so
-Composer dependencies are not installed here. The branch changes no PHP: four files, all
-`.tsx` and `.scss`.
+Composer dependencies are not installed here. The branch adds one read-only PHP route; `php -l` is clean and it was exercised live.
 
 **End-to-end visual regression.** `npm run test:e2e` drives the public site's holotype
 pages. It does not cover wp-admin.
@@ -146,7 +148,7 @@ reproduced first, then fixed, then re-tested. Fixed in `01fc8ce9e`.
 
 | # | Defect | How it showed up |
 | --- | --- | --- |
-| 1 | Collapse all tracked its own flag while acting on the filtered list | Expand all under a search, clear the search: the button read "Collapse all" with 1 card of 14 open |
+| 1 | Collapse all tracked its own flag while acting on the filtered list | Expand all under a search, clear the search: the button read "Collapse all" with 1 card of 14 open. The control is gone in two panes, but the bug was real |
 | 2 | Creating or duplicating under an active filter | The new instance was filtered straight back out, so the panel closed and nothing appeared |
 | 3 | Renaming orphaned the card's expansion | Expansion is keyed by instance key, so the card collapsed under the editor mid-edit and the old key leaked |
 | 4 | A long label widened the row instead of truncating | The text column is a flex child, so `min-width` defaulted to `auto` and the ellipsis never engaged |
@@ -155,9 +157,12 @@ A fifth suspicion — that the New instance button vanished when nothing matched
 filter — turned out to be a wrong selector in the audit script. The button collapses to
 a trigger by default. It is recorded here because it was checked, not assumed.
 
-After the fixes: 1,275 tests still pass, axe still reports no violations in all three
-states, a 140-character label no longer grows the page past 1440px, and there are no
-console errors through the whole sequence.
+A fifth, found after the rebuild: WordPress relocates admin notices to just after the
+first heading, so with the heading inside a flex row they became flex items and wrecked
+the header. Fixed with core's own `wp-header-end` marker.
+
+After the fixes: 1,275 tests still pass, axe reports no violations in all three states,
+and there are no console errors through the whole sequence.
 
 ### A fifth change, from reviewing it on the real screen
 

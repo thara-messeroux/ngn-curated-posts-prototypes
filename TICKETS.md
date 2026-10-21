@@ -16,8 +16,8 @@ The index renders every instance fully expanded, in creation order, with no sear
 instances on production; 5,372px of page for 14 on the local environment.
 
 **Measured impact**
-Page height 5,372px to 1,659px, a 69% reduction. Six screens of scroll down to 1.8. Zero
-search controls to one, plus a group filter and a visible count.
+Page height 5,372px to 1,636px, a 70% reduction. Six screens of scroll down to 1.8. The
+screen now shows what each shelf is publishing, which it never did before.
 
 **Evidence**
 https://thara-messeroux.github.io/ngn-curated-posts-prototypes/evidence/
@@ -28,32 +28,13 @@ contains no PHP.
 
 ---
 
-## NUEAC-399 — Two-pane workbench for Curated Posts, with live slot contents
+## NUEAC-399 — not filed, and no longer needed
 
-**Status** — to be filed
-**Link** — _pending_
-**Owner** — Thara Messeroux, reporter
-**Depends on** — NUEAC-398 merging first
+**Status** — withdrawn before filing
 
-**Why it is being filed**
-Three directions were prototyped for NUEAC-398 and the two-pane workbench was preferred in
-design review. It did not ship with NUEAC-398 because its one real advantage — showing the
-headline each shelf is currently serving — needs data the screen does not have today.
+It was drafted to defer the two-pane workbench on the grounds that live slot contents
+would cost one query per instance across 47 instances. That reasoning was wrong: it is a
+cost of the single-column layout, not of the data. In two panes only the selected shelf
+needs stories, so it is one request on selection.
 
-**The blocker, in the team's own words**
-`class-curated-posts-instance-controller.php` returns configuration, not stories. A live
-headline per slot means one query per instance. `instance-card.tsx` already carries the
-comment *"behind one request per instance on the page, is seconds"*, so the team has
-already hit this on a lighter payload.
-
-**What has to be decided before any UI work**
-Whether the index endpoint can return the first N stories per instance, and at what cost
-on a page carrying 47 of them. That is a `Curated_Posts_Store` question, not a layout one.
-
-**Prototype**
-https://thara-messeroux.github.io/ngn-curated-posts-prototypes/03-two-pane.html
-All 47 shelves filled with real headlines, each labelled with where it came from.
-
-**Why it is worth doing**
-It is the only direction that answers the question editors actually have — what is on this
-shelf right now — without opening the site in another tab.
+The workbench shipped inside NUEAC-398 instead, with one new read-only endpoint.
