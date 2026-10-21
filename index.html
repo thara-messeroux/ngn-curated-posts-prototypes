@@ -156,11 +156,12 @@ footer.page-foot a { color: var(--wp-blue); }
         <h3>Two-pane workbench</h3>
         <p class="what">A searchable index on the left that never moves, and the selected
         shelf's settings on the right. Changing shelf swaps only the right pane, so your
-        place in the list is never lost.</p>
+        place in the list is never lost. Each slot shows the headline that is
+        <strong>live on the site right now</strong>.</p>
         <dl>
           <dt>Best for</dt><dd>Editing six shelves in a row</dd>
-          <dt>Strength</dt><dd>Most room for the rules and the slots</dd>
-          <dt>Trade-off</dt><dd>Least like the rest of wp-admin</dd>
+          <dt>Strength</dt><dd>The only direction that shows what a shelf actually holds</dd>
+          <dt>Trade-off</dt><dd>Least like the rest of wp-admin, most to build</dd>
         </dl>
       </div>
       <div class="card-foot"><a class="button button-primary" href="03-two-pane.html">Open direction C</a></div>
@@ -179,25 +180,28 @@ footer.page-foot a { color: var(--wp-blue); }
       <tr><td>Empty fields</td><td>Hidden</td><td>Hidden</td><td>Shown as "off" / "none set"</td></tr>
       <tr><td>Delete</td><td>Row actions, on hover</td><td>Overflow menu</td><td>Overflow menu</td></tr>
       <tr><td>Confirm step</td><td colspan="3">All three name the shelf and say it is live before anything is removed</td></tr>
+      <tr><td>Shows live content</td><td>No</td><td>No</td><td><strong>Yes — real headlines per slot</strong></td></tr>
       <tr><td>Familiarity</td><td>Highest</td><td>Medium</td><td>Lowest</td></tr>
       <tr><td>Build cost</td><td>Lowest</td><td>Medium</td><td>Highest</td></tr>
     </tbody>
   </table>
 
   <div class="rec">
-    <b>Recommendation: A, with B's grouping added as a filter.</b>
-    <p>Direction A costs the least, is the most familiar, and solves all three problems.
-    Direction B's real contribution is the grouping, and that can live inside A as the
-    view links above the table — the same pattern the Posts screen uses for post statuses.
-    Direction C is the strongest editing experience, and the one to revisit if editors
-    say the rules need more room than a table row allows.</p>
+    <b>Recommendation: C, with A as the fallback.</b>
+    <p>All three solve the three problems. Only C answers the question editors actually
+    have — <em>what is on this shelf right now?</em> — by showing the live headline in each
+    slot instead of a number. That is worth the extra build.
+    If the build cost comes back too high, Direction A plus B's grouping as view links
+    gets most of the value for a fraction of the work, and the comparison is already here
+    to make that call with.</p>
   </div>
 
   <footer class="page-foot">
     Built for <strong>NUEAC-398</strong>, Northeastern Global News.<br>
-    Data read from the live screen at <code>admin.php?page=ngn-curated-posts</code> on
-    20 October 2026. Prototypes are front-end only — no data is written and the public
-    site is untouched.<br>
+    Shelf settings read from the live screen at <code>admin.php?page=ngn-curated-posts</code>
+    on 20 October 2026. Headlines in Direction C scraped from news.northeastern.edu on
+    21 October 2026 — a snapshot, not a feed. Prototypes are front-end only: no data is
+    written and the public site is untouched.<br>
     Design tokens taken from WordPress 6.x core admin.
   </footer>
 

@@ -10,7 +10,7 @@ admin design system so any direction drops in without a restyle.
 | --- | --- | --- |
 | A | List table — the standard `wp-list-table` component, sortable, with row actions | [01-list-table.html](01-list-table.html) |
 | B | Grouped accordion — six families, sticky toolbar, collapsible sections | [02-grouped-accordion.html](02-grouped-accordion.html) |
-| C | Two-pane workbench — fixed searchable index, detail pane on the right | [03-two-pane.html](03-two-pane.html) |
+| C | Two-pane workbench — fixed searchable index, detail pane, **live headline in every slot** | [03-two-pane.html](03-two-pane.html) |
 
 ## The problem
 
@@ -34,6 +34,11 @@ All three are driven by the same data and share the same fixes:
   names the shelf and says it is live
 - A state pill: **Live**, or **Needs check** where a shelf has unresolved exclude rules
 
+Direction C adds one thing the others do not: each slot shows the **headline currently
+live on the site** for that shelf, so the screen answers "what is on this shelf right
+now?" without opening the site in another tab. 29 of the 47 shelves have captured
+headlines; the rest show an empty slot and say so.
+
 ## Scope
 
 Admin template and stylesheet only. **No change to the data model, the shortcodes, or the
@@ -48,18 +53,24 @@ index.html                  Stakeholder hub — problems, three directions, comp
 03-two-pane.html            Direction C
 assets/wp-admin.css         WordPress 6.x admin design tokens and components
 assets/data.js              The 47 instances, read from the live screen, plus shared helpers
+assets/headlines.js         132 live headlines across 29 shelves, scraped 21 Oct 2026
 ```
 
 ## Data
 
-Read from the live wp-admin screen on **20 October 2026**. Field names match the plugin's
-own labels. The prototypes write nothing — they are static HTML, CSS and vanilla JS with
-no build step and no dependencies.
+Shelf settings read from the live wp-admin screen on **20 October 2026**; field names
+match the plugin's own labels. Headlines scraped from news.northeastern.edu on
+**21 October 2026** — a snapshot, not a feed. In the real plugin these come from the same
+query the shelf already runs, so no extra request is needed.
+
+The prototypes write nothing — static HTML, CSS and vanilla JS, no build step, no
+dependencies.
 
 ## Recommendation
 
-**Direction A, with B's grouping added as view links above the table.** A costs the least,
-is the most familiar, and solves all three problems. B's real contribution is the
-grouping, which fits inside A as the same pattern the Posts screen uses for post statuses.
-C is the strongest editing experience and worth revisiting if editors say the rules need
-more room than a table row allows.
+**Direction C, with A as the fallback.** All three solve the three problems. Only C
+answers the question editors actually have — *what is on this shelf right now?* — by
+showing the live headline in each slot instead of a number.
+
+If the build cost comes back too high, **A plus B's grouping as view links** gets most of
+the value for a fraction of the work.
