@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Before and after — Curated Posts · NUEAC-398</title>
+<link rel="stylesheet" href="../assets/wp-admin.css">
+<style>
+.hero { padding: 30px 0 18px; border-bottom: 1px solid var(--wp-border-light); margin-bottom: 24px; }
+.eyebrow { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--wp-text-muted); margin: 0; }
+.hero h1 { font-size: 30px; font-weight: 400; margin: 8px 0 0; line-height: 1.22; }
+.hero p { font-size: 15px; line-height: 1.65; color: var(--wp-text-2); margin: 12px 0 0; max-width: 68ch; }
+
+h2.sec { font-size: 19px; font-weight: 600; margin: 34px 0 10px; }
+h3.sub { font-size: 15px; font-weight: 600; margin: 24px 0 6px; }
+p.note { font-size: 13.5px; color: var(--wp-text-2); line-height: 1.65; margin: 0 0 12px; max-width: 70ch; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 16px 0 6px; }
+.stat { background: var(--wp-surface); border: 1px solid var(--wp-border-light); border-radius: 3px; padding: 13px 15px; }
+.stat b { display: block; font-size: 24px; font-weight: 400; line-height: 1.15; }
+.stat .delta { color: var(--wp-green); font-size: 13px; }
+.stat span { display: block; font-size: 12px; color: var(--wp-text-muted); margin-top: 3px; line-height: 1.4; }
+
+.ba { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; margin-top: 10px; }
+figure { margin: 0; background: var(--wp-surface); border: 1px solid var(--wp-border-light); border-radius: 3px; overflow: hidden; }
+figure img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--wp-border-light); }
+figcaption { padding: 10px 14px; font-size: 13px; color: var(--wp-text-2); line-height: 1.5; }
+figcaption b { display: block; font-size: 13.5px; color: var(--wp-text); margin-bottom: 2px; }
+figcaption a { color: var(--wp-blue); }
+
+.wide figure img { max-height: none; }
+
+table.cmp { width: 100%; border-collapse: collapse; background: var(--wp-surface); border: 1px solid var(--wp-border-light); border-radius: 3px; margin-top: 10px; }
+table.cmp th, table.cmp td { text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--wp-border-light); font-size: 13.5px; }
+table.cmp thead th { background: var(--wp-surface-alt); font-weight: 400; color: var(--wp-text-muted); font-size: 12px; }
+table.cmp tbody tr:last-child td { border-bottom: 0; }
+table.cmp td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.cmp td.good { color: var(--wp-green); }
+
+footer.pf { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--wp-border-light); font-size: 12px; color: var(--wp-text-muted); line-height: 1.8; }
+footer.pf a { color: var(--wp-blue); }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · Before and after</strong>
+  <span class="sep">|</span>
+  <a href="../index.html">The three prototype directions</a>
+  <span class="sep">|</span>
+  <a href="https://github.com/News-at-Northeastern/environment/pull/898">PR #898</a>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <p class="eyebrow">NUEAC-398 · shipped to PR #898</p>
+    <h1>The Curated Posts screen, before and after</h1>
+    <p>
+      Captured with Playwright against the local VIP dev environment at 1440 x 900 on
+      21 October 2026. The local database holds 14 instances; production holds 47, so the
+      saving on production is larger than what is shown here.
+    </p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b>5,372px <span class="delta">&rarr; 1,659px</span></b><span>page height, a 69% reduction</span></div>
+    <div class="stat"><b>6.0 <span class="delta">&rarr; 1.8</span></b><span>screens of scroll at 900px</span></div>
+    <div class="stat"><b>0 <span class="delta">&rarr; 1</span></b><span>search field</span></div>
+    <div class="stat"><b>8 <span class="delta">&rarr; 6</span></b><span>rows on an open card</span></div>
+  </div>
+
+  <h2 class="sec">Side by side</h2>
+  <div class="ba">
+    <figure>
+      <img src="before-01-viewport-1440.png" alt="Curated Posts before: a stack of fully expanded cards, no search field">
+      <figcaption>
+        <b>Before</b>
+        Every instance open, in creation order, no way to search. Roughly half of each
+        card reads None, N/A or Off.
+        <a href="before-02-fullpage-1440.png">See the full page, 5,372px</a>
+      </figcaption>
+    </figure>
+    <figure>
+      <img src="after-01-viewport-1440.png" alt="Curated Posts after: a search toolbar above collapsed single-line cards">
+      <figcaption>
+        <b>After</b>
+        A search field, a group filter, a visible count and collapse all. Each card is one
+        line: story count, post types, include terms, whether it rotates.
+        <a href="after-02-fullpage-1440.png">See the full page, 1,659px</a>
+      </figcaption>
+    </figure>
+  </div>
+
+  <h2 class="sec">The new behaviour</h2>
+  <div class="ba">
+    <figure>
+      <img src="after-03-search-1440.png" alt="Typing featured in the search box leaves one card and the count reads 1 of 14">
+      <figcaption>
+        <b>Search</b>
+        Typing <code>featured</code> leaves one card. The count reads "1 of 14" and is
+        announced through aria-live.
+      </figcaption>
+    </figure>
+    <figure>
+      <img src="after-04-expanded-1440.png" alt="One card expanded, showing only the settings that hold a value">
+      <figcaption>
+        <b>One card opened</b>
+        Clicking a header opens that card only, and settings with no value are not
+        printed. Six rows where the old card showed eight.
+      </figcaption>
+    </figure>
+  </div>
+
+  <h2 class="sec">Tested at both widths, and by keyboard</h2>
+  <div class="ba">
+    <figure>
+      <img src="after-05-1280px.png" alt="The same screen at 1280 pixels wide with no horizontal scroll">
+      <figcaption>
+        <b>1280 wide</b>
+        Same 1,659px height, no horizontal page scroll, toolbar does not wrap.
+        <a href="after-05-1280-fullpage.png">Full page</a>
+      </figcaption>
+    </figure>
+    <figure>
+      <img src="after-06-keyboard-focus.png" alt="The first card header focused by keyboard with a visible focus ring">
+      <figcaption>
+        <b>Keyboard</b>
+        Tab reaches the card header, which shows a 2px focus ring, opens on Enter and
+        reports aria-expanded. The header is a real button now.
+      </figcaption>
+    </figure>
+  </div>
+
+  <h2 class="sec">How it was verified</h2>
+  <table class="cmp">
+    <thead><tr><th>Check</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>JavaScript unit tests</td><td class="good">1,275 passed</td></tr>
+      <tr><td>axe-core, WCAG 2.1 AA, three states</td><td class="good">no violations</td></tr>
+      <tr><td>1280 and 1440</td><td class="good">identical, no horizontal scroll</td></tr>
+      <tr><td>Keyboard only</td><td class="good">reachable, focus visible, Enter works</td></tr>
+      <tr><td>Console errors</td><td class="good">none</td></tr>
+      <tr><td>PHP tests</td><td>not run — no Composer autoload in this environment. The branch changes no PHP.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">Four defects found auditing my own branch</h3>
+  <p class="note">
+    Each was reproduced in the browser before it was fixed, and re-tested after. The
+    collapse-all button disagreed with the screen once a filter was applied; a new or
+    duplicated instance was hidden by an active filter; renaming collapsed the card
+    mid-edit; and a long label widened the row instead of truncating. Fixed in
+    <code>01fc8ce9e</code>.
+  </p>
+
+  <footer class="pf">
+    Full write-up with the exact commands:
+    <a href="https://github.com/thara-messeroux/ngn-curated-posts-prototypes/blob/main/evidence/README.md">evidence/README.md</a><br>
+    The change: <a href="https://github.com/News-at-Northeastern/environment/pull/898">PR #898 on News-at-Northeastern/environment</a><br>
+    The three prototype directions: <a href="../index.html">back to the hub</a>
+  </footer>
+
+</div>
+
+</body>
+</html>

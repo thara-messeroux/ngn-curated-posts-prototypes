@@ -54,6 +54,8 @@ real site.
 
 ## Before / after evidence
 
+**Viewable page: https://thara-messeroux.github.io/ngn-curated-posts-prototypes/evidence/**
+
 [evidence/README.md](evidence/README.md) — screenshots of every state, the measured
 numbers (**page height 5,372px to 1,659px, a 69% reduction**), how it was verified three
 ways, the four defects found in self-audit, and how to reproduce it.
