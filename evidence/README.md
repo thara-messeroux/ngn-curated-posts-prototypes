@@ -54,6 +54,50 @@ themes/ngn-theme/
 
 Repo: `News-at-Northeastern/environment`.
 
-## After
+## After — 21 October 2026
 
-Not captured yet. Pending the implementation.
+Same environment, same viewport, after the change on branch
+`NUEAC-398-curated-posts-admin`.
+
+| File | What it shows |
+| --- | --- |
+| `after-01-viewport-1440.png` | First screen, everything collapsed |
+| `after-02-fullpage-1440.png` | The whole page |
+| `after-03-search-1440.png` | Typing "featured" — 1 of 14 |
+| `after-04-expanded-1440.png` | One card opened |
+
+### Measured
+
+| | Before | After | Change |
+| --- | --- | --- | --- |
+| Page height at 1440 wide | 5,372px | **1,659px** | **−69%** |
+| Screens of scroll at 900px | 6.0 | **1.8** | −70% |
+| Search controls | 0 | **1** | — |
+| Group filter | none | **1** | — |
+| Settings rows on an open card | 8 | **6** | unset ones dropped |
+| Visible count | none | "14 of 14" | — |
+
+Verified in the browser, not assumed: searching `featured` leaves 1 card and the
+count reads "1 of 14"; clicking a card header opens exactly one settings block;
+no JavaScript errors and no failed REST calls on load or interaction.
+
+### What changed in the code
+
+```
+themes/ngn-theme/src/scripts/admin/curated-posts-admin/
+  app.tsx                            filter + collapse state, visible list
+  components/instance-filter.tsx     new — the toolbar and grouping rules
+  components/instance-card.tsx       collapsible, summary line, unset rows hidden
+  index.scss                         layout for the toolbar and card header
+```
+
+372 insertions, 49 deletions. `npm run build:admin` compiles clean. Nothing in the
+REST layer, the store, or the public site was touched.
+
+### Correction to the original audit
+
+The audit said Delete had no confirmation. That was wrong — it was read from a
+screenshot of the resting state, and the card already had a two-step
+Delete → Confirm/Cancel. What was true: Delete sat at the same size beside Rename
+and Duplicate, and the confirm said only "Delete?" without naming the instance.
+The confirm now names it and says it is live.
