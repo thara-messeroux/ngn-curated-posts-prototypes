@@ -48,6 +48,20 @@ Where a slot could not be filled it is drawn differently and labelled *not captu
 never shown as empty — a gap in the prototype's data is never mistaken for a gap on the
 real site.
 
+## Before / after evidence
+
+Screenshots of the real screen, captured with Playwright against the local VIP dev
+environment, with the measured numbers and how to reproduce them:
+[evidence/README.md](evidence/README.md).
+
+## Where the screen lives in the codebase
+
+Not a plugin — theme code, and the list is a React app:
+`themes/ngn-theme/src/scripts/admin/curated-posts-admin/` (`app.tsx` for the list,
+`components/instance-card.tsx` for one card), backed by REST routes in
+`inc/admin/curated-posts/class-curated-posts-instance-controller.php`.
+Repo: `News-at-Northeastern/environment`.
+
 ## Scope
 
 Admin template and stylesheet only. **No change to the data model, the shortcodes, or the
