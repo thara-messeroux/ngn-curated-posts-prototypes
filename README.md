@@ -48,6 +48,10 @@ Where a slot could not be filled it is drawn differently and labelled *not captu
 never shown as empty — a gap in the prototype's data is never mistaken for a gap on the
 real site.
 
+## Tickets raised from this work
+
+[TICKETS.md](TICKETS.md) — what was filed, why, with the measured impact and evidence.
+
 ## Every file in this repo, and what it does
 
 [FILES.md](FILES.md) lists all of them with links.
@@ -101,9 +105,15 @@ dependencies.
 
 ## Recommendation
 
-**Direction C, with A as the fallback.** All three solve the three problems. Only C
-answers the question editors actually have — *what is on this shelf right now?* — by
-showing the live headline in each slot instead of a number.
+**Direction C is the strongest, and it is not what shipped first.** All three solve the
+three problems; only C answers the question editors actually have — *what is on this shelf
+right now?* — by showing the live headline in each slot instead of a number.
 
-If the build cost comes back too high, **A plus B's grouping as view links** gets most of
-the value for a fraction of the work.
+What shipped in [PR #898](https://github.com/News-at-Northeastern/environment/pull/898) is
+the searchable, collapsed index: the whole of the problem, none of C's layout. C's one
+real advantage needs the index endpoint to return stories as well as configuration, which
+on a 47-instance page is a performance question rather than a design one — the code
+already notes that *"behind one request per instance on the page, is seconds"*.
+
+So C is tracked on its own as **NUEAC-399**, with that question written into it. Nothing
+in #898 blocks it: the collapsed card becomes C's left pane almost unchanged.
