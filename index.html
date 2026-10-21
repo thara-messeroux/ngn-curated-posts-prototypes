@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curated Posts prototypes · NUEAC-398</title>
+<link rel="stylesheet" href="assets/wp-admin.css">
+<style>
+.hero { padding: 30px 0 18px; border-bottom: 1px solid var(--wp-border-light); margin-bottom: 26px; }
+.eyebrow {
+  font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--wp-text-muted); margin: 0;
+}
+.hero h1 { font-size: 30px; font-weight: 400; margin: 8px 0 0; line-height: 1.22; max-width: 22ch; }
+.hero p { font-size: 15px; line-height: 1.65; color: var(--wp-text-2); margin: 12px 0 0; max-width: 68ch; }
+
+h2.sec { font-size: 18px; font-weight: 600; margin: 32px 0 12px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 18px 0 0; }
+.stat { background: var(--wp-surface); border: 1px solid var(--wp-border-light); border-radius: 3px; padding: 13px 15px; }
+.stat b { display: block; font-size: 26px; font-weight: 400; line-height: 1.15; }
+.stat span { display: block; font-size: 12px; color: var(--wp-text-muted); margin-top: 3px; line-height: 1.4; }
+
+.probs { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.prob {
+  background: var(--wp-surface); border: 1px solid var(--wp-border-light);
+  border-left: 4px solid var(--wp-red-bright); border-radius: 0 3px 3px 0;
+  padding: 12px 15px;
+}
+.prob b { display: block; font-size: 14px; }
+.prob p { margin: 4px 0 0; font-size: 13px; color: var(--wp-text-2); line-height: 1.6; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; margin-top: 14px; }
+.card {
+  background: var(--wp-surface); border: 1px solid var(--wp-border-light);
+  border-radius: 3px; box-shadow: 0 1px 1px rgba(0,0,0,.04);
+  display: flex; flex-direction: column;
+}
+.card-top { padding: 16px 18px 14px; flex: 1 1 auto; }
+.card .tag {
+  display: inline-block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--wp-blue); background: var(--wp-blue-bg); border-radius: 3px; padding: 2px 8px;
+}
+.card h3 { margin: 9px 0 0; font-size: 17px; font-weight: 600; line-height: 1.3; }
+.card .what { margin: 7px 0 0; font-size: 13px; color: var(--wp-text-2); line-height: 1.6; }
+.card dl { margin: 13px 0 0; font-size: 12.5px; line-height: 1.55; }
+.card dt { color: var(--wp-text-muted); margin-top: 8px; }
+.card dd { margin: 1px 0 0; color: var(--wp-text); }
+.card-foot { padding: 0 18px 16px; }
+
+table.compare { width: 100%; border-collapse: collapse; background: var(--wp-surface); border: 1px solid var(--wp-border-light); border-radius: 3px; margin-top: 12px; }
+table.compare th, table.compare td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--wp-border-light); font-size: 13px; vertical-align: top; }
+table.compare thead th { background: var(--wp-surface-alt); font-weight: 400; color: var(--wp-text-muted); font-size: 12px; }
+table.compare tbody tr:last-child td { border-bottom: 0; }
+table.compare td:first-child { color: var(--wp-text-muted); width: 190px; }
+
+.rec { background: var(--wp-green-bg); border: 1px solid #a7e3b4; border-left-width: 4px; border-radius: 0 3px 3px 0; padding: 14px 16px; margin-top: 14px; }
+.rec b { font-size: 14px; }
+.rec p { margin: 5px 0 0; font-size: 13px; line-height: 1.65; color: #15451f; }
+
+footer.page-foot { margin-top: 42px; padding-top: 16px; border-top: 1px solid var(--wp-border-light); font-size: 12px; color: var(--wp-text-muted); line-height: 1.7; }
+footer.page-foot a { color: var(--wp-blue); }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · Curated Posts</strong>
+  <span class="sep">|</span>
+  <a href="01-list-table.html">A — List table</a>
+  <a href="02-grouped-accordion.html">B — Grouped accordion</a>
+  <a href="03-two-pane.html">C — Two-pane workbench</a>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <p class="eyebrow">NUEAC-398 · Phase 1 · Concepts</p>
+    <h1>Three ways to fix the Curated Posts screen</h1>
+    <p>
+      Curated Posts is the screen that controls every automatically-filled shelf on
+      Northeastern Global News — the homepage rails, the Most read lists, the section
+      fronts. There are 47 shelves on it. All of them render open, in the order they were
+      created, with no way to search. These are three working prototypes of the same data,
+      built on WordPress's own admin design system so any of them drops in without a
+      restyle.
+    </p>
+  </div>
+
+  <h2 class="sec">What the screen costs today</h2>
+  <div class="stats">
+    <div class="stat"><b>47</b><span>shelves on one page</span></div>
+    <div class="stat"><b>~40</b><span>screens of scroll at 1440px</span></div>
+    <div class="stat"><b>0</b><span>ways to search or filter</span></div>
+    <div class="stat"><b>~376</b><span>label/value lines rendered on load</span></div>
+  </div>
+
+  <h2 class="sec">Three problems, worst first</h2>
+  <div class="probs">
+    <div class="prob">
+      <b>1 · Finding one shelf means reading all of them</b>
+      <p>No search, no filter, no jump list. Reaching "Most read health" means scrolling
+      past 29 other blocks and reading 13px titles until you spot it.</p>
+    </div>
+    <div class="prob">
+      <b>2 · Every shelf is expanded, including its empty fields</b>
+      <p>Each block prints all eight settings whether or not they hold a value. Roughly
+      half of what is on screen reads <code>None</code>, <code>N/A</code> or
+      <code>Off</code>.</p>
+    </div>
+    <div class="prob">
+      <b>3 · Delete sits beside Rename and Duplicate</b>
+      <p>Same size, same row, one gap apart, on every card. Nothing warns that a shelf is
+      live on the site before it is removed.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">The three directions</h2>
+  <div class="cards">
+
+    <div class="card">
+      <div class="card-top">
+        <span class="tag">Direction A</span>
+        <h3>List table</h3>
+        <p class="what">The screen becomes a standard WordPress list table — the same
+        component the Posts screen uses. Sortable columns, search where editors already
+        look, row actions on hover.</p>
+        <dl>
+          <dt>Best for</dt><dd>Editors who live in wp-admin already</dd>
+          <dt>Strength</dt><dd>Zero learning curve, least code to write</dd>
+          <dt>Trade-off</dt><dd>One row per shelf means less room for the rules</dd>
+        </dl>
+      </div>
+      <div class="card-foot"><a class="button button-primary" href="01-list-table.html">Open direction A</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <span class="tag">Direction B</span>
+        <h3>Grouped accordion</h3>
+        <p class="what">The 47 shelves fall into six families that already exist in their
+        names. Each family collapses. The toolbar sticks to the top of the screen so
+        search stays reachable however far down you are.</p>
+        <dl>
+          <dt>Best for</dt><dd>Working through one family at a time</dd>
+          <dt>Strength</dt><dd>Matches how the shelves are actually maintained</dd>
+          <dt>Trade-off</dt><dd>One more click to reach a single shelf</dd>
+        </dl>
+      </div>
+      <div class="card-foot"><a class="button button-primary" href="02-grouped-accordion.html">Open direction B</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <span class="tag">Direction C</span>
+        <h3>Two-pane workbench</h3>
+        <p class="what">A searchable index on the left that never moves, and the selected
+        shelf's settings on the right. Changing shelf swaps only the right pane, so your
+        place in the list is never lost.</p>
+        <dl>
+          <dt>Best for</dt><dd>Editing six shelves in a row</dd>
+          <dt>Strength</dt><dd>Most room for the rules and the slots</dd>
+          <dt>Trade-off</dt><dd>Least like the rest of wp-admin</dd>
+        </dl>
+      </div>
+      <div class="card-foot"><a class="button button-primary" href="03-two-pane.html">Open direction C</a></div>
+    </div>
+
+  </div>
+
+  <h2 class="sec">Side by side</h2>
+  <table class="compare">
+    <thead>
+      <tr><th></th><th>A — List table</th><th>B — Grouped accordion</th><th>C — Two-pane</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Find one shelf</td><td>Search or sort</td><td>Search or open its family</td><td>Search, list never moves</td></tr>
+      <tr><td>Screens of scroll</td><td>About 2</td><td>About 1 collapsed</td><td>None — panes scroll separately</td></tr>
+      <tr><td>Empty fields</td><td>Hidden</td><td>Hidden</td><td>Shown as "off" / "none set"</td></tr>
+      <tr><td>Delete</td><td>Row actions, on hover</td><td>Overflow menu</td><td>Overflow menu</td></tr>
+      <tr><td>Confirm step</td><td colspan="3">All three name the shelf and say it is live before anything is removed</td></tr>
+      <tr><td>Familiarity</td><td>Highest</td><td>Medium</td><td>Lowest</td></tr>
+      <tr><td>Build cost</td><td>Lowest</td><td>Medium</td><td>Highest</td></tr>
+    </tbody>
+  </table>
+
+  <div class="rec">
+    <b>Recommendation: A, with B's grouping added as a filter.</b>
+    <p>Direction A costs the least, is the most familiar, and solves all three problems.
+    Direction B's real contribution is the grouping, and that can live inside A as the
+    view links above the table — the same pattern the Posts screen uses for post statuses.
+    Direction C is the strongest editing experience, and the one to revisit if editors
+    say the rules need more room than a table row allows.</p>
+  </div>
+
+  <footer class="page-foot">
+    Built for <strong>NUEAC-398</strong>, Northeastern Global News.<br>
+    Data read from the live screen at <code>admin.php?page=ngn-curated-posts</code> on
+    20 October 2026. Prototypes are front-end only — no data is written and the public
+    site is untouched.<br>
+    Design tokens taken from WordPress 6.x core admin.
+  </footer>
+
+</div>
+
+</body>
+</html>

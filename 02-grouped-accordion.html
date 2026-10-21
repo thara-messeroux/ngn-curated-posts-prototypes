@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction B — Grouped accordion · Curated Posts prototypes</title>
+<link rel="stylesheet" href="assets/wp-admin.css">
+<style>
+.sticky-tools {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  background: var(--wp-bg);
+  padding: 10px 0 10px;
+  border-bottom: 1px solid var(--wp-border-light);
+  margin-bottom: 14px;
+}
+
+.group {
+  background: var(--wp-surface);
+  border: 1px solid var(--wp-border-light);
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: var(--wp-surface-alt);
+  border: 0;
+  border-bottom: 1px solid var(--wp-border-light);
+  font: inherit;
+  text-align: left;
+  padding: 11px 14px;
+  cursor: pointer;
+  color: var(--wp-text);
+}
+.group-head:hover { background: #eef0f1; }
+.group-head .caret { color: var(--wp-text-muted); font-size: 11px; width: 10px; flex: none; }
+.group-head .gname { font-size: 14px; font-weight: 600; flex: 1 1 auto; min-width: 0; }
+.group-head .gcount { color: var(--wp-text-muted); font-size: 12px; }
+
+.inst { border-bottom: 1px solid var(--wp-border-light); }
+.inst:last-child { border-bottom: 0; }
+
+.inst-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 0 0;
+}
+.inst-head:hover { background: var(--wp-surface-alt); }
+.inst.is-open .inst-head { background: var(--wp-blue-bg); }
+
+.row-toggle {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  color: var(--wp-text);
+  padding: 10px 6px 10px 14px;
+  cursor: pointer;
+}
+.row-toggle .caret {
+  flex: none; width: 10px; color: var(--wp-text-muted); font-size: 11px;
+  transition: transform .12s ease;
+}
+.inst.is-open .row-toggle .caret { transform: rotate(90deg); }
+.row-main { min-width: 0; flex: 1 1 auto; display: block; }
+.row-name { display: block; font-size: 14px; font-weight: 600; color: var(--wp-blue); line-height: 1.35; }
+.row-toggle:hover .row-name { color: var(--wp-blue-hover); }
+.row-sum {
+  display: block;
+  font-size: 12px; color: var(--wp-text-muted); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.inst-body { padding: 4px 14px 14px 38px; background: var(--wp-surface-alt); }
+
+.empty {
+  background: var(--wp-surface);
+  border: 1px solid var(--wp-border-light);
+  border-radius: 3px;
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--wp-text-muted);
+}
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.chip {
+  background: var(--wp-surface);
+  border: 1px solid var(--wp-border);
+  border-radius: 14px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--wp-text-2);
+  padding: 3px 11px;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--wp-blue); color: var(--wp-blue); }
+.chip.is-on {
+  background: var(--wp-blue);
+  border-color: var(--wp-blue);
+  color: #fff;
+}
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · Direction B</strong>
+  <span class="sep">|</span>
+  <a href="index.html">All three directions</a>
+  <span class="sep">|</span>
+  <a href="01-list-table.html">A — List table</a>
+  <a href="03-two-pane.html">C — Two-pane workbench</a>
+</div>
+
+<div class="wrap">
+
+  <div class="title-row">
+    <h1 class="wp-heading-inline">Curated Posts</h1>
+    <a class="button" href="#" onclick="return false">Add new</a>
+  </div>
+  <p class="wp-subtitle">
+    <strong>Direction B — Grouped accordion.</strong>
+    The 47 instances fall into six families that already exist in their names: Featured,
+    Most read, Latest, Topic, World Cup, Other. Each family is a section you can collapse.
+    The toolbar sticks to the top of the screen, so search and filters stay reachable
+    however far down you are.
+  </p>
+  <hr class="wp-header-end">
+
+  <div class="notice notice-info">
+    <p><strong>Why this one:</strong> it matches how the shelves are actually maintained.
+    "Update all the Most read shelves" is one section, not eleven scattered cards. The
+    grouping is derived from the names you already use, so there is nothing new to keep
+    in sync.</p>
+  </div>
+
+  <div class="sticky-tools">
+    <div class="tablenav">
+      <label class="screen-reader-text" for="q">Search curated posts</label>
+      <input type="search" id="q" placeholder="Search name or slug" style="width:260px">
+      <div class="chips" id="chips"></div>
+      <span class="spacer"></span>
+      <button type="button" class="button button-small" id="toggleAll">Collapse all</button>
+      <span class="displaying-num" id="num"></span>
+    </div>
+  </div>
+
+  <div id="groups"></div>
+
+</div>
+
+<script src="assets/data.js"></script>
+<script>
+(function () {
+  var openRows = {}, openGroups = {}, confirming = null, deleted = {}, state = "", allCollapsed = false;
+  var $ = function (id) { return document.getElementById(id); };
+
+  GROUP_ORDER.forEach(function (g) { openGroups[g] = true; });
+
+  function live() { return CURATED.filter(function (d) { return !deleted[d.s]; }); }
+
+  function visible() {
+    var term = $("q").value.trim().toLowerCase();
+    return live().filter(function (d) {
+      if (state && d.state !== state) return false;
+      if (term && (d.n + " " + d.s).toLowerCase().indexOf(term) < 0) return false;
+      return true;
+    });
+  }
+
+  function renderChips() {
+    var all = live();
+    var l = all.filter(function (d) { return d.state === "live"; }).length;
+    var c = all.filter(function (d) { return d.state === "check"; }).length;
+    $("chips").innerHTML =
+      '<button type="button" class="chip ' + (state === "" ? "is-on" : "") + '" data-s="">All ' + all.length + "</button>" +
+      '<button type="button" class="chip ' + (state === "live" ? "is-on" : "") + '" data-s="live">Live ' + l + "</button>" +
+      '<button type="button" class="chip ' + (state === "check" ? "is-on" : "") + '" data-s="check">Needs check ' + c + "</button>";
+  }
+
+  function render() {
+    renderChips();
+    var list = visible(), host = $("groups");
+    $("num").textContent = list.length + " of " + live().length + " instances";
+
+    if (!list.length) {
+      host.innerHTML = '<div class="empty">No curated post matches that.<br>' +
+        "Clear the search to see all " + live().length + ".</div>";
+      return;
+    }
+
+    var searching = $("q").value.trim().length > 0;
+    var html = "";
+
+    GROUP_ORDER.forEach(function (g) {
+      var items = list.filter(function (d) { return d.g === g; });
+      if (!items.length) return;
+      var gOpen = searching || openGroups[g];
+
+      html += '<section class="group">' +
+        '<button type="button" class="group-head" data-g="' + CP.esc(g) + '" aria-expanded="' + gOpen + '">' +
+          '<span class="caret">' + (gOpen ? "▼" : "▶") + "</span>" +
+          '<span class="gname">' + CP.esc(g) + "</span>" +
+          '<span class="gcount">' + items.length + (items.length === 1 ? " shelf" : " shelves") + "</span>" +
+        "</button>";
+
+      if (gOpen) {
+        items.forEach(function (d) {
+          var isOpen = !!openRows[d.s];
+          html += '<div class="inst' + (isOpen ? " is-open" : "") + '">' +
+            '<div class="inst-head">' +
+              '<button type="button" class="row-toggle" data-t="' + CP.esc(d.s) + '" aria-expanded="' + isOpen + '">' +
+                '<span class="caret">▶</span>' +
+                '<span class="row-main">' +
+                  '<span class="row-name">' + CP.esc(d.n) + "</span>" +
+                  '<span class="row-sum">' + CP.esc(CP.summary(d)) + "</span>" +
+                "</span>" +
+              "</button>" +
+              CP.pill(d) +
+              '<span class="menu-wrap"><button type="button" class="kebab" ' +
+                'aria-label="Actions for ' + CP.esc(d.n) + '" data-m="' + CP.esc(d.s) + '">⋯</button></span>' +
+            "</div>";
+
+          if (confirming === d.s) {
+            html += '<div class="confirm">' +
+              "<span>Delete <strong>" + CP.esc(d.n) + "</strong>? It is live on the site and fills " +
+              d.stories + (d.stories === 1 ? " slot." : " slots.") + "</span>" +
+              '<button type="button" class="button button-link-delete button-small" data-yes="' + CP.esc(d.s) + '">Delete permanently</button>' +
+              '<button type="button" class="button button-small" data-no="1">Keep it</button>' +
+              "</div>";
+          }
+
+          if (isOpen) {
+            html += '<div class="inst-body"><dl class="fields">' + CP.fields(d) + "</dl></div>";
+          }
+          html += "</div>";
+        });
+      }
+      html += "</section>";
+    });
+
+    host.innerHTML = html;
+  }
+
+  document.addEventListener("click", function (ev) {
+    var g = ev.target.closest("[data-g]"), t = ev.target.closest("[data-t]"),
+        m = ev.target.closest("[data-m]"), d = ev.target.closest("[data-d]"),
+        y = ev.target.closest("[data-yes]"), n = ev.target.closest("[data-no]"),
+        s = ev.target.closest("[data-s]");
+
+    if (y) { deleted[y.dataset.yes] = true; confirming = null; return render(); }
+    if (n) { confirming = null; return render(); }
+    if (d) { confirming = d.dataset.d; closeMenu(); return render(); }
+    if (t) { openRows[t.dataset.t] = !openRows[t.dataset.t]; closeMenu(); return render(); }
+    if (g) { openGroups[g.dataset.g] = !openGroups[g.dataset.g]; return render(); }
+    if (s) { state = s.dataset.s; return render(); }
+    if (m) { return toggleMenu(m); }
+    closeMenu();
+  });
+
+  function closeMenu() {
+    var el = document.querySelector(".menu");
+    if (el) el.remove();
+  }
+
+  function toggleMenu(btn) {
+    var existing = btn.parentElement.querySelector(".menu");
+    closeMenu();
+    if (existing) return;
+    var slug = btn.dataset.m;
+    var wrap = document.createElement("div");
+    wrap.className = "menu";
+    wrap.innerHTML =
+      '<button type="button" data-t="' + CP.esc(slug) + '">Edit settings</button>' +
+      '<button type="button">Rename</button>' +
+      '<button type="button">Duplicate</button>' +
+      '<div class="menu-sep"></div>' +
+      '<button type="button" class="is-delete" data-d="' + CP.esc(slug) + '">Delete…</button>';
+    btn.parentElement.appendChild(wrap);
+  }
+
+  $("q").addEventListener("input", function () { confirming = null; render(); });
+
+  $("toggleAll").addEventListener("click", function () {
+    allCollapsed = !allCollapsed;
+    GROUP_ORDER.forEach(function (g) { openGroups[g] = !allCollapsed; });
+    if (allCollapsed) openRows = {};
+    this.textContent = allCollapsed ? "Expand all" : "Collapse all";
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

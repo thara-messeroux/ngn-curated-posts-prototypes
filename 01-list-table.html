@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction A — List table · Curated Posts prototypes</title>
+<link rel="stylesheet" href="assets/wp-admin.css">
+<style>
+/* WordPress .wp-list-table ------------------------------------------------ */
+.wp-list-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--wp-surface);
+  border: 1px solid var(--wp-border-light);
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+.wp-list-table th,
+.wp-list-table td {
+  padding: 10px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--wp-border-light);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.wp-list-table thead th {
+  background: var(--wp-surface-alt);
+  color: var(--wp-text);
+  font-weight: 400;
+  border-bottom: 1px solid var(--wp-border);
+  white-space: nowrap;
+}
+.wp-list-table tbody tr:last-child td { border-bottom: 0; }
+.wp-list-table tbody tr:hover { background: var(--wp-surface-alt); }
+.wp-list-table tbody tr.is-open { background: var(--wp-blue-bg); }
+
+.sortable { padding: 0 !important; }
+.sortable button {
+  width: 100%;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: var(--wp-blue);
+  text-align: left;
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.sortable button:hover { color: var(--wp-blue-hover); }
+.sortable .arrow { font-size: 10px; color: var(--wp-text-muted); }
+.sortable.is-sorted button { color: var(--wp-text); }
+.sortable.is-sorted .arrow { color: var(--wp-blue); }
+
+.col-cb    { width: 32px; }
+.col-count { width: 74px; }
+.col-state { width: 110px; }
+.col-act   { width: 44px; }
+
+.row-title {
+  background: none; border: 0; padding: 0; font: inherit;
+  font-size: 14px; font-weight: 600; color: var(--wp-blue);
+  cursor: pointer; text-align: left; line-height: 1.4;
+}
+.row-title:hover { color: var(--wp-blue-hover); text-decoration: underline; }
+.row-slug { color: var(--wp-text-muted); font-size: 12px; margin-top: 1px; }
+
+.row-actions {
+  color: var(--wp-text-muted);
+  font-size: 12px;
+  margin-top: 4px;
+  visibility: hidden;
+}
+tr:hover .row-actions,
+tr:focus-within .row-actions { visibility: visible; }
+.row-actions button {
+  background: none; border: 0; padding: 0; font: inherit; font-size: 12px;
+  color: var(--wp-blue); cursor: pointer;
+}
+.row-actions button:hover { color: var(--wp-blue-hover); text-decoration: underline; }
+.row-actions .trash button { color: var(--wp-red); }
+.row-actions .trash button:hover { color: var(--wp-red-bright); }
+.row-actions .sep { margin: 0 4px; color: var(--wp-border); }
+
+tr.detail-row td { background: var(--wp-surface-alt); padding: 12px 14px 14px 46px; }
+tr.detail-row.is-confirm td { background: var(--wp-red-bg); padding: 0; }
+
+.search-box { display: flex; gap: 6px; align-items: center; }
+
+.subsubsub {
+  list-style: none;
+  margin: 8px 0 12px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--wp-text-muted);
+}
+.subsubsub li::after { content: "|"; margin: 0 4px 0 8px; color: var(--wp-border); }
+.subsubsub li:last-child::after { content: ""; }
+.subsubsub button {
+  background: none; border: 0; padding: 0; font: inherit;
+  color: var(--wp-blue); cursor: pointer;
+}
+.subsubsub button:hover { color: var(--wp-blue-hover); }
+.subsubsub .current button { color: var(--wp-text); font-weight: 600; }
+.subsubsub .count { color: var(--wp-text-muted); }
+
+.no-items td { text-align: center; padding: 30px 10px; color: var(--wp-text-muted); }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · Direction A</strong>
+  <span class="sep">|</span>
+  <a href="index.html">All three directions</a>
+  <span class="sep">|</span>
+  <a href="02-grouped-accordion.html">B — Grouped accordion</a>
+  <a href="03-two-pane.html">C — Two-pane workbench</a>
+</div>
+
+<div class="wrap">
+
+  <div class="title-row">
+    <h1 class="wp-heading-inline">Curated Posts</h1>
+    <a class="button" href="#" onclick="return false">Add new</a>
+  </div>
+  <p class="wp-subtitle">
+    <strong>Direction A — List table.</strong>
+    The screen becomes a standard WordPress list table, the same component the Posts and
+    Pages screens use. Sortable columns, a search box where editors already look for one,
+    and row actions that appear on hover. Destructive actions sit in the row-actions strip
+    like everywhere else in wp-admin, so Delete is never a button you can hit by accident.
+  </p>
+  <hr class="wp-header-end">
+
+  <div class="notice notice-info">
+    <p><strong>Why this one:</strong> zero learning curve. Anyone who has edited a post on
+    this site already knows how to drive it. It is also the least code — WordPress ships
+    the table, the sorting and the row actions.</p>
+  </div>
+
+  <ul class="subsubsub" id="views"></ul>
+
+  <div class="tablenav">
+    <div class="search-box">
+      <label class="screen-reader-text" for="q">Search curated posts</label>
+      <input type="search" id="q" placeholder="Search name or slug" style="width:240px">
+      <button type="button" class="button" id="clear">Clear</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="displaying-num" id="num"></span>
+  </div>
+
+  <table class="wp-list-table widefat striped">
+    <thead>
+      <tr>
+        <th class="col-cb"><input type="checkbox" aria-label="Select all"></th>
+        <th class="sortable" data-sort="n"><button type="button">Name <span class="arrow">▲▼</span></button></th>
+        <th class="sortable col-count" data-sort="stories"><button type="button">Stories <span class="arrow">▲▼</span></button></th>
+        <th class="sortable" data-sort="types"><button type="button">Post types <span class="arrow">▲▼</span></button></th>
+        <th>Include terms</th>
+        <th class="sortable col-state" data-sort="state"><button type="button">State <span class="arrow">▲▼</span></button></th>
+        <th class="col-act"><span class="screen-reader-text">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+</div>
+
+<script src="assets/data.js"></script>
+<script>
+(function () {
+  var open = {}, confirming = null, deleted = {}, view = "", sort = { by: "", dir: 1 };
+  var $ = function (id) { return document.getElementById(id); };
+
+  function live() { return CURATED.filter(function (d) { return !deleted[d.s]; }); }
+
+  function visible() {
+    var term = $("q").value.trim().toLowerCase();
+    var list = live().filter(function (d) {
+      if (view && d.g !== view) return false;
+      if (term && (d.n + " " + d.s).toLowerCase().indexOf(term) < 0) return false;
+      return true;
+    });
+    if (sort.by) {
+      list.sort(function (a, b) {
+        var x = a[sort.by], y = b[sort.by];
+        if (typeof x === "string") return x.localeCompare(y) * sort.dir;
+        return (x - y) * sort.dir;
+      });
+    }
+    return list;
+  }
+
+  function renderViews() {
+    var all = live(), ul = $("views"), html = "";
+    html += '<li class="' + (view === "" ? "current" : "") + '">' +
+      '<button type="button" data-v="">All <span class="count">(' + all.length + ')</span></button></li>';
+    GROUP_ORDER.forEach(function (g) {
+      var n = all.filter(function (d) { return d.g === g; }).length;
+      if (!n) return;
+      html += '<li class="' + (view === g ? "current" : "") + '">' +
+        '<button type="button" data-v="' + CP.esc(g) + '">' + CP.esc(g) +
+        ' <span class="count">(' + n + ')</span></button></li>';
+    });
+    ul.innerHTML = html;
+  }
+
+  function render() {
+    renderViews();
+    var list = visible(), tb = $("rows");
+    $("num").textContent = list.length + " of " + live().length + " items";
+
+    document.querySelectorAll(".sortable").forEach(function (th) {
+      th.classList.toggle("is-sorted", th.dataset.sort === sort.by);
+      var a = th.querySelector(".arrow");
+      a.textContent = th.dataset.sort === sort.by ? (sort.dir === 1 ? "▲" : "▼") : "▲▼";
+    });
+
+    if (!list.length) {
+      tb.innerHTML = '<tr class="no-items"><td colspan="7">No curated post matches that. ' +
+        'Clear the search to see all ' + live().length + '.</td></tr>';
+      return;
+    }
+
+    var html = "";
+    list.forEach(function (d) {
+      var isOpen = !!open[d.s];
+      html +=
+        '<tr class="' + (isOpen ? "is-open" : "") + '">' +
+          '<td class="col-cb"><input type="checkbox" aria-label="Select ' + CP.esc(d.n) + '"></td>' +
+          '<td>' +
+            '<button type="button" class="row-title" data-t="' + CP.esc(d.s) + '" aria-expanded="' + isOpen + '">' +
+              CP.esc(d.n) + "</button>" +
+            '<div class="row-slug mono">' + CP.esc(d.s) + "</div>" +
+            '<div class="row-actions">' +
+              '<span><button type="button" data-t="' + CP.esc(d.s) + '">' + (isOpen ? "Hide" : "Edit") + "</button></span>" +
+              '<span class="sep">|</span><span><button type="button">Rename</button></span>' +
+              '<span class="sep">|</span><span><button type="button">Duplicate</button></span>' +
+              '<span class="sep">|</span><span class="trash"><button type="button" data-d="' + CP.esc(d.s) + '">Delete</button></span>' +
+            "</div>" +
+          "</td>" +
+          '<td class="col-count">' + d.stories + "</td>" +
+          "<td>" + CP.esc(d.types) + "</td>" +
+          "<td>" + CP.terms(d.inc, "inc") + "</td>" +
+          '<td class="col-state">' + CP.pill(d) + "</td>" +
+          '<td class="col-act"><span class="menu-wrap"><button type="button" class="kebab" ' +
+            'aria-label="Actions for ' + CP.esc(d.n) + '" data-m="' + CP.esc(d.s) + '">⋯</button></span></td>' +
+        "</tr>";
+
+      if (confirming === d.s) {
+        html += '<tr class="detail-row is-confirm"><td colspan="7"><div class="confirm">' +
+          "<span>Delete <strong>" + CP.esc(d.n) + "</strong>? It is live on the site and fills " +
+          d.stories + (d.stories === 1 ? " slot." : " slots.") + "</span>" +
+          '<button type="button" class="button button-link-delete button-small" data-yes="' + CP.esc(d.s) + '">Delete permanently</button>' +
+          '<button type="button" class="button button-small" data-no="1">Keep it</button>' +
+          "</div></td></tr>";
+      }
+
+      if (isOpen) {
+        html += '<tr class="detail-row"><td colspan="7"><dl class="fields">' + CP.fields(d) + "</dl></td></tr>";
+      }
+    });
+    tb.innerHTML = html;
+  }
+
+  document.addEventListener("click", function (ev) {
+    var m = ev.target.closest("[data-m]"), t = ev.target.closest("[data-t]"),
+        d = ev.target.closest("[data-d]"), y = ev.target.closest("[data-yes]"),
+        n = ev.target.closest("[data-no]"), v = ev.target.closest("[data-v]"),
+        th = ev.target.closest(".sortable");
+
+    if (y) { deleted[y.dataset.yes] = true; confirming = null; return render(); }
+    if (n) { confirming = null; return render(); }
+    if (d) { confirming = d.dataset.d; closeMenu(); return render(); }
+    if (t) { open[t.dataset.t] = !open[t.dataset.t]; closeMenu(); return render(); }
+    if (v) { view = v.dataset.v; return render(); }
+    if (th) {
+      var by = th.dataset.sort;
+      sort = { by: by, dir: sort.by === by ? -sort.dir : 1 };
+      return render();
+    }
+    if (m) { return toggleMenu(m); }
+    closeMenu();
+  });
+
+  function closeMenu() {
+    var el = document.querySelector(".menu");
+    if (el) el.remove();
+  }
+
+  function toggleMenu(btn) {
+    var existing = btn.parentElement.querySelector(".menu");
+    closeMenu();
+    if (existing) return;
+    var slug = btn.dataset.m;
+    var wrap = document.createElement("div");
+    wrap.className = "menu";
+    wrap.innerHTML =
+      '<button type="button" data-t="' + CP.esc(slug) + '">Edit settings</button>' +
+      '<button type="button">Rename</button>' +
+      '<button type="button">Duplicate</button>' +
+      '<div class="menu-sep"></div>' +
+      '<button type="button" class="is-delete" data-d="' + CP.esc(slug) + '">Delete…</button>';
+    btn.parentElement.appendChild(wrap);
+  }
+
+  $("q").addEventListener("input", function () { confirming = null; render(); });
+  $("clear").addEventListener("click", function () { $("q").value = ""; view = ""; render(); $("q").focus(); });
+
+  render();
+})();
+</script>
+</body>
+</html>

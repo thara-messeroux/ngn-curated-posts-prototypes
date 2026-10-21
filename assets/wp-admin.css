@@ -1,0 +1,379 @@
+/* ==========================================================================
+   WordPress admin design system
+   Tokens lifted from WordPress 6.x core admin (common.css, colors-fresh.css)
+   so these prototypes drop into wp-admin without a restyle.
+   ========================================================================== */
+
+:root {
+  /* Surfaces */
+  --wp-bg:            #f0f0f1;
+  --wp-surface:       #ffffff;
+  --wp-surface-alt:   #f6f7f7;
+  --wp-surface-hover: #f0f0f1;
+
+  /* Borders */
+  --wp-border:        #c3c4c7;
+  --wp-border-light:  #dcdcde;
+
+  /* Text */
+  --wp-text:          #1d2327;
+  --wp-text-2:        #50575e;
+  --wp-text-muted:    #646970;
+
+  /* Brand + state */
+  --wp-blue:          #2271b1;
+  --wp-blue-hover:    #135e96;
+  --wp-blue-bg:       #f0f6fc;
+  --wp-red:           #b32d2e;
+  --wp-red-bright:    #d63638;
+  --wp-red-bg:        #fcf0f1;
+  --wp-green:         #00a32a;
+  --wp-green-bg:      #edfaef;
+  --wp-amber:         #dba617;
+  --wp-amber-bg:      #fcf9e8;
+
+  /* Type */
+  --wp-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+             "Oxygen-Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --wp-mono: Menlo, Consolas, monaco, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--wp-bg); }
+
+body {
+  margin: 0;
+  background: var(--wp-bg);
+  color: var(--wp-text);
+  font-family: var(--wp-font);
+  font-size: 13px;
+  line-height: 1.4em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+   Prototype chrome — the fake wp-admin frame around each direction
+   -------------------------------------------------------------------------- */
+
+.proto-bar {
+  background: #1d2327;
+  color: #f0f0f1;
+  font-size: 13px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.proto-bar a { color: #72aee6; text-decoration: none; }
+.proto-bar a:hover { color: #fff; text-decoration: underline; }
+.proto-bar .sep { color: #646970; }
+.proto-bar strong { font-weight: 600; }
+
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 20px 60px;
+}
+
+.wp-heading-inline {
+  font-size: 23px;
+  font-weight: 400;
+  margin: 18px 0 0;
+  padding: 9px 0 4px;
+  line-height: 1.3;
+  display: inline-block;
+}
+
+.wp-subtitle {
+  color: var(--wp-text-muted);
+  font-size: 13px;
+  margin: 2px 0 16px;
+  max-width: 70ch;
+  line-height: 1.6;
+}
+
+hr.wp-header-end { visibility: hidden; margin: 6px 0 12px; border: 0; }
+
+/* --------------------------------------------------------------------------
+   Buttons — WordPress .button / .button-primary / .button-link-delete
+   -------------------------------------------------------------------------- */
+
+.button,
+.button-primary {
+  display: inline-block;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 2.15384615;
+  min-height: 30px;
+  margin: 0;
+  padding: 0 10px;
+  cursor: pointer;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 3px;
+  white-space: nowrap;
+  box-sizing: border-box;
+  text-decoration: none;
+  vertical-align: top;
+}
+
+.button {
+  color: var(--wp-blue);
+  border-color: var(--wp-blue);
+  background: var(--wp-surface);
+}
+.button:hover {
+  background: var(--wp-blue-bg);
+  border-color: var(--wp-blue-hover);
+  color: var(--wp-blue-hover);
+}
+
+.button-primary {
+  background: var(--wp-blue);
+  border-color: var(--wp-blue);
+  color: #fff;
+}
+.button-primary:hover {
+  background: var(--wp-blue-hover);
+  border-color: var(--wp-blue-hover);
+}
+
+.button-link-delete {
+  background: none;
+  border: 1px solid var(--wp-red);
+  color: var(--wp-red);
+}
+.button-link-delete:hover {
+  background: var(--wp-red-bg);
+  border-color: var(--wp-red-bright);
+  color: var(--wp-red-bright);
+}
+
+.button-small { min-height: 26px; line-height: 2.18181818; font-size: 12px; padding: 0 8px; }
+
+.button:focus-visible,
+.button-primary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible,
+.row-toggle:focus-visible {
+  outline: 2px solid var(--wp-blue);
+  outline-offset: 0;
+  box-shadow: 0 0 0 1px var(--wp-blue);
+}
+
+/* --------------------------------------------------------------------------
+   Form controls
+   -------------------------------------------------------------------------- */
+
+input[type="search"],
+input[type="text"],
+select {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--wp-text);
+  background: var(--wp-surface);
+  border: 1px solid #8c8f94;
+  border-radius: 3px;
+  min-height: 30px;
+  padding: 0 8px;
+  line-height: 2;
+  box-shadow: 0 0 0 transparent;
+}
+input[type="search"]:focus,
+select:focus {
+  border-color: var(--wp-blue);
+  box-shadow: 0 0 0 1px var(--wp-blue);
+  outline: 2px solid transparent;
+}
+
+/* --------------------------------------------------------------------------
+   Notices
+   -------------------------------------------------------------------------- */
+
+.notice {
+  background: var(--wp-surface);
+  border: 1px solid var(--wp-border-light);
+  border-left-width: 4px;
+  border-radius: 0;
+  padding: 10px 12px;
+  margin: 14px 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.notice p { margin: 0; }
+.notice-info    { border-left-color: #72aee6; }
+.notice-success { border-left-color: var(--wp-green); }
+.notice-warning { border-left-color: var(--wp-amber); }
+.notice-error   { border-left-color: var(--wp-red-bright); }
+
+/* --------------------------------------------------------------------------
+   Status pills
+   -------------------------------------------------------------------------- */
+
+.pill {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 1px 8px;
+  border-radius: 9px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.pill-live  { background: var(--wp-green-bg); color: #005c12; }
+.pill-check { background: var(--wp-amber-bg); color: #7a5c00; }
+
+/* --------------------------------------------------------------------------
+   Shared: toolbar above a list
+   -------------------------------------------------------------------------- */
+
+.tablenav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+.tablenav .spacer { flex: 1 1 auto; }
+.tablenav .displaying-num {
+  color: var(--wp-text-muted);
+  font-size: 13px;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Shared: field grid inside an expanded instance
+   -------------------------------------------------------------------------- */
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 2px 28px;
+  margin: 0;
+}
+.field {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--wp-border-light);
+  font-size: 12px;
+}
+.field dt { color: var(--wp-text-muted); }
+.field dd { margin: 0; color: var(--wp-text); text-align: right; }
+
+.term {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 3px;
+  margin: 1px 0 1px 3px;
+  background: var(--wp-surface-alt);
+  border: 1px solid var(--wp-border-light);
+  color: var(--wp-text-2);
+}
+.term-exclude {
+  background: var(--wp-red-bg);
+  border-color: #f0b4b5;
+  color: var(--wp-red);
+}
+
+/* --------------------------------------------------------------------------
+   Shared: inline delete confirm
+   -------------------------------------------------------------------------- */
+
+.confirm {
+  background: var(--wp-red-bg);
+  border: 1px solid #f0b4b5;
+  border-left-width: 4px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.confirm strong { font-weight: 600; }
+
+/* --------------------------------------------------------------------------
+   Shared: row actions menu
+   -------------------------------------------------------------------------- */
+
+.menu-wrap { position: relative; display: inline-block; }
+
+.kebab {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--wp-text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px 8px;
+}
+.kebab:hover { border-color: var(--wp-border); color: var(--wp-text); background: var(--wp-surface); }
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 2px);
+  z-index: 20;
+  min-width: 180px;
+  background: var(--wp-surface);
+  border: 1px solid var(--wp-border);
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+  padding: 4px;
+}
+.menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 2px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--wp-text);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.menu button:hover { background: var(--wp-blue-bg); color: var(--wp-blue-hover); }
+.menu .menu-sep { height: 1px; background: var(--wp-border-light); margin: 4px 0; }
+.menu .is-delete { color: var(--wp-red); }
+.menu .is-delete:hover { background: var(--wp-red-bg); color: var(--wp-red-bright); }
+
+/* --------------------------------------------------------------------------
+   Utility
+   -------------------------------------------------------------------------- */
+
+.screen-reader-text {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.muted { color: var(--wp-text-muted); }
+.mono  { font-family: var(--wp-mono); font-size: 11px; }
+.nowrap { white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* Page title + Add new on one baseline, as core does -------------------- */
+.title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 18px 0 0;
+}
+.title-row .wp-heading-inline { margin: 0; padding: 0; }

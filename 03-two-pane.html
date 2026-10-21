@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction C — Two-pane workbench · Curated Posts prototypes</title>
+<link rel="stylesheet" href="assets/wp-admin.css">
+<style>
+.panes {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .panes { grid-template-columns: minmax(0, 1fr); }
+  .pane-list { max-height: 340px; }
+}
+
+.pane {
+  background: var(--wp-surface);
+  border: 1px solid var(--wp-border-light);
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.pane-list { position: sticky; top: 10px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; }
+.pane-list .list-tools { padding: 10px; border-bottom: 1px solid var(--wp-border-light); }
+.pane-list .list-tools input { width: 100%; }
+.pane-list .list-scroll { overflow-y: auto; flex: 1 1 auto; }
+.pane-list .list-foot {
+  border-top: 1px solid var(--wp-border-light);
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--wp-text-muted);
+  background: var(--wp-surface-alt);
+}
+
+.grp-label {
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--wp-text-muted);
+  background: var(--wp-surface-alt);
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--wp-border-light);
+  position: sticky;
+  top: 0;
+}
+
+.li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--wp-border-light);
+  border-left: 3px solid transparent;
+  font: inherit;
+  text-align: left;
+  color: var(--wp-text);
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.li:hover { background: var(--wp-surface-alt); }
+.li.is-sel {
+  background: var(--wp-blue-bg);
+  border-left-color: var(--wp-blue);
+}
+.li-main { flex: 1 1 auto; min-width: 0; display: block; }
+.li-name {
+  display: block;
+  font-size: 13px; font-weight: 600; color: var(--wp-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.li.is-sel .li-name { color: var(--wp-blue-hover); }
+.li-sub {
+  display: block;
+  font-size: 11px; color: var(--wp-text-muted); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dot-live  { background: var(--wp-green); }
+.dot-check { background: var(--wp-amber); }
+
+.detail-head {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--wp-border-light);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.detail-head h2 { margin: 0; font-size: 20px; font-weight: 400; line-height: 1.3; }
+.detail-head .slug { color: var(--wp-text-muted); font-size: 12px; margin-top: 3px; }
+.detail-head .acts { margin-left: auto; display: flex; gap: 6px; align-items: flex-start; }
+
+.detail-body { padding: 16px 20px 20px; }
+
+.sect { margin-bottom: 20px; }
+.sect:last-child { margin-bottom: 0; }
+.sect h3 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--wp-text-muted);
+  font-weight: 600;
+}
+
+.kv { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 7px 16px; font-size: 13px; }
+.kv dt { color: var(--wp-text-muted); }
+.kv dd { margin: 0; }
+.kv .unset { color: var(--wp-text-muted); font-style: italic; }
+
+.slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.slot {
+  background: var(--wp-surface-alt);
+  border: 1px dashed var(--wp-border);
+  border-radius: 3px;
+  width: 92px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--wp-text-muted);
+}
+
+.empty-detail {
+  padding: 70px 24px;
+  text-align: center;
+  color: var(--wp-text-muted);
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · Direction C</strong>
+  <span class="sep">|</span>
+  <a href="index.html">All three directions</a>
+  <span class="sep">|</span>
+  <a href="01-list-table.html">A — List table</a>
+  <a href="02-grouped-accordion.html">B — Grouped accordion</a>
+</div>
+
+<div class="wrap">
+
+  <div class="title-row">
+    <h1 class="wp-heading-inline">Curated Posts</h1>
+    <a class="button" href="#" onclick="return false">Add new</a>
+  </div>
+  <p class="wp-subtitle">
+    <strong>Direction C — Two-pane workbench.</strong>
+    A searchable index on the left that never moves, and the selected shelf's settings on
+    the right. Picking a different shelf swaps the right pane only, so your place in the
+    list is never lost — the thing that makes editing six shelves in a row painful today.
+  </p>
+  <hr class="wp-header-end">
+
+  <div class="notice notice-info">
+    <p><strong>Why this one:</strong> it is built for the real task, which is rarely
+    "look at one shelf". It is "work through the Latest shelves". The left pane is the
+    whole screen's worth of context in 340px, and the right pane has room to show the
+    slots a shelf actually fills.</p>
+  </div>
+
+  <div class="panes">
+
+    <div class="pane pane-list">
+      <div class="list-tools">
+        <label class="screen-reader-text" for="q">Search curated posts</label>
+        <input type="search" id="q" placeholder="Search name or slug">
+      </div>
+      <div class="list-scroll" id="list" role="listbox" aria-label="Curated post instances"></div>
+      <div class="list-foot" id="num"></div>
+    </div>
+
+    <div class="pane" id="detail"></div>
+
+  </div>
+
+</div>
+
+<script src="assets/data.js"></script>
+<script>
+(function () {
+  var sel = CURATED[0].s, confirming = null, deleted = {};
+  var $ = function (id) { return document.getElementById(id); };
+
+  function live() { return CURATED.filter(function (d) { return !deleted[d.s]; }); }
+
+  function visible() {
+    var term = $("q").value.trim().toLowerCase();
+    return live().filter(function (d) {
+      return !term || (d.n + " " + d.s).toLowerCase().indexOf(term) >= 0;
+    });
+  }
+
+  function renderList() {
+    var list = visible(), host = $("list"), html = "";
+    $("num").textContent = list.length + " of " + live().length + " instances";
+
+    if (!list.length) {
+      host.innerHTML = '<div class="empty-detail" style="padding:30px 16px;font-size:13px">' +
+        "Nothing matches that.</div>";
+      return;
+    }
+
+    GROUP_ORDER.forEach(function (g) {
+      var items = list.filter(function (d) { return d.g === g; });
+      if (!items.length) return;
+      html += '<div class="grp-label">' + CP.esc(g) + " · " + items.length + "</div>";
+      items.forEach(function (d) {
+        html += '<button type="button" class="li' + (sel === d.s ? " is-sel" : "") + '" ' +
+          'role="option" aria-selected="' + (sel === d.s) + '" data-sel="' + CP.esc(d.s) + '">' +
+          '<span class="dot ' + (d.state === "live" ? "dot-live" : "dot-check") + '" aria-hidden="true"></span>' +
+          '<span class="li-main">' +
+            '<span class="li-name">' + CP.esc(d.n) + "</span>" +
+            '<span class="li-sub">' + d.stories + " · " + CP.esc(d.types) + "</span>" +
+          "</span></button>";
+      });
+    });
+    host.innerHTML = html;
+  }
+
+  function renderDetail() {
+    var d = live().filter(function (x) { return x.s === sel; })[0], host = $("detail");
+
+    if (!d) {
+      host.innerHTML = '<div class="empty-detail">Pick a shelf on the left to see its settings.</div>';
+      return;
+    }
+
+    var slots = "";
+    for (var i = 1; i <= d.stories; i++) {
+      slots += '<div class="slot">Slot ' + i + "</div>";
+    }
+
+    var html =
+      '<div class="detail-head">' +
+        "<div><h2>" + CP.esc(d.n) + "</h2>" +
+        '<div class="slug mono">' + CP.esc(d.s) + "</div></div>" +
+        CP.pill(d) +
+        '<div class="acts">' +
+          '<button type="button" class="button">Rename</button>' +
+          '<button type="button" class="button">Duplicate</button>' +
+          '<span class="menu-wrap"><button type="button" class="kebab" aria-label="More actions" data-m="' + CP.esc(d.s) + '">⋯</button></span>' +
+        "</div>" +
+      "</div>";
+
+    if (confirming === d.s) {
+      html += '<div class="confirm">' +
+        "<span>Delete <strong>" + CP.esc(d.n) + "</strong>? It is live on the site and fills " +
+        d.stories + (d.stories === 1 ? " slot." : " slots.") + "</span>" +
+        '<button type="button" class="button button-link-delete button-small" data-yes="' + CP.esc(d.s) + '">Delete permanently</button>' +
+        '<button type="button" class="button button-small" data-no="1">Keep it</button>' +
+        "</div>";
+    }
+
+    html += '<div class="detail-body">' +
+      '<div class="sect"><h3>What this shelf shows</h3><div class="slots">' + slots + "</div></div>" +
+      '<div class="sect"><h3>Rules</h3><dl class="kv">' +
+        "<dt>Post types</dt><dd>" + CP.esc(d.types) + "</dd>" +
+        "<dt>Include terms</dt><dd>" + CP.terms(d.inc, "inc") + "</dd>" +
+        "<dt>Exclude terms</dt><dd>" + (d.exc.length ? CP.terms(d.exc, "exc") : '<span class="unset">none set</span>') + "</dd>" +
+        "<dt>Search post types</dt><dd>" + (d.search === d.types ? '<span class="unset">same as post types</span>' : CP.esc(d.search)) + "</dd>" +
+      "</dl></div>" +
+      '<div class="sect"><h3>Rotation</h3><dl class="kv">' +
+        "<dt>Interval</dt><dd>" + (d.rot === "Off" ? '<span class="unset">off</span>' : CP.esc(d.rot)) + "</dd>" +
+        (d.rot === "Off" ? "" : "<dt>Starts</dt><dd>" + CP.esc(d.rotStart) + "</dd>") +
+        "<dt>Upcoming</dt><dd>" + (d.upcoming ? d.upcoming + " scheduled" : '<span class="unset">none scheduled</span>') + "</dd>" +
+      "</dl></div>" +
+    "</div>";
+
+    host.innerHTML = html;
+  }
+
+  function render() { renderList(); renderDetail(); }
+
+  document.addEventListener("click", function (ev) {
+    var s = ev.target.closest("[data-sel]"), m = ev.target.closest("[data-m]"),
+        d = ev.target.closest("[data-d]"), y = ev.target.closest("[data-yes]"),
+        n = ev.target.closest("[data-no]");
+
+    if (y) { deleted[y.dataset.yes] = true; confirming = null; sel = (live()[0] || {}).s; return render(); }
+    if (n) { confirming = null; return render(); }
+    if (d) { confirming = d.dataset.d; closeMenu(); return render(); }
+    if (s) { sel = s.dataset.sel; confirming = null; closeMenu(); return render(); }
+    if (m) { return toggleMenu(m); }
+    closeMenu();
+  });
+
+  function closeMenu() {
+    var el = document.querySelector(".menu");
+    if (el) el.remove();
+  }
+
+  function toggleMenu(btn) {
+    var existing = btn.parentElement.querySelector(".menu");
+    closeMenu();
+    if (existing) return;
+    var wrap = document.createElement("div");
+    wrap.className = "menu";
+    wrap.innerHTML =
+      '<button type="button">Rename</button>' +
+      '<button type="button">Duplicate</button>' +
+      '<div class="menu-sep"></div>' +
+      '<button type="button" class="is-delete" data-d="' + CP.esc(btn.dataset.m) + '">Delete…</button>';
+    btn.parentElement.appendChild(wrap);
+  }
+
+  $("q").addEventListener("input", function () {
+    var list = visible();
+    if (list.length && !list.some(function (d) { return d.s === sel; })) sel = list[0].s;
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
