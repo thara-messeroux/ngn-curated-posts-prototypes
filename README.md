@@ -38,10 +38,15 @@ Direction C adds one thing the others do not: each slot shows the **headline cur
 live on the site** for that shelf, so the screen answers "what is on this shelf right
 now?" without opening the site in another tab.
 
-Coverage is stated on screen rather than implied: **17 shelves are fully captured, 9
-partly, 21 not at all**. An uncaptured slot is drawn differently from a filled one and
-labelled *not captured*, with a note saying the shelf is not empty on the site — so a
-gap in the prototype's data is never mistaken for a gap on the real site.
+All **47 shelves are filled**, 182 headlines in total. Two sources, named on screen:
+
+- **Read off the live page** — scraped from the rail where that shelf renders
+- **Matched by this shelf's rules** — fetched from the site's own WordPress REST API
+  using the shelf's post type and include terms, newest first
+
+Where a slot could not be filled it is drawn differently and labelled *not captured*,
+never shown as empty — a gap in the prototype's data is never mistaken for a gap on the
+real site.
 
 ## Scope
 
@@ -57,7 +62,7 @@ index.html                  Stakeholder hub — problems, three directions, comp
 03-two-pane.html            Direction C
 assets/wp-admin.css         WordPress 6.x admin design tokens and components
 assets/data.js              The 47 instances, read from the live screen, plus shared helpers
-assets/headlines.js         118 live headlines across 26 shelves, scraped 21 Oct 2026
+assets/headlines.js         182 headlines, all 47 shelves filled, captured 21 Oct 2026
 ```
 
 ## Data

@@ -280,12 +280,14 @@
     }
 
     var heads = (window.HEADLINES && HEADLINES[d.s]) || [];
-    var slots = "";
+    var slots = "", onRail = 0, byRule = 0;
     for (var i = 0; i < d.stories; i++) {
-      if (heads[i]) {
+      var h = heads[i];
+      if (h) {
+        if (h.src === "rail") onRail++; else byRule++;
         slots += '<div class="slot slot-filled">' +
           '<span class="slot-n">Slot ' + (i + 1) + "</span>" +
-          '<span class="slot-h">' + CP.esc(heads[i]) + "</span></div>";
+          '<span class="slot-h">' + CP.esc(h.t) + "</span></div>";
       } else {
         slots += '<div class="slot slot-uncaptured">' +
           '<span class="slot-n">Slot ' + (i + 1) + "</span>" +
@@ -295,13 +297,18 @@
     var when = CP.esc(window.HEADLINES_CAPTURED || "today");
     var asof;
     if (!heads.length) {
-      asof = '<p class="asof asof-warn">Prototype data: no headlines were captured for this ' +
-        "shelf. The shelf is not empty on the site.</p>";
+      asof = '<p class="asof asof-warn">Prototype data: no headlines for this shelf. ' +
+        "It is not empty on the site.</p>";
     } else if (heads.length < d.stories) {
       asof = '<p class="asof asof-warn">Prototype data: ' + heads.length + " of " + d.stories +
-        " slots captured on " + when + ". The rest were not read, not empty.</p>";
+        " slots filled. The rest were not read, not empty.</p>";
+    } else if (byRule && onRail) {
+      asof = '<p class="asof">' + onRail + " read off the live page, " + byRule +
+        " matched by this shelf's rules \u00b7 " + when + "</p>";
+    } else if (byRule) {
+      asof = '<p class="asof">Matched by this shelf\u2019s own rules \u00b7 ' + when + "</p>";
     } else {
-      asof = '<p class="asof">Live on the site as of ' + when + "</p>";
+      asof = '<p class="asof">Read off the live page \u00b7 ' + when + "</p>";
     }
 
     var html =
