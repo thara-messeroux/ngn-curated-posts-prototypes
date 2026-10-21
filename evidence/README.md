@@ -101,3 +101,60 @@ screenshot of the resting state, and the card already had a two-step
 Delete → Confirm/Cancel. What was true: Delete sat at the same size beside Rename
 and Duplicate, and the confirm said only "Delete?" without naming the instance.
 The confirm now names it and says it is live.
+
+## Test and accessibility pass — 21 October 2026
+
+### JavaScript unit tests
+
+```
+npx jest --config private/jest.config.js
+Test Suites: 2 failed, 142 passed, 144 total
+Tests:       1275 passed, 1275 total
+```
+
+**Every test passed.** The two failing suites never ran: they fail to resolve
+`@observablehq/plot`, a dependency that is not installed in this environment
+(`npm ls @observablehq/plot` returns empty). Both sit in `client-mu-plugins/ngn-app`
+Chart components. This commit touches four files, all under
+`themes/ngn-theme/src/scripts/admin/curated-posts-admin/`, and none in `ngn-app`,
+so the failure predates the change and cannot be caused by it.
+
+### Responsive — 1280 and 1440
+
+| | 1280 | 1440 |
+| --- | --- | --- |
+| Page height | 1,659px | 1,659px |
+| Horizontal page scroll | none | none |
+| Toolbar wraps to a second row | no | no |
+| JavaScript errors | none | none |
+
+Screenshots: `after-05-1280px.png`, `after-05-1280-fullpage.png`, `after-05-1440px.png`.
+
+### Keyboard only
+
+| Check | Result |
+| --- | --- |
+| Search field reachable and typeable | yes — typing `featured` filtered to 1 card |
+| Result count announced | yes — `aria-live="polite"`, reads "1 of 14" |
+| Tab order reaches a card header | yes — search → group → collapse all → first card |
+| Focus is visible on the card header | yes — `outline: solid 2px` |
+| Enter expands the card | yes — 0 settings blocks → 1 |
+| State exposed to assistive tech | yes — `aria-expanded` flips to `true` |
+
+Screenshot: `after-06-keyboard-focus.png`.
+
+### PHP tests — not run
+
+`bash bin/test-php.sh` stops at `env: php: No such file or directory`; PHP is not on
+the host PATH. Inside the `ngn-php-1` container PHPUnit is present but
+`themes/ngn-theme/vendor/autoload.php` is missing, so Composer dependencies are not
+installed in this environment.
+
+**This commit changes no PHP** — four files, all `.tsx` and `.scss`. Running the suite
+needs `composer install`, which would add a large untracked `vendor/` tree to the
+working copy, so it is left for whoever picks this up to decide.
+
+### End-to-end visual regression — not run
+
+`npm run test:e2e` drives the public site's holotype pages. It does not cover wp-admin
+and would not exercise this change.
