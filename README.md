@@ -48,11 +48,19 @@ Where a slot could not be filled it is drawn differently and labelled *not captu
 never shown as empty — a gap in the prototype's data is never mistaken for a gap on the
 real site.
 
+## Every file in this repo, and what it does
+
+[FILES.md](FILES.md) lists all of them with links.
+
 ## Before / after evidence
 
-Screenshots of the real screen, captured with Playwright against the local VIP dev
-environment, with the measured numbers and how to reproduce them:
-[evidence/README.md](evidence/README.md).
+[evidence/README.md](evidence/README.md) — screenshots of every state, the measured
+numbers (**page height 5,372px to 1,659px, a 69% reduction**), how it was verified three
+ways, the four defects found in self-audit, and how to reproduce it.
+
+The change itself is
+[PR #898](https://github.com/News-at-Northeastern/environment/pull/898) on
+`News-at-Northeastern/environment`.
 
 ## Where the screen lives in the codebase
 
