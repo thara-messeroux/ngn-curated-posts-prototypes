@@ -37,6 +37,7 @@
 }
 
 .grp-label {
+  z-index: 2;
   font-size: 11px;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -265,7 +266,7 @@
       '<div class="sect"><h3>What this shelf shows</h3><div class="slots">' + slots + "</div></div>" +
       '<div class="sect"><h3>Rules</h3><dl class="kv">' +
         "<dt>Post types</dt><dd>" + CP.esc(d.types) + "</dd>" +
-        "<dt>Include terms</dt><dd>" + CP.terms(d.inc, "inc") + "</dd>" +
+        "<dt>Include terms</dt><dd>" + (d.inc.length ? CP.terms(d.inc, "inc") : '<span class="unset">none set</span>') + "</dd>" +
         "<dt>Exclude terms</dt><dd>" + (d.exc.length ? CP.terms(d.exc, "exc") : '<span class="unset">none set</span>') + "</dd>" +
         "<dt>Search post types</dt><dd>" + (d.search === d.types ? '<span class="unset">same as post types</span>' : CP.esc(d.search)) + "</dd>" +
       "</dl></div>" +
