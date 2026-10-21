@@ -67,7 +67,7 @@ footer.pf a { color: var(--wp-blue); }
     <div class="stat"><b>5,372px <span class="delta">&rarr; 1,659px</span></b><span>page height, a 69% reduction</span></div>
     <div class="stat"><b>6.0 <span class="delta">&rarr; 1.8</span></b><span>screens of scroll at 900px</span></div>
     <div class="stat"><b>0 <span class="delta">&rarr; 1</span></b><span>search field</span></div>
-    <div class="stat"><b>8 <span class="delta">&rarr; 6</span></b><span>rows on an open card</span></div>
+    <div class="stat"><b>6</b><span>the same rows on every card, empty ones marked</span></div>
   </div>
 
   <h2 class="sec">Side by side</h2>
@@ -106,8 +106,25 @@ footer.pf a { color: var(--wp-blue); }
       <img src="after-04-expanded-1440.png" alt="One card expanded, showing only the settings that hold a value">
       <figcaption>
         <b>One card opened</b>
-        Clicking a header opens that card only, and settings with no value are not
-        printed. Six rows where the old card showed eight.
+        The same six rows on every card, in the same order, so two cards read against
+        each other. A setting holding no value keeps its row and says so in italic.
+      </figcaption>
+    </figure>
+  </div>
+
+  <h2 class="sec">Rows line up card to card</h2>
+  <p class="note">
+    Every instance renders the same six rows in the same order. An empty setting keeps its
+    row and says so in italic, because "none set" and "not checked" are different things.
+    Rotation start and upcoming rotations appear only when rotation is on.
+  </p>
+  <div class="ba wide">
+    <figure>
+      <img src="after-07-aligned-rows.png" alt="Two expanded cards whose settings rows align with each other">
+      <figcaption>
+        <b>Aligned</b>
+        Collapsed the page is unchanged at 1,659px. With all fourteen cards open it is
+        5,022px, still shorter than the 5,372px the screen occupied at rest before.
       </figcaption>
     </figure>
   </div>

@@ -19,7 +19,7 @@ Chromium, 1440 x 900, deviceScaleFactor 2, on 21 October 2026.
 | Search controls | 0 | **1** | — |
 | Group filter | none | **1** | — |
 | Visible count | none | "14 of 14" | — |
-| Settings rows on an open card | 8 | **6** | unset ones dropped |
+| Settings rows on an open card | 8, all always shown | **6**, same six every time | rotation rows only when it rotates |
 | Rename / Duplicate / Delete | 14 each | 14 each | unchanged |
 
 The local database holds **14 instances**; production holds **47**. The problems are the
@@ -57,10 +57,19 @@ Typing `featured` leaves one card. The count reads "1 of 14" and is announced th
 
 ### One card opened
 
-Clicking a card header opens that card only. Settings with no value are not printed, so
-this card shows six rows where the old one showed eight.
+Clicking a card header opens that card only.
 
-![One card expanded, showing only the settings that hold a value](after-04-expanded-1440.png)
+Every card shows **the same six rows in the same order** — stories, post types, include
+terms, exclude terms, search post types, rotation — so two cards read against each other.
+A setting holding no value keeps its row and says so in italic rather than disappearing,
+because "none set" and "not checked" are different things. Rotation start and upcoming
+rotations appear only when rotation is on, since they are meaningless otherwise.
+
+![One card expanded, showing the same six rows with rotation marked off in italic](after-04-expanded-1440.png)
+
+Two cards side by side, labels aligned:
+
+![Two expanded cards whose settings rows line up with each other](after-07-aligned-rows.png)
 
 ### Keyboard
 
@@ -149,6 +158,25 @@ a trigger by default. It is recorded here because it was checked, not assumed.
 After the fixes: 1,275 tests still pass, axe still reports no violations in all three
 states, a 140-character label no longer grows the page past 1440px, and there are no
 console errors through the whole sequence.
+
+### A fifth change, from reviewing it on the real screen
+
+Dropping unset rows entirely left two cards impossible to read against each other: one
+showed Exclude terms and the next did not, so the labels stopped lining up and "no
+exclusions set" looked the same as "I have not checked". The variation between instances
+was always there; hiding the empty rows is what made it visible.
+
+Every card now renders the same six rows and marks the empty ones. This costs height only
+on an expanded card:
+
+| | Height |
+| --- | ---: |
+| Collapsed, the default | **1,659px**, unchanged |
+| One card open | 1,917px |
+| All fourteen open | 5,022px |
+| The old screen, always open | 5,372px |
+
+Even with every card expanded it is shorter than the screen used to be at rest.
 
 ---
 
