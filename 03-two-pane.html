@@ -145,20 +145,30 @@
   line-height: 1.4;
   color: var(--wp-text);
 }
-.slot-empty {
+.slot-uncaptured {
   background: var(--wp-surface-alt);
   border: 1px dashed var(--wp-border);
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  border-top: 2px dashed var(--wp-border);
+  border-radius: 0 0 3px 3px;
+}
+.slot-uncaptured .slot-h {
+  font-size: 12px;
   color: var(--wp-text-muted);
-  font-size: 11px;
+  font-style: italic;
 }
 .asof {
   font-size: 11px;
   color: var(--wp-text-muted);
   font-style: italic;
   margin: 0 0 8px;
+}
+.asof-warn {
+  font-style: normal;
+  color: var(--wp-amber);
+  background: var(--wp-amber-bg);
+  border-left: 3px solid var(--wp-amber);
+  padding: 5px 9px;
+  display: inline-block;
 }
 
 .empty-detail {
@@ -277,12 +287,22 @@
           '<span class="slot-n">Slot ' + (i + 1) + "</span>" +
           '<span class="slot-h">' + CP.esc(heads[i]) + "</span></div>";
       } else {
-        slots += '<div class="slot slot-empty">Slot ' + (i + 1) + "<br>empty</div>";
+        slots += '<div class="slot slot-uncaptured">' +
+          '<span class="slot-n">Slot ' + (i + 1) + "</span>" +
+          '<span class="slot-h">not captured</span></div>';
       }
     }
-    var asof = heads.length
-      ? '<p class="asof">Showing live on the site as of ' + CP.esc(window.HEADLINES_CAPTURED || "today") + "</p>"
-      : '<p class="asof">No live headlines captured for this shelf</p>';
+    var when = CP.esc(window.HEADLINES_CAPTURED || "today");
+    var asof;
+    if (!heads.length) {
+      asof = '<p class="asof asof-warn">Prototype data: no headlines were captured for this ' +
+        "shelf. The shelf is not empty on the site.</p>";
+    } else if (heads.length < d.stories) {
+      asof = '<p class="asof asof-warn">Prototype data: ' + heads.length + " of " + d.stories +
+        " slots captured on " + when + ". The rest were not read, not empty.</p>";
+    } else {
+      asof = '<p class="asof">Live on the site as of ' + when + "</p>";
+    }
 
     var html =
       '<div class="detail-head">' +

@@ -36,8 +36,12 @@ All three are driven by the same data and share the same fixes:
 
 Direction C adds one thing the others do not: each slot shows the **headline currently
 live on the site** for that shelf, so the screen answers "what is on this shelf right
-now?" without opening the site in another tab. 29 of the 47 shelves have captured
-headlines; the rest show an empty slot and say so.
+now?" without opening the site in another tab.
+
+Coverage is stated on screen rather than implied: **17 shelves are fully captured, 9
+partly, 21 not at all**. An uncaptured slot is drawn differently from a filled one and
+labelled *not captured*, with a note saying the shelf is not empty on the site — so a
+gap in the prototype's data is never mistaken for a gap on the real site.
 
 ## Scope
 
@@ -53,7 +57,7 @@ index.html                  Stakeholder hub — problems, three directions, comp
 03-two-pane.html            Direction C
 assets/wp-admin.css         WordPress 6.x admin design tokens and components
 assets/data.js              The 47 instances, read from the live screen, plus shared helpers
-assets/headlines.js         132 live headlines across 29 shelves, scraped 21 Oct 2026
+assets/headlines.js         118 live headlines across 26 shelves, scraped 21 Oct 2026
 ```
 
 ## Data

@@ -2,7 +2,8 @@
    Live headlines, per shelf
    Scraped from news.northeastern.edu on 21 October 2026. A snapshot, not a
    feed — in the real plugin these come from the same query the shelf runs.
-   Shelves absent here were not captured; the UI shows an empty slot for them.
+   A shelf may be captured only partly; the UI says so rather than showing
+   an uncaptured slot as an empty one.
    ========================================================================== */
 
 window.HEADLINES = {
@@ -24,8 +25,11 @@ window.HEADLINES = {
     "Grads take their workout supplements from Marino to Miami"
   ],
   "editors-picks": [
-    "What does a healthy brain look like? Turns out it\u2019s all relative.",
-    "Northeastern students bond by riding unicycles around campus"
+    "A visit to a cow farm led her to the top of Scottish politics",
+    "The NU grad solving the \u201cFrizzle problem\u201d for women teaching science",
+    "France\u2019s student protests have spiraled into a broader crisis",
+    "AI is helping pathologists find harmful lesions the eye can\u2019t see",
+    "Is an arms race in space on the near horizon?"
   ],
   "featured-stories": [
     "Love sloths? A little space can make a big difference",
@@ -98,22 +102,6 @@ window.HEADLINES = {
     "Can you guess your favorite World Cup team based on signature passes?",
     "Spain versus Argentina: Team brilliance versus individual star power"
   ],
-  "latest-university-news": [
-    "Photos: New campus sculpture, collaborations and a paw-fect birthday",
-    "Old games built on imagination and dice rolls thrive at Northeastern",
-    "Silicon Valley mentorship club helps students ace technical interviews",
-    "How do you clean a giant ship? This student builds robots for the job",
-    "Young Northeastern philanthropists on why they support giving back",
-    "The Oakland students networking on top of a 3,849-foot mountain peak"
-  ],
-  "latest-world-national-news": [
-    "The midterms could bring a blue wave. Here are the forces at play",
-    "Coming to America \u2013 pandas and international politics at a zoo",
-    "In 2026, is the United Nations a power broker or a \u2018toothless tiger\u2019?",
-    "\u201cSuper\u201d El Ni\u00f1o is expected to be the strongest on record",
-    "Many causes for floods, many causes for their devastation",
-    "Why hostage-taking thrives in an era of great power competition"
-  ],
   "most-read-arts-entertainment": [
     "Why is it so difficult to sing the US national anthem?",
     "\u2018Franchise fatigue\u2019 can\u2019t seem to stick to Spider-Man. Why?",
@@ -154,13 +142,6 @@ window.HEADLINES = {
     "Northeastern helped launch this World Cup star for Haiti",
     "Former Husky Cam Schlittler stars as Yankees rout hometown Red Sox",
     "Shelton-Zverev final puts parental coaching dynamics in the spotlight"
-  ],
-  "most-read-university-news": [
-    "Harvard Business School takes up Northeastern\u2019s case for higher education",
-    "Here\u2019s when and where Northeastern\u2019s class of 2027 will graduate",
-    "How Northeastern prepared these graduates for entrepreneurial success",
-    "The bioinformatics escape room where guests become genetic detectives",
-    "In Serbia, she helped build an AI to give activists worldwide a leg up"
   ],
   "most-read-world-national-news": [
     "The midterms could bring a blue wave. Here are the forces at play",
