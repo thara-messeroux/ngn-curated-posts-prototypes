@@ -132,9 +132,10 @@ colour contrast.
 
 ### Not run
 
-**PHP tests.** `bin/test-php.sh` stops at `env: php: No such file or directory`, and
-inside the `ngn-php-1` container `themes/ngn-theme/vendor/autoload.php` is absent, so
-Composer dependencies are not installed here. The branch adds one read-only PHP route; `php -l` is clean and it was exercised live.
+**PHP tests, locally.** `bin/test-php.sh` stops at `env: php: No such file or directory`,
+and inside the `ngn-php-1` container `themes/ngn-theme/vendor/autoload.php` is absent, so
+Composer dependencies are not installed here. **CI covers this gap: PHPUnit passes on the
+branch**, along with Build, Required checks and Test location policy. The branch adds one read-only PHP route; `php -l` is clean and it was exercised live.
 
 **End-to-end visual regression.** `npm run test:e2e` drives the public site's holotype
 pages. It does not cover wp-admin.
