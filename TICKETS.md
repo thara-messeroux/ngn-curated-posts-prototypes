@@ -175,3 +175,34 @@ away." Tested against a fixed clock, including half past midnight (correctly say
 AM), the last minute of the day, and an interval that crosses midnight.
 
 Shared by Settings A, B, D and E.
+
+---
+
+## Audit against the real dialog: AND groups were missing (`08`)
+
+Checked every design against `curated-posts/types.ts` rather than against the
+screenshots. Three differences, one of them serious.
+
+**1. AND groups — a real gap, now fixed.** `TaxonomyFilterState.andGroups` is
+`number[][]`: further include lists for the same taxonomy that the query ANDs together,
+so "has a founder tag AND a tech tag" is two groups and never one merged list. No design
+of mine had it. E now renders each group as its own token joined by "and also in", and
+the editor can add or drop a group.
+
+**2. Terms are tri-state, not two lists.** `TermFilterMode` is `'include' | 'exclude' |
+'none'` per term — the radios and "No filter" in the dialog. The sentence's two buckets
+produce the same query, so this is a presentation difference, not a gap.
+
+**3. Taxonomies nested under each post type is duplication.** The dialog repeats the
+taxonomy list under every checked post type, but `QuerySettingsUIState.taxonomyFilters`
+is `Record<string, TaxonomyFilterState>` keyed by taxonomy alone. Setting Tag under News
+Post is the same state as Tag under Parents and Family Article. The flat list in these
+designs is the honest shape; the nesting invites editors to believe they are setting two
+different things.
+
+Found in passing, worth a ticket: `removeTermFilter()` in `settings-panel.tsx` rebuilds
+the filter as `{ taxonomy, terms }` and drops `andGroups`, so removing any one term
+silently wipes that taxonomy's AND groups.
+
+Also fixed here: the taxonomy `<select>` had no label (axe `select-name`).
+Verified at 1280 and 1440 — axe clean, no overflow, no console errors.

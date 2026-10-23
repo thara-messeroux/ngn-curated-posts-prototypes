@@ -140,11 +140,11 @@
     return Object.assign({ windowDays: 14, searchTypes: null }, o);
   }
   var SHELVES = [
-    { n: 'Featured Stories', k: 'featured-stories', s: base({ count: 4, sort: 'Newest', types: ['newspost'], include: [], exclude: [], rotation: { on: true, interval: '1h', start: '00:00' } }) },
-    { n: 'Featured research', k: 'featured-research', s: base({ count: 3, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Category', term: 'Research' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'Most read health', k: 'most-read-health', s: base({ count: 5, sort: 'Most viewed', types: ['newspost'], include: [{ tax: 'Category', term: 'Health' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'Latest world news', k: 'latest-world-news', s: base({ count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [{ tax: 'Category', term: 'World & National News' }], exclude: [{ tax: 'Newsfeed Display', term: 'Hide Post' }], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'World Cup 2026 Stories', k: 'world-cup-2026-stories', s: base({ count: 50, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Tag', term: 'world cup 2026' }], exclude: [{ tax: 'Kicker Category', term: 'Preview' }, { tax: 'Kicker Category', term: 'First Stage' }, { tax: 'Kicker Category', term: 'Round of 32' }], rotation: { on: false, interval: '1h', start: '00:00' } }) }
+    { n: 'Featured Stories', k: 'featured-stories', s: base({ count: 4, sort: 'Newest', types: ['newspost'], include: [[]], exclude: [], rotation: { on: true, interval: '1h', start: '00:00' } }) },
+    { n: 'Featured research', k: 'featured-research', s: base({ count: 3, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'Category', term: 'Research' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'Most read health', k: 'most-read-health', s: base({ count: 5, sort: 'Most viewed', types: ['newspost'], include: [[{ tax: 'Category', term: 'Health' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'Latest world news', k: 'latest-world-news', s: base({ count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [[{ tax: 'Category', term: 'World & National News' }]], exclude: [{ tax: 'Newsfeed Display', term: 'Hide Post' }], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'World Cup 2026 Stories', k: 'world-cup-2026-stories', s: base({ count: 50, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'Tag', term: 'world cup 2026' }], [{ tax: 'Audience', term: 'Students' }]], exclude: [{ tax: 'Kicker Category', term: 'Preview' }, { tax: 'Kicker Category', term: 'First Stage' }, { tax: 'Kicker Category', term: 'Round of 32' }], rotation: { on: false, interval: '1h', start: '00:00' } }) }
   ];
 
   var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, open = null, taxKey = TAXONOMIES[0].k, q = '';
@@ -153,6 +153,21 @@
   var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
   var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
   var changed = function () { return JSON.stringify(draft) !== JSON.stringify(SHELVES[sel].s); };
+
+  /* Each AND group is its own token. Terms inside a group are "or"; the
+     groups themselves are "and also", which is how the query treats them. */
+  function groupTokens() {
+    var filled = draft.include.filter(function (g) { return g.length; });
+    if (!filled.length) return tok('include:0', 'anything', true);
+    return draft.include.map(function (g, i) {
+      return g.length ? tok('include:' + i, g.map(function (f) { return f.term; }).join(' or ')) : null;
+    }).filter(Boolean).join(' <span class="plain">and also in</span> ');
+  }
+
+  /* The stand-in count wants one flat list of include terms. */
+  function flat(d) {
+    return { types: d.types, include: d.include.reduce(function (a, g) { return a.concat(g); }, []), exclude: d.exclude };
+  }
 
   function tok(key, text, empty) {
     return '<button class="tok' + (open === key ? ' is-open' : '') + (empty ? ' is-empty' : '') +
@@ -167,8 +182,7 @@
 
     if (views) str += ' <span class="plain">from the last</span> ' + tok('window', draft.windowDays + ' days');
 
-    str += ' <span class="plain">in</span> ' +
-      tok('include', draft.include.length ? draft.include.map(function (f) { return f.term; }).join(' and ') : 'anything', !draft.include.length) +
+    str += ' <span class="plain">in</span> ' + groupTokens() +
       ', <span class="plain">but not</span> ' +
       tok('exclude', draft.exclude.length ? draft.exclude.map(function (f) { return f.term; }).join(' or ') : 'nothing', !draft.exclude.length) +
       '<span class="plain">.</span>';
@@ -206,12 +220,21 @@
         '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-same" ' + (custom ? '' : 'checked') + '> <span class="t-label">Same as the types above</span></label>' +
         (custom ? '<div class="chips">' + POST_TYPES.filter(function (t) { return t.common; }).map(function (t) {
           return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
-        }).join('') + '</div>' : '') + done + '</div>';
+        }).join('') + '</div>' : '') +
+        (gi < 0 ? '' : '<div class="chips" style="border-top:1px solid var(--ngn-outline-variant);padding-top:var(--ngn-space-2)">' +
+          '<button class="btn btn-outlined btn-sm" type="button" data-addgroup>+ Add AND group</button>' +
+          (draft.include.length > 1 ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove this group</button>' : '') +
+          '</div>') +
+        done + '</div>';
     }
-    if (open === 'include' || open === 'exclude') {
-      var bucket = open === 'include' ? draft.include : draft.exclude;
+    if (open.indexOf('include') === 0 || open === 'exclude') {
+      var gi = open === 'exclude' ? -1 : +open.split(':')[1];
+      var bucket = gi < 0 ? draft.exclude : draft.include[gi];
       var tax = TAXONOMIES.filter(function (x) { return x.k === taxKey; })[0];
-      return '<div class="editor">' + head(open === 'include' ? 'Only stories tagged' : 'Never stories tagged') +
+      var heading = gi < 0 ? 'Never stories tagged'
+        : gi === 0 ? 'Only stories tagged' : 'And also tagged (group ' + (gi + 1) + ')';
+      return '<div class="editor">' + head(heading) +
+        '<label class="screen-reader-text" for="e-tax">Taxonomy</label>' +
         '<select id="e-tax">' + TAXONOMIES.map(function (x) { return '<option value="' + x.k + '"' + (x.k === taxKey ? ' selected' : '') + '>' + esc(x.n) + '</option>'; }).join('') + '</select>' +
         '<div class="chips">' + tax.terms.map(function (t) {
           var on = bucket.some(function (f) { return f.term === t; });
@@ -220,7 +243,12 @@
         (bucket.length ? '<div class="chips picked">' + bucket.map(function (f) {
           return '<span class="chip' + (open === 'exclude' ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
             ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" aria-label="Remove ' + esc(f.term) + '">&times;</button></span>';
-        }).join('') + '</div>' : '') + done + '</div>';
+        }).join('') + '</div>' : '') +
+        (gi < 0 ? '' : '<div class="chips" style="border-top:1px solid var(--ngn-outline-variant);padding-top:var(--ngn-space-2)">' +
+          '<button class="btn btn-outlined btn-sm" type="button" data-addgroup>+ Add AND group</button>' +
+          (draft.include.length > 1 ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove this group</button>' : '') +
+          '</div>') +
+        done + '</div>';
     }
     if (open === 'rotation') return '<div class="editor">' + head('Rotation') +
       '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' + (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
@@ -247,7 +275,7 @@
     $('slug').textContent = SHELVES[sel].k;
     $('rule').innerHTML = rule();
     $('editor').innerHTML = editor();
-    $('count').textContent = draft.types.length ? matchCount(draft).toLocaleString() : '0';
+    $('count').textContent = draft.types.length ? matchCount(flat(draft)).toLocaleString() : '0';
     $('savebar').hidden = !changed();
     $('dirty').textContent = 'Unsaved changes to ' + SHELVES[sel].n;
     renderList();
@@ -270,18 +298,21 @@
     if (ty) { var i = draft.types.indexOf(ty.dataset.type); if (i > -1) draft.types.splice(i, 1); else draft.types.push(ty.dataset.type); return render(); }
     if (so) { draft.sort = so.dataset.sort; return render(); }
     if (st) { var j = draft.searchTypes.indexOf(st.dataset.stype); if (j > -1) draft.searchTypes.splice(j, 1); else draft.searchTypes.push(st.dataset.stype); return render(); }
-    if (rm) { var b = open === 'include' ? draft.include : draft.exclude; var k = b.findIndex(function (f) { return f.term === rm.dataset.rm; }); if (k > -1) b.splice(k, 1); return render(); }
+    if (rm) { var b = open === 'exclude' ? draft.exclude : draft.include[+open.split(':')[1]]; var k = b.findIndex(function (f) { return f.term === rm.dataset.rm; }); if (k > -1) b.splice(k, 1); return render(); }
     if (tm) {
-      var bucket = open === 'include' ? draft.include : draft.exclude;
+      var bucket = open === 'exclude' ? draft.exclude : draft.include[+open.split(':')[1]];
       var at = bucket.findIndex(function (f) { return f.term === tm.dataset.term; });
       if (at > -1) bucket.splice(at, 1); else bucket.push({ tax: tm.dataset.tax, term: tm.dataset.term });
       return render();
     }
+    if (ev.target.closest('[data-addgroup]')) { draft.include.push([]); open = 'include:' + (draft.include.length - 1); return render(); }
+    var dg = ev.target.closest('[data-dropgroup]');
+    if (dg) { draft.include.splice(+dg.dataset.dropgroup, 1); open = 'include:0'; return render(); }
     if (t) { open = open === t.dataset.tok ? null : t.dataset.tok; return render(); }
   });
 
   document.addEventListener('input', function (ev) {
-    if (ev.target.id === 'e-count') { draft.count = Math.max(1, +ev.target.value || 1); $('rule').innerHTML = rule(); $('count').textContent = matchCount(draft).toLocaleString(); $('savebar').hidden = !changed(); renderList(); }
+    if (ev.target.id === 'e-count') { draft.count = Math.max(1, +ev.target.value || 1); $('rule').innerHTML = rule(); $('count').textContent = matchCount(flat(draft)).toLocaleString(); $('savebar').hidden = !changed(); renderList(); }
     if (ev.target.id === 'e-window') { draft.windowDays = Math.max(1, +ev.target.value || 1); $('rule').innerHTML = rule(); $('savebar').hidden = !changed(); }
     if (ev.target.id === 'e-int') { draft.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); $('e-next').textContent = nextRunLine(draft.rotation.start, draft.rotation.interval); $('savebar').hidden = !changed(); }
     if (ev.target.id === 'e-start') { draft.rotation.start = ev.target.value; $('e-next').textContent = nextRunLine(draft.rotation.start, draft.rotation.interval); $('savebar').hidden = !changed(); }
