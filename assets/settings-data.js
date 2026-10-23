@@ -13866,9 +13866,6 @@ window.TAXONOMIES = {
  }
 };
 
-/* A taxonomy small enough to show as chips. Anything larger needs search. */
-window.CHIP_LIMIT = 20;
-
 /* The taxonomies offered by a set of post types, in the order the dialog
    lists them, with no duplicates. */
 window.taxonomiesFor = function (typeKeys) {

@@ -356,3 +356,27 @@ Others:
 
 No em dashes anywhere on the page, checked against the rendered text rather than the
 source. Axe clean at 1280 and 1440, no overflow, no console errors.
+
+---
+
+## Search on every taxonomy, not just the big ones (`08`)
+
+`CHIP_LIMIT = 20` was a number I invented, and it made the editor change shape depending
+on which taxonomy was picked: Tag had a search box, Campus did not. Learn the interaction
+on one, lose it on the next.
+
+It also does not survive growth. Campus has 15 terms today and would have silently grown
+a search box at 21. Kicker Category has 13 and gains one per World Cup stage. Every
+taxonomy crosses an arbitrary line eventually, and the UI changing under the editor when
+it does is worse than a search box on a four-item list.
+
+Search is now unconditional. One count line covers all three states:
+
+- whole list: "15 terms."
+- filtered: "1 of 15 match "bos"."
+- nothing found: "Nothing matches "zzz"."
+- capped: "Showing 40 of 12,710. Type to find the rest."
+
+Verified across Campus (15), Newsfeed Display (4), Spotlight (1), Department (97) and
+Tag (12,710): the box is present on all of them, filtering works on the small ones,
+focus and caret survive typing, axe clean at 1280 and 1440, no overflow, no errors.

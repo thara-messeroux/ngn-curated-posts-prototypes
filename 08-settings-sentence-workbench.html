@@ -183,12 +183,22 @@
     return { types: d.types, include: d.include.reduce(function (a, g) { return a.concat(g); }, []), exclude: d.exclude };
   }
 
+  /* Says what you are looking at: the whole list, a filtered one, or the first
+     slice of a taxonomy too big to send at once. */
+  function countLine(tax, showing, q) {
+    if (q) return showing === 0
+      ? 'Nothing matches \u201c' + esc(q) + '\u201d.'
+      : showing + ' of ' + tax.count.toLocaleString() + ' match \u201c' + esc(q) + '\u201d.';
+    if (showing >= tax.count) return tax.count.toLocaleString() + (tax.count === 1 ? ' term.' : ' terms.');
+    return 'Showing ' + showing + ' of ' + tax.count.toLocaleString() + '. Type to find the rest.';
+  }
+
   /* One AND group: its own heading with a live count, its own search and term
-     list, and its own Remove. Matches how the live dialog boxes them. */
+     list, and its own Remove. Every taxonomy gets the search box, whatever its
+     size today, so the editor keeps one shape and keeps working as they grow. */
   function groupBox(tax, bucket, gi, isEx) {
-    var big = tax.count > CHIP_LIMIT;
     var q = termQ[gi] || '';
-    var shown = big ? searchTerms(taxKey, q, 40) : tax.terms;
+    var shown = searchTerms(taxKey, q, 40);
     var title = isEx ? 'Has any of' : (gi === 0 ? 'Has any of' : 'AND has any of');
 
     return '<div class="group">' +
@@ -197,8 +207,9 @@
         (!isEx && draft.include.length > 1
           ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove</button>' : '') +
       '</div>' +
-      (big ? '<div class="field"><label for="e-q-' + gi + '">Search ' + esc(tax.n) + '</label>' +
-        '<input type="search" id="e-q-' + gi + '" data-q="' + gi + '" value="' + esc(q) + '" placeholder="Type a name or a slug\u2026"></div>' : '') +
+      '<div class="field"><label for="e-q-' + gi + '">Search ' + esc(tax.n) + '</label>' +
+        '<input type="search" id="e-q-' + gi + '" data-q="' + gi + '" value="' + esc(q) +
+        '" placeholder="Type a name or a slug\u2026"></div>' +
       '<div class="chips">' + shown.map(function (t) {
         var on = bucket.some(function (f) { return f.term === t.n; });
         return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t.n) +
@@ -206,8 +217,7 @@
           (t.p ? '<span class="muted">' + esc(t.p) + ' \u203a </span>' : '') + esc(t.n) +
           ' <span class="muted">' + t.c.toLocaleString() + '</span></button>';
       }).join('') + '</div>' +
-      (big ? '<p class="t-body-sm muted" style="margin:0">Showing ' + shown.length + ' of ' + tax.count.toLocaleString() +
-        (q ? ' matching \u201c' + esc(q) + '\u201d.' : '. Type to find the rest.') + '</p>' : '') +
+      '<p class="t-body-sm muted" style="margin:0">' + countLine(tax, shown.length, q) + '</p>' +
       (bucket.length ? '<div class="chips picked">' + bucket.map(function (f) {
         return '<span class="chip' + (isEx ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
           ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" data-gi="' + gi +
