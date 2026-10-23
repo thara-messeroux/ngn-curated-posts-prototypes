@@ -72,6 +72,8 @@ footer.page-foot a { color: var(--wp-blue); }
   <a href="03-two-pane.html">C — Two-pane workbench</a>
   <span class="sep">|</span>
   <a href="evidence/">Before and after</a>
+  <span class="sep">|</span>
+  <a href="#settings">Settings designs</a>
 </div>
 
 <div class="wrap">
@@ -169,6 +171,76 @@ footer.page-foot a { color: var(--wp-blue); }
       <div class="card-foot"><a class="button button-primary" href="03-two-pane.html">Open direction C</a></div>
     </div>
 
+  </div>
+
+
+  <h2 class="sec" id="settings">Query settings — three designs</h2>
+  <p class="note">
+    The dialog behind the icon on every shelf is where the real work happens, and it is
+    the part the redesign had not touched. It asks for sixteen post types, nine taxonomies
+    under each, and hundreds of terms under those, in one 510px column with no summary and
+    no feedback. These three rebuild it on NGN's own v2 design system, whose tokens are
+    Material 3 named and whose primary colour is Northeastern red.
+  </p>
+
+  <div class="cards">
+
+    <div class="card">
+      <div class="card-top">
+        <span class="tag">Settings A</span>
+        <h3>Guided panel</h3>
+        <p class="what">Four numbered steps in one column. A plain-English sentence and a
+        live match count sit above them, so you always know what the rules mean and how
+        many stories they catch.</p>
+        <dl>
+          <dt>Best for</dt><dd>Anyone, first time or hundredth</dd>
+          <dt>Strength</dt><dd>Shows the consequence of every change</dd>
+          <dt>Trade-off</dt><dd>Still a dialog over the list</dd>
+        </dl>
+      </div>
+      <div class="card-foot"><a class="button button-primary" href="04-settings-guided.html">Open A</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <span class="tag">Settings B</span>
+        <h3>Inline, no dialog</h3>
+        <p class="what">The settings are the right pane. Each line opens in place, and a
+        save bar appears only once something has changed.</p>
+        <dl>
+          <dt>Best for</dt><dd>Small edits to a shelf you can see</dd>
+          <dt>Strength</dt><dd>Nothing ever covers the list</dd>
+          <dt>Trade-off</dt><dd>Less room, so filters stay compact</dd>
+        </dl>
+      </div>
+      <div class="card-foot"><a class="button button-primary" href="05-settings-inline.html">Open B</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <span class="tag">Settings C</span>
+        <h3>The rule as a sentence</h3>
+        <p class="what">The whole query is one sentence. Every underlined part is a
+        button that opens a small editor beneath it.</p>
+        <dl>
+          <dt>Best for</dt><dd>Reading a shelf at a glance</dd>
+          <dt>Strength</dt><dd>Impossible to misread what it does</dd>
+          <dt>Trade-off</dt><dd>Strains on long or multi-group rules</dd>
+        </dl>
+      </div>
+      <div class="card-foot"><a class="button button-primary" href="06-settings-sentence.html">Open C</a></div>
+    </div>
+
+  </div>
+
+  <div class="rec">
+    <b>Recommendation: A, with C's sentence as its header.</b>
+    <p>A is the one that scales to sixteen post types and hundreds of terms without ever
+    showing them all at once, and the only one that answers "what will this actually
+    return" while you are still deciding. C's sentence is too good to leave behind, so it
+    sits at the top of A rather than being a design of its own. B is the right answer for
+    a quick change and worth keeping for that, but filters need more room than a 300px
+    pane gives them.</p>
   </div>
 
   <h2 class="sec">Side by side</h2>

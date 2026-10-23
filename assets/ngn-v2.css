@@ -1,0 +1,246 @@
+/* ==========================================================================
+   NGN design system v2 — the tokens these settings designs are built on.
+
+   Values read from the theme, not invented:
+   themes/ngn-theme/src/styles/design-system-v2/shared/themes/ref-light.scss
+   and sys-light.scss. Material 3 naming, Northeastern's palette.
+   ========================================================================== */
+
+:root {
+  /* Primary — Northeastern red. In this system red is the BRAND, not a warning. */
+  --ngn-primary:            #c8102e;
+  --ngn-on-primary:         #ffffff;
+  --ngn-primary-container:  #ffdad8;
+  --ngn-on-primary-container: #c8102f;
+
+  /* Secondary */
+  --ngn-secondary:            #000000;
+  --ngn-secondary-container:  #e5e5e5;
+  --ngn-on-secondary-container: #1a1a1a;
+
+  /* Tertiary — the blue. The only non-red accent the system has. */
+  --ngn-tertiary:            #0c3354;
+  --ngn-tertiary-container:  #b8d4e8;
+
+  /* Error. Note how close this sits to primary: #bf0229 against #c8102e.
+     That is exactly why red cannot be spent on routine things here. */
+  --ngn-error:             #bf0229;
+  --ngn-error-container:   #ffdad8;
+  --ngn-on-error-container:#92001c;
+
+  /* Surfaces */
+  --ngn-surface:                  #ffffff;
+  --ngn-surface-container-lowest: #fcfcfc;
+  --ngn-surface-container-low:    #f7f7f7;
+  --ngn-surface-container:        #f3f3f3;
+  --ngn-surface-container-high:   #eeeeee;
+
+  /* Ink */
+  --ngn-on-surface:          #281717;
+  --ngn-on-surface-variant:  #49454f;
+
+  /* Lines */
+  --ngn-outline:          #79747e;
+  --ngn-outline-variant:  #cac4d0;
+
+  /* Shape, from shape-ref: 4px fine grid, 8px baseline */
+  --ngn-radius-xs: 4px;
+  --ngn-radius-sm: 8px;
+  --ngn-radius-md: 12px;
+  --ngn-radius-lg: 16px;
+  --ngn-radius-full: 999px;
+
+  /* Spacing, 8px baseline with a 4px fine step */
+  --ngn-space-1: 4px;
+  --ngn-space-2: 8px;
+  --ngn-space-3: 12px;
+  --ngn-space-4: 16px;
+  --ngn-space-5: 24px;
+  --ngn-space-6: 32px;
+
+  --ngn-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --ngn-mono: ui-monospace, Menlo, Consolas, monospace;
+
+  /* State layers, from colors-ref */
+  --ngn-state-hover: 0.08;
+  --ngn-state-focus: 0.10;
+  --ngn-state-pressed: 0.16;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ngn-surface-container-low);
+  color: var(--ngn-on-surface);
+  font-family: var(--ngn-font);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Type scale, the label / body steps the theme actually uses -------------- */
+
+.t-headline { font-size: 20px; line-height: 1.3; font-weight: 500; letter-spacing: -0.01em; }
+.t-title    { font-size: 16px; line-height: 1.4; font-weight: 500; }
+.t-body     { font-size: 14px; line-height: 1.55; }
+.t-body-sm  { font-size: 13px; line-height: 1.5; }
+.t-label    { font-size: 13px; line-height: 1.4; font-weight: 500; }
+.t-label-sm { font-size: 12px; line-height: 1.4; }
+.t-overline {
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ngn-on-surface-variant);
+}
+.muted { color: var(--ngn-on-surface-variant); }
+
+/* Buttons — M3 filled / outlined / text ---------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ngn-space-2);
+  min-height: 40px;
+  padding: 0 var(--ngn-space-5);
+  border-radius: var(--ngn-radius-full);
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  color: var(--ngn-primary);
+  transition: background-color .12s ease, border-color .12s ease;
+}
+.btn-filled { background: var(--ngn-primary); color: var(--ngn-on-primary); }
+.btn-filled:hover { background: #ad0e28; }
+.btn-outlined { border-color: var(--ngn-outline); color: var(--ngn-on-surface); }
+.btn-outlined:hover { background: var(--ngn-surface-container); }
+.btn-text:hover { background: var(--ngn-surface-container); }
+.btn-sm { min-height: 32px; padding: 0 var(--ngn-space-4); font-size: 13px; }
+
+.btn:focus-visible,
+.chip:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--ngn-tertiary);
+  outline-offset: 2px;
+}
+
+/* Fields ------------------------------------------------------------------ */
+
+.field { display: flex; flex-direction: column; gap: var(--ngn-space-1); }
+.field > label { font-size: 13px; font-weight: 500; }
+.field .hint { font-size: 12px; color: var(--ngn-on-surface-variant); }
+
+input[type="text"],
+input[type="number"],
+input[type="search"],
+input[type="time"],
+select {
+  font: inherit;
+  font-size: 14px;
+  min-height: 40px;
+  padding: 0 var(--ngn-space-3);
+  border: 1px solid var(--ngn-outline);
+  border-radius: var(--ngn-radius-xs);
+  background: var(--ngn-surface);
+  color: var(--ngn-on-surface);
+}
+input:focus, select:focus {
+  border-color: var(--ngn-tertiary);
+  box-shadow: 0 0 0 1px var(--ngn-tertiary);
+  outline: 2px solid transparent;
+}
+
+/* Chips — M3 filter and input chips --------------------------------------- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ngn-space-2);
+  min-height: 32px;
+  padding: 0 var(--ngn-space-3);
+  border-radius: var(--ngn-radius-sm);
+  border: 1px solid var(--ngn-outline-variant);
+  background: var(--ngn-surface);
+  color: var(--ngn-on-surface);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip:hover { background: var(--ngn-surface-container); }
+.chip.is-on {
+  background: var(--ngn-secondary-container);
+  border-color: var(--ngn-secondary-container);
+  color: var(--ngn-on-secondary-container);
+  font-weight: 500;
+}
+.chip.is-on::before { content: "\2713"; font-size: 12px; }
+
+/* An excluded term is configuration, not a problem. Dashed and neutral,
+   never the error colour, which here is almost the brand colour. */
+.chip-exclude { border-style: dashed; color: var(--ngn-on-surface-variant); }
+.chip-exclude::before { content: "\2212"; font-size: 13px; color: var(--ngn-on-surface-variant); }
+
+.chip-remove {
+  border: 0; background: none; cursor: pointer; padding: 0;
+  color: var(--ngn-on-surface-variant); font-size: 15px; line-height: 1;
+}
+.chip-remove:hover { color: var(--ngn-on-surface); }
+
+/* Surfaces ---------------------------------------------------------------- */
+
+.card {
+  background: var(--ngn-surface);
+  border: 1px solid var(--ngn-outline-variant);
+  border-radius: var(--ngn-radius-md);
+}
+
+.sheet {
+  background: var(--ngn-surface);
+  border-radius: var(--ngn-radius-lg);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .16), 0 2px 6px rgba(0, 0, 0, .08);
+  overflow: hidden;
+}
+
+.scrim {
+  background: rgba(40, 23, 23, .45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--ngn-space-6) var(--ngn-space-4);
+  min-height: 760px;
+}
+
+/* Prototype chrome -------------------------------------------------------- */
+
+.proto-bar {
+  background: var(--ngn-on-surface);
+  color: var(--ngn-surface);
+  font-size: 13px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.proto-bar a { color: var(--ngn-tertiary-container); text-decoration: none; }
+.proto-bar a:hover { color: #fff; text-decoration: underline; }
+.proto-bar .sep { opacity: .4; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 24px 20px 64px; }
+
+.screen-reader-text {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

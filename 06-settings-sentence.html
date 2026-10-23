@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings C — The rule as a sentence · NUEAC-398</title>
+<link rel="stylesheet" href="assets/ngn-v2.css">
+<style>
+.sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; }
+.sheet-head {
+  padding: var(--ngn-space-4) var(--ngn-space-5);
+  border-bottom: 1px solid var(--ngn-outline-variant);
+  display: flex; align-items: flex-start;
+}
+.sheet-head .x { margin-left: auto; border: 0; background: none; cursor: pointer; font-size: 20px; color: var(--ngn-on-surface-variant); padding: 4px 8px; border-radius: var(--ngn-radius-full); }
+.sheet-head .x:hover { background: var(--ngn-surface-container); }
+
+.rule { padding: var(--ngn-space-6) var(--ngn-space-5); font-size: 22px; line-height: 1.9; }
+
+/* Every editable part of the rule is a real button that looks like text. */
+.tok {
+  border: 0; background: none; font: inherit; color: var(--ngn-on-surface);
+  cursor: pointer; padding: 2px 6px; border-radius: var(--ngn-radius-xs);
+  border-bottom: 2px solid var(--ngn-outline-variant);
+}
+.tok:hover { background: var(--ngn-surface-container); border-bottom-color: var(--ngn-on-surface-variant); }
+.tok.is-open { background: var(--ngn-secondary-container); border-bottom-color: var(--ngn-on-surface); }
+.tok.is-empty { color: var(--ngn-on-surface-variant); font-style: italic; }
+
+.rule .plain { color: var(--ngn-on-surface-variant); }
+
+.result {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
+  padding: var(--ngn-space-3) var(--ngn-space-4);
+  background: var(--ngn-surface-container-low);
+  border-radius: var(--ngn-radius-sm);
+  display: flex; align-items: center; gap: var(--ngn-space-3); flex-wrap: wrap;
+}
+.result b { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.editor {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
+  border: 1px solid var(--ngn-tertiary); border-radius: var(--ngn-radius-md);
+  padding: var(--ngn-space-4); display: flex; flex-direction: column; gap: var(--ngn-space-3);
+}
+.editor h3 { margin: 0; font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
+.chips { display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; }
+.editor .done { align-self: flex-start; }
+
+.sheet-foot {
+  border-top: 1px solid var(--ngn-outline-variant);
+  padding: var(--ngn-space-3) var(--ngn-space-5);
+  display: flex; gap: var(--ngn-space-3); align-items: center;
+}
+.sheet-foot .spacer { flex: 1 1 auto; }
+
+.advanced { border-top: 1px solid var(--ngn-outline-variant); padding: var(--ngn-space-4) var(--ngn-space-5); }
+.advanced summary { cursor: pointer; font-size: 13px; color: var(--ngn-tertiary); }
+.advanced .body { padding-top: var(--ngn-space-3); font-size: 13px; color: var(--ngn-on-surface-variant); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · Settings C — The rule as a sentence</strong>
+  <span class="sep">|</span>
+  <a href="index.html">All designs</a>
+  <span class="sep">|</span>
+  <a href="04-settings-guided.html">A — Guided panel</a>
+  <a href="05-settings-inline.html">B — Inline</a>
+</div>
+
+<div class="scrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="t">
+
+    <div class="sheet-head">
+      <div>
+        <h2 class="t-headline" id="t" style="margin:0">What this shelf shows</h2>
+        <p class="t-body-sm muted" style="margin:2px 0 0">Featured Stories</p>
+      </div>
+      <button class="x" type="button" aria-label="Close">&times;</button>
+    </div>
+
+    <p class="rule" id="rule"></p>
+
+    <div class="result">
+      <b id="count">—</b><span class="t-body-sm muted">stories match this rule right now</span>
+    </div>
+
+    <div id="editor"></div>
+
+    <details class="advanced">
+      <summary>Advanced: match several groups of terms</summary>
+      <div class="body">
+        Most shelves need one set of terms. When a shelf needs two sets matched together,
+        the sentence gets a second clause rather than a nested builder, so the rule still
+        reads as one thing.
+      </div>
+    </details>
+
+    <div class="sheet-foot">
+      <span class="t-body-sm muted" id="dirty">No changes yet</span>
+      <span class="spacer"></span>
+      <button class="btn btn-text" type="button">Cancel</button>
+      <button class="btn btn-filled" type="button">Save</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="assets/settings-data.js"></script>
+<script>
+(function () {
+  var s = JSON.parse(JSON.stringify(SHELF));
+  var open = null, touched = false;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
+  var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
+
+  function tok(key, text, empty) {
+    return '<button class="tok' + (open === key ? ' is-open' : '') + (empty ? ' is-empty' : '') +
+      '" type="button" data-tok="' + key + '">' + esc(text) + '</button>';
+  }
+
+  function rule() {
+    return '<span class="plain">Show the</span> ' + tok('count', s.count) + ' ' +
+      tok('sort', s.sort === 'Newest' ? 'newest' : 'most viewed') + ' ' +
+      tok('types', s.types.length ? s.types.map(typeName).join(' or ') : 'pick a type', !s.types.length) +
+      ' <span class="plain">in</span> ' +
+      tok('include', s.include.length ? s.include.map(function (f) { return f.term; }).join(' and ') : 'anything', !s.include.length) +
+      ', <span class="plain">but not</span> ' +
+      tok('exclude', s.exclude.length ? s.exclude.map(function (f) { return f.term; }).join(' or ') : 'nothing', !s.exclude.length) +
+      '<span class="plain">.</span><br>' +
+      '<span class="plain">Rotate them</span> ' +
+      tok('rotation', s.rotation.on ? 'every ' + s.rotation.interval : 'never', !s.rotation.on) +
+      '<span class="plain">.</span>';
+  }
+
+  function editor() {
+    if (!open) return '';
+    var head = function (t) { return '<h3>' + t + '</h3>'; };
+    var done = '<button class="btn btn-outlined btn-sm done" type="button" data-close>Done</button>';
+
+    if (open === 'count') {
+      return '<div class="editor">' + head('How many stories') +
+        '<input type="number" id="e-count" min="1" max="50" value="' + s.count + '" style="width:120px">' + done + '</div>';
+    }
+    if (open === 'sort') {
+      return '<div class="editor">' + head('Order') +
+        '<div class="chips">' +
+          '<button class="chip' + (s.sort === 'Newest' ? ' is-on' : '') + '" type="button" data-sort="Newest">Newest</button>' +
+          '<button class="chip' + (s.sort === 'Most viewed' ? ' is-on' : '') + '" type="button" data-sort="Most viewed">Most viewed</button>' +
+        '</div>' + done + '</div>';
+    }
+    if (open === 'types') {
+      return '<div class="editor">' + head('Where the stories come from') +
+        '<div class="chips">' + POST_TYPES.map(function (t) {
+          return '<button class="chip' + (s.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '">' + esc(t.n) + '</button>';
+        }).join('') + '</div>' + done + '</div>';
+    }
+    if (open === 'include' || open === 'exclude') {
+      var bucket = open === 'include' ? s.include : s.exclude;
+      return '<div class="editor">' + head(open === 'include' ? 'Only stories tagged' : 'Never stories tagged') +
+        '<select id="e-tax">' + TAXONOMIES.map(function (x) { return '<option value="' + x.k + '">' + esc(x.n) + '</option>'; }).join('') + '</select>' +
+        '<div class="chips" id="e-terms"></div>' +
+        (bucket.length ? '<div class="chips" style="padding-top:8px;border-top:1px solid var(--ngn-outline-variant)">' +
+          bucket.map(function (f) {
+            return '<span class="chip' + (open === 'exclude' ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
+              ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" aria-label="Remove">&times;</button></span>';
+          }).join('') + '</div>' : '') +
+        done + '</div>';
+    }
+    if (open === 'rotation') {
+      return '<div class="editor">' + head('Rotation') +
+        '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' +
+        (s.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
+        '<div style="display:flex;gap:12px"><div class="field" style="width:110px"><label for="e-int">Every</label>' +
+        '<input type="text" id="e-int" value="' + esc(s.rotation.interval) + '"></div>' +
+        '<div class="field" style="width:140px"><label for="e-start">Starting at</label>' +
+        '<input type="time" id="e-start" value="' + esc(s.rotation.start) + '"></div></div>' + done + '</div>';
+    }
+    return '';
+  }
+
+  function drawTerms() {
+    var host = $('e-terms');
+    if (!host) return;
+    var tax = TAXONOMIES.filter(function (x) { return x.k === $('e-tax').value; })[0];
+    host.innerHTML = tax.terms.map(function (t) {
+      return '<button class="chip" type="button" data-term="' + esc(t) + '" data-tax="' + esc(tax.n) + '">' + esc(t) + '</button>';
+    }).join('');
+  }
+
+  function render() {
+    $('rule').innerHTML = rule();
+    $('editor').innerHTML = editor();
+    $('count').textContent = s.types.length ? matchCount(s).toLocaleString() : '0';
+    $('dirty').textContent = touched ? 'Unsaved changes' : 'No changes yet';
+    drawTerms();
+    var tax = $('e-tax'); if (tax) tax.addEventListener('change', drawTerms);
+  }
+
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest('[data-tok]'), c = ev.target.closest('[data-close]'),
+        ty = ev.target.closest('[data-type]'), so = ev.target.closest('[data-sort]'),
+        tm = ev.target.closest('[data-term]'), rm = ev.target.closest('[data-rm]');
+
+    if (c) { open = null; return render(); }
+    if (ty) { touched = true; var i = s.types.indexOf(ty.dataset.type); if (i > -1) s.types.splice(i, 1); else s.types.push(ty.dataset.type); return render(); }
+    if (so) { touched = true; s.sort = so.dataset.sort; return render(); }
+    if (tm) {
+      touched = true;
+      var bucket = open === 'include' ? s.include : s.exclude;
+      if (!bucket.some(function (f) { return f.term === tm.dataset.term; })) bucket.push({ tax: tm.dataset.tax, term: tm.dataset.term });
+      return render();
+    }
+    if (rm) {
+      touched = true;
+      var b2 = open === 'include' ? s.include : s.exclude;
+      var j = b2.findIndex(function (f) { return f.term === rm.dataset.rm; });
+      if (j > -1) b2.splice(j, 1);
+      return render();
+    }
+    if (t) { open = open === t.dataset.tok ? null : t.dataset.tok; return render(); }
+  });
+
+  document.addEventListener('input', function (ev) {
+    if (ev.target.id === 'e-count') { touched = true; s.count = +ev.target.value || 1; $('rule').innerHTML = rule(); $('count').textContent = matchCount(s).toLocaleString(); }
+    if (ev.target.id === 'e-int') { touched = true; s.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); }
+  });
+  document.addEventListener('change', function (ev) {
+    if (ev.target.id === 'e-rot') { touched = true; s.rotation.on = ev.target.checked; render(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
