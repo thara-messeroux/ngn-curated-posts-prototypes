@@ -294,3 +294,31 @@ used an em dash.
 Now: "It's 2:14 PM. Next run 3:00 PM, in 46 min." The current time stays, because that is
 what stopped the midnight start from reading as a mistake, and the five upcoming times
 below carry the schedule. Retested against a fixed clock across midnight.
+
+---
+
+## AND groups rebuilt as boxes (`08`)
+
+"+ Add AND group" appeared to do nothing. It did create the group, but the only feedback
+was the editor heading changing to "And also tagged (group 2)" over an identical term
+list, and an empty group has no token in the sentence, so pressing Done made it vanish.
+Created but invisible is worse than not created.
+
+Rebuilt the way the live dialog boxes them, which is also clearer. One editor now shows
+every group stacked as its own bordered box, each with:
+
+- a heading that counts its own selection: "Has any of (1 selected)", then "AND has any
+  of (1 selected)" for each group after the first
+- its own search box and term list, searched independently
+- its own Remove, shown only when more than one group exists
+- its own selected chips
+
+The taxonomy select sits above all of them, because `andGroups` belongs to a taxonomy -
+group 2 of Tag is still Tag.
+
+Exclude gets a single box and no Add button, since `termsExclude` is one NOT IN list with
+no groups.
+
+Verified at 1280 and 1440: two boxes after Add, counts track per box, the two searches do
+not interfere, focus and caret survive typing, Remove drops the right group, axe clean,
+no overflow, no console errors.
