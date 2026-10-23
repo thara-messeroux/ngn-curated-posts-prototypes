@@ -399,3 +399,47 @@ The select sizes to its widest option, not the selected one, so the box does not
 when you change taxonomy.
 
 Verified at 1280 and 1440: axe clean, no overflow, no errors.
+
+---
+
+## "the same types" was invented, and the fallback was wrong too
+
+`searchPostTypes` is a plain `string[]`. There is no "same as the auto types" anywhere in
+the model, and `post-selector.tsx` spells out what empty means:
+
+```
+settings.postTypes = searchTypes.length > 0
+  ? searchTypes
+  : ( defaultPostTypes ?? curatedPostsConfig.postTypes.map( pt => pt.value ) );
+```
+
+Empty falls back to **every** post type, not to the auto types. So the sentence was wrong
+twice: it described a link that does not exist, and implied the wrong default. Chrome saw
+the same thing from the other side, reporting Page and News Post ticked under manual
+search while only News Post was ticked under auto.
+
+Now: "search Post or News Post" when types are chosen, "search every type" when none are,
+and the editor is a plain chip list with a line saying what empty means. The "Same as the
+types above" checkbox is gone.
+
+### Audit against QuerySettings, field by field
+
+| Field | Where it lives in the sentence |
+| --- | --- |
+| `count` | "Show the **4**" |
+| `sort` | "**newest** / **most viewed**" |
+| `sortWindowDays` | "from the last **14 days**", only under most viewed |
+| `postTypes` | "**News Post**" |
+| `searchPostTypes` | "search **every type**" |
+| `termsInclude` | "in **anything**", one token per AND group |
+| `termsExclude` | "skipping **nothing**" |
+| `rotationEnabled` | "**They never rotate**" |
+| `rotationInterval` | "Rotate them **every 1h**" |
+| `rotationStartTime` | inside the rotation editor |
+
+All ten reachable, verified by clicking each one. Rotation is correctly hidden under a
+most-viewed sort and `sortWindowDays` appears in its place, matching
+`localSort !== 'views'` in the panel.
+
+Still outstanding and unchanged: `rotationInterval` is text here and minutes in the
+model, and the repo has a `duration-input` component for it.
