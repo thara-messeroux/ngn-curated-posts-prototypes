@@ -112,7 +112,9 @@
 <script>
 (function () {
   var s = JSON.parse(JSON.stringify(SHELF));
-  var open = null, touched = false;
+  s.windowDays = 14;
+  s.searchTypes = null;   // null means "same as the types above"
+  var open = null, touched = false, taxKey = TAXONOMIES[0].k;
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
   var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
@@ -123,17 +125,37 @@
   }
 
   function rule() {
-    return '<span class="plain">Show the</span> ' + tok('count', s.count) + ' ' +
-      tok('sort', s.sort === 'Newest' ? 'newest' : 'most viewed') + ' ' +
-      tok('types', s.types.length ? s.types.map(typeName).join(' or ') : 'pick a type', !s.types.length) +
-      ' <span class="plain">in</span> ' +
+    var views = s.sort === 'Most viewed';
+
+    var main = '<span class="plain">Show the</span> ' + tok('count', s.count) + ' ' +
+      tok('sort', views ? 'most viewed' : 'newest') + ' ' +
+      tok('types', s.types.length ? s.types.map(typeName).join(' or ') : 'pick a type', !s.types.length);
+
+    // A most-viewed sort only counts recent posts, so the window belongs in
+    // the sentence rather than hidden in a field somewhere.
+    if (views) main += ' <span class="plain">from the last</span> ' + tok('window', s.windowDays + ' days');
+
+    main += ' <span class="plain">in</span> ' +
       tok('include', s.include.length ? s.include.map(function (f) { return f.term; }).join(' and ') : 'anything', !s.include.length) +
       ', <span class="plain">but not</span> ' +
       tok('exclude', s.exclude.length ? s.exclude.map(function (f) { return f.term; }).join(' or ') : 'nothing', !s.exclude.length) +
-      '<span class="plain">.</span><br>' +
-      '<span class="plain">Rotate them</span> ' +
-      tok('rotation', s.rotation.on ? 'every ' + s.rotation.interval : 'never', !s.rotation.on) +
       '<span class="plain">.</span>';
+
+    // Rotation and a most-viewed sort are mutually exclusive in the model,
+    // so the sentence says so rather than offering a control that is dropped.
+    var rot = views
+      ? '<br><span class="plain">A most-viewed order changes on its own, so there is no rotation.</span>'
+      : '<br><span class="plain">Rotate them</span> ' +
+        tok('rotation', s.rotation.on ? 'every ' + s.rotation.interval : 'never', !s.rotation.on) +
+        '<span class="plain">.</span>';
+
+    // Which types a hand-pinned search offers is a different question from
+    // what fills the shelf, so it gets its own short sentence.
+    var manual = '<br><span class="plain">When someone pins a story by hand, search</span> ' +
+      tok('searchTypes', s.searchTypes === null ? 'the same types' : (s.searchTypes.length ? s.searchTypes.map(typeName).join(' or ') : 'nothing'), s.searchTypes === null) +
+      '<span class="plain">.</span>';
+
+    return main + rot + manual;
   }
 
   function editor() {
@@ -161,7 +183,9 @@
     if (open === 'include' || open === 'exclude') {
       var bucket = open === 'include' ? s.include : s.exclude;
       return '<div class="editor">' + head(open === 'include' ? 'Only stories tagged' : 'Never stories tagged') +
-        '<select id="e-tax">' + TAXONOMIES.map(function (x) { return '<option value="' + x.k + '">' + esc(x.n) + '</option>'; }).join('') + '</select>' +
+        '<select id="e-tax">' + TAXONOMIES.map(function (x) {
+          return '<option value="' + x.k + '"' + (x.k === taxKey ? ' selected' : '') + '>' + esc(x.n) + '</option>';
+        }).join('') + '</select>' +
         '<div class="chips" id="e-terms"></div>' +
         (bucket.length ? '<div class="chips" style="padding-top:8px;border-top:1px solid var(--ngn-outline-variant)">' +
           bucket.map(function (f) {
@@ -169,6 +193,21 @@
               ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" aria-label="Remove">&times;</button></span>';
           }).join('') + '</div>' : '') +
         done + '</div>';
+    }
+    if (open === 'window') {
+      return '<div class="editor">' + head('How far back a most-viewed sort looks') +
+        '<div style="display:flex;gap:8px;align-items:center"><input type="number" id="e-window" min="1" value="' + s.windowDays + '" style="width:110px">' +
+        '<span class="t-body-sm muted">days</span></div>' +
+        '<p class="t-body-sm muted" style="margin:0">Only posts published inside this window are counted.</p>' + done + '</div>';
+    }
+    if (open === 'searchTypes') {
+      var custom = s.searchTypes !== null;
+      return '<div class="editor">' + head('Types the manual search offers') +
+        '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-same" ' +
+        (custom ? '' : 'checked') + '> <span class="t-label">Same as the types above</span></label>' +
+        (custom ? '<div class="chips">' + POST_TYPES.filter(function (t) { return t.common; }).map(function (t) {
+          return '<button class="chip' + (s.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
+        }).join('') + '</div>' : '') + done + '</div>';
     }
     if (open === 'rotation') {
       return '<div class="editor">' + head('Rotation') +
@@ -185,7 +224,8 @@
   function drawTerms() {
     var host = $('e-terms');
     if (!host) return;
-    var tax = TAXONOMIES.filter(function (x) { return x.k === $('e-tax').value; })[0];
+    taxKey = $('e-tax').value;
+    var tax = TAXONOMIES.filter(function (x) { return x.k === taxKey; })[0];
     host.innerHTML = tax.terms.map(function (t) {
       return '<button class="chip" type="button" data-term="' + esc(t) + '" data-tax="' + esc(tax.n) + '">' + esc(t) + '</button>';
     }).join('');
@@ -221,15 +261,24 @@
       if (j > -1) b2.splice(j, 1);
       return render();
     }
+    var st = ev.target.closest('[data-stype]');
+    if (st) {
+      touched = true;
+      var si = s.searchTypes.indexOf(st.dataset.stype);
+      if (si > -1) s.searchTypes.splice(si, 1); else s.searchTypes.push(st.dataset.stype);
+      return render();
+    }
     if (t) { open = open === t.dataset.tok ? null : t.dataset.tok; return render(); }
   });
 
   document.addEventListener('input', function (ev) {
     if (ev.target.id === 'e-count') { touched = true; s.count = +ev.target.value || 1; $('rule').innerHTML = rule(); $('count').textContent = matchCount(s).toLocaleString(); }
     if (ev.target.id === 'e-int') { touched = true; s.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); }
+    if (ev.target.id === 'e-window') { touched = true; s.windowDays = Math.max(1, +ev.target.value || 1); render(); }
   });
   document.addEventListener('change', function (ev) {
     if (ev.target.id === 'e-rot') { touched = true; s.rotation.on = ev.target.checked; render(); }
+    if (ev.target.id === 'e-same') { touched = true; s.searchTypes = ev.target.checked ? null : s.types.slice(); render(); }
   });
 
   render();

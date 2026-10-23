@@ -115,3 +115,26 @@ The time was right and the sentence was not. It rotates hourly from midnight, so
 
 It now says both things: "Runs every 1h from 12:00 AM. Next at 1:00 PM, in 23 min." The
 schedule and the next run are different facts and the line was only giving one of them.
+
+**Design C completed against the real model.** Preferred in review for reading well, so
+it was audited the same way D was.
+
+It was missing the same three things, now added:
+
+- `sortWindowDays` reads inside the sentence: "the 4 most viewed News Post **from the
+  last 30 days**". It only appears for a most-viewed sort.
+- Rotation and a most-viewed sort are mutually exclusive, so instead of offering a
+  control that gets dropped the sentence says "A most-viewed order changes on its own,
+  so there is no rotation."
+- `searchPostTypes` gets its own short sentence, since what a hand-pinned search offers
+  is a different question from what fills the shelf: "When someone pins a story by hand,
+  search the same types."
+
+A bug found while stress-testing it: choosing a term re-rendered the editor and snapped
+the taxonomy dropdown back to Category, so picking two kicker terms in a row was
+impossible. The open taxonomy is now remembered.
+
+**Where it still strains.** With four post types, three include terms and three exclude
+terms the sentence runs to 46 words over eight lines. It stays readable and the page does
+not overflow, but it is no longer a glance. Most shelves are far smaller than that, so
+this is a question of how often the worst case turns up rather than a fault.
