@@ -380,3 +380,22 @@ Search is now unconditional. One count line covers all three states:
 Verified across Campus (15), Newsfeed Display (4), Spotlight (1), Department (97) and
 Tag (12,710): the box is present on all of them, filtering works on the small ones,
 focus and caret survive typing, axe clean at 1280 and 1440, no overflow, no errors.
+
+---
+
+## Select chevron sat at the far right
+
+The taxonomy select had no custom styling, so it used the native chevron, which pins
+itself to the right edge. The select was also a flex child with no width set, so it
+stretched the full 694px of the editor and left the arrow a long way from "Campus (15)".
+
+Two changes in `assets/ngn-v2.css`, shared by every design:
+
+- `appearance: none` with an inline SVG chevron at `right 12px center`, so the arrow
+  position is ours rather than the browser's.
+- `width: auto` instead of filling its container. 187px rather than 694px.
+
+The select sizes to its widest option, not the selected one, so the box does not resize
+when you change taxonomy.
+
+Verified at 1280 and 1440: axe clean, no overflow, no errors.
