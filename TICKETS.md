@@ -53,3 +53,12 @@ drops silently into Other; add a family and someone edits code.
 
 The index is now one flat list sorted A to Z. No rule, nothing to maintain, and shelves
 that share a name prefix still sit together because sorting puts them there.
+
+**Live slots removed.** Xris: the page is for setting up curated posts now and then, not
+for watching what is live, so the slot boxes are not needed.
+
+Taken out. Worth recording that this removes the one thing Direction C had that A and B
+did not, which changes the comparison rather than just trimming the screen. With the
+slots gone the right pane holds the rules alone, and the case for two panes over a plain
+list table is narrower: it is now about finding a shelf and keeping your place while you
+edit, not about seeing what a shelf is publishing.
