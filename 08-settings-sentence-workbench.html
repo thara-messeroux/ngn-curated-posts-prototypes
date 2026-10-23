@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings E: the sentence, in the pane · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231624">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231635">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 280px; } }
@@ -142,7 +142,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610231624"></script>
+<script src="assets/settings-data.js?v=202610231635"></script>
 <script>
 (function () {
   function base(o) {
@@ -168,6 +168,11 @@
   }
 
   var stories = function (n) { return n + (n === 1 ? ' story' : ' stories'); };
+
+  /* The intervals editors actually pick. Anything else goes through Custom,
+     which the real duration-input accepts as "1h 24m" or "90". */
+  var INTERVALS = ['15m', '30m', '1h', '2h', '3h', '4h', '6h', '12h', '24h'];
+  var isCustom = function (v) { return INTERVALS.indexOf(v) < 0; };
 
   /* "a", "a or b", "a, b or c" - repeating "or" reads like a machine. */
   function listJoin(items, word) {
@@ -344,8 +349,19 @@
     }
     if (open === 'rotation') return '<div class="editor">' + head('Rotation') +
       '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' + (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
-      '<div style="display:flex;gap:12px"><div class="field" style="width:110px"><label for="e-int">Every</label><input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '"></div>' +
-      '<div class="field" style="width:150px"><label for="e-start">Starting at</label><input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"></div></div>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
+        '<div class="field"><label for="e-every">Every</label>' +
+          '<select id="e-every">' + INTERVALS.map(function (o) {
+            return '<option value="' + o + '"' + (o === draft.rotation.interval ? ' selected' : '') + '>' + o + '</option>';
+          }).join('') +
+          '<option value="custom"' + (isCustom(draft.rotation.interval) ? ' selected' : '') + '>Custom\u2026</option>' +
+          '</select></div>' +
+        (isCustom(draft.rotation.interval)
+          ? '<div class="field" style="width:130px"><label for="e-int">How long</label>' +
+            '<input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '" placeholder="1h 30m"></div>'
+          : '') +
+        '<div class="field" style="width:150px"><label for="e-start">Starting at</label><input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"></div>' +
+      '</div>' +
       '<div id="e-next">' + (draft.rotation.on ? upcoming(draft.rotation) : '') + '</div>' + done + '</div>';
     return '';
   }
@@ -439,6 +455,12 @@
 
   document.addEventListener('change', function (ev) {
     if (ev.target.id === 'e-rot') { draft.rotation.on = ev.target.checked; render(); }
+    if (ev.target.id === 'e-every') {
+      draft.rotation.interval = ev.target.value === 'custom' ? '' : ev.target.value;
+      render();
+      var box = $('e-int');
+      if (box) box.focus();
+    }
   });
 
   $('discard').addEventListener('click', function () { draft = clone(SHELVES[sel].s); delete dirty[sel]; open = null; render(); });

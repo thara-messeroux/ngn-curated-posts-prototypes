@@ -488,3 +488,22 @@ Before and after, worst case:
 
 Left alone deliberately: "and also in" between AND groups. It is wordier than "and", but
 it is carrying the one thing about this rule that is easy to get wrong.
+
+---
+
+## Rotation interval: presets plus Custom
+
+A plain text box asking for "1h" with no hint is a poor first encounter. A plain dropdown
+would have been worse, though: `duration-input.tsx` accepts "1h 24m", "33m" and a bare
+"90" on purpose, and a fixed list throws that away.
+
+So both. A dropdown of the intervals editors actually pick (15m, 30m, 1h, 2h, 3h, 4h, 6h,
+12h, 24h) with "Custom..." at the end, which reveals the text box and focuses it. Common
+cases become one click; the flexible format stays available.
+
+Also brought `intervalMinutes()` in line with the real `parseDuration()`, which it had
+drifted from: a bare number is minutes, so "90" is an hour and a half. It previously read
+as unparseable. Tested against eight inputs including "1h 24m", "90", "" and "banana".
+
+The failure hint said "Set an interval like 1h or 30m", which did not mention the plain
+number it now accepts. Now "Try 1h, 30m, 1h 30m, or a number of minutes."

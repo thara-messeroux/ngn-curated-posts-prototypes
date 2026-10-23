@@ -13933,14 +13933,19 @@ window.matchCount = function (s) {
    by the interval until you pass now.
    -------------------------------------------------------------------------- */
 
-/** "1h" / "90m" / "2h 30m" -> minutes. Returns 0 when it cannot be read. */
+/**
+ * "1h", "90m", "2h 30m" or a bare "90" -> minutes. Returns 0 when it cannot
+ * be read. Mirrors parseDuration() in duration-input.tsx, including the bare
+ * number being treated as minutes.
+ */
 window.intervalMinutes = function (text) {
-  var m = String(text).toLowerCase().match(/(\d+)\s*h|(\d+)\s*m/g);
-  if (!m) return 0;
-  return m.reduce(function (total, part) {
-    var n = parseInt(part, 10);
-    return total + (part.indexOf('h') > -1 ? n * 60 : n);
-  }, 0);
+  var t = String(text).trim().toLowerCase();
+  if (!t) return 0;
+  if (/^\d+$/.test(t)) return parseInt(t, 10);
+
+  var m = t.match(/^(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?$/);
+  if (!m || (!m[1] && !m[2])) return 0;
+  return parseInt(m[1] || '0', 10) * 60 + parseInt(m[2] || '0', 10);
 };
 
 /**
@@ -13975,7 +13980,7 @@ window.nextRotations = function (start, every, count, now) {
  */
 window.nextRunLine = function (start, every, now) {
   var times = nextRotations(start, every, 1, now);
-  if (!times.length) return 'Set an interval like 1h or 30m.';
+  if (!times.length) return 'Try 1h, 30m, 1h 30m, or a number of minutes.';
 
   now = now || new Date();
   var t = times[0];
