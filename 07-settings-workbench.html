@@ -174,6 +174,11 @@
                 <label for="sort-in">Sort by</label>
                 <select id="sort-in"><option>Newest</option><option>Most viewed</option></select>
               </div>
+              <div class="field" style="width:220px" id="window-field" hidden>
+                <label for="window-in">Published within the last</label>
+                <input type="number" id="window-in" min="1" value="14">
+                <span class="hint">days. Only applies to a most-viewed sort.</span>
+              </div>
             </div>
           </div>
         </div>
@@ -203,8 +208,20 @@
         <div class="step">
           <div class="step-n">4</div>
           <div class="step-main">
+            <h3>What the manual search offers</h3>
+            <p class="why">When an editor pins a story by hand, these are the types the search looks through. Usually the same as above.</p>
+            <label class="switch" style="margin-bottom:var(--ngn-space-2)">
+              <input type="checkbox" id="same-as"> <span class="t-label">Use something different from the types above</span>
+            </label>
+            <div class="chips" id="search-types" hidden></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-n">5</div>
+          <div class="step-main">
             <h3>Rotation</h3>
-            <p class="why">Optional. Rotating swaps which matching stories show, on a timer.</p>
+            <p class="why" id="rot-why">Optional. Rotating swaps which matching stories show, on a timer.</p>
             <div class="rot" id="rot">
               <label class="switch"><input type="checkbox" id="rot-on" checked> <span class="t-label">Rotate the stories automatically</span></label>
               <div class="row" style="margin-top:var(--ngn-space-3)" id="rot-fields">
@@ -234,11 +251,11 @@
 <script>
 (function () {
   var SHELVES = [
-    { n: 'Featured Stories', k: 'featured-stories', s: { count: 4, sort: 'Newest', types: ['newspost'], include: [], exclude: [], rotation: { on: true, interval: '1h', start: '00:00' } } },
-    { n: 'Featured research', k: 'featured-research', s: { count: 3, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Category', term: 'Research' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } } },
-    { n: 'Most read health', k: 'most-read-health', s: { count: 5, sort: 'Most viewed', types: ['newspost'], include: [{ tax: 'Category', term: 'Health' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } } },
-    { n: 'Latest world news', k: 'latest-world-news', s: { count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [{ tax: 'Category', term: 'World & National News' }], exclude: [{ tax: 'Newsfeed Display', term: 'Hide Post' }], rotation: { on: false, interval: '1h', start: '00:00' } } },
-    { n: 'Spotlight', k: 'spotlight', s: { count: 1, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Spotlight', term: 'Spotlight' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } } }
+    { n: 'Featured Stories', k: 'featured-stories', s: { count: 4, sort: 'Newest', types: ['newspost'], include: [], exclude: [], rotation: { on: true, interval: '1h', start: '00:00' }, windowDays: 14, searchTypes: null } },
+    { n: 'Featured research', k: 'featured-research', s: { count: 3, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Category', term: 'Research' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' }, windowDays: 14, searchTypes: null } },
+    { n: 'Most read health', k: 'most-read-health', s: { count: 5, sort: 'Most viewed', types: ['newspost'], include: [{ tax: 'Category', term: 'Health' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' }, windowDays: 14, searchTypes: null } },
+    { n: 'Latest world news', k: 'latest-world-news', s: { count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [{ tax: 'Category', term: 'World & National News' }], exclude: [{ tax: 'Newsfeed Display', term: 'Hide Post' }], rotation: { on: false, interval: '1h', start: '00:00' }, windowDays: 14, searchTypes: null } },
+    { n: 'Spotlight', k: 'spotlight', s: { count: 1, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Spotlight', term: 'Spotlight' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' }, windowDays: 14, searchTypes: null } }
   ];
 
   var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, showAll = false, q = '';
@@ -294,7 +311,8 @@
     var str = 'Show the <b>' + draft.count + '</b> ' + (draft.sort === 'Newest' ? 'newest' : 'most viewed') + ' <b>' + esc(types) + '</b>';
     if (draft.include.length) str += ' in <b>' + draft.include.map(function (f) { return esc(f.term); }).join(' and ') + '</b>';
     if (draft.exclude.length) str += ', not <b>' + draft.exclude.map(function (f) { return esc(f.term); }).join(' or ') + '</b>';
-    if (draft.rotation.on) str += ', rotating every <b>' + esc(draft.rotation.interval) + '</b>';
+    if (draft.sort === 'Most viewed') str += ' from the last <b>' + draft.windowDays + ' days</b>';
+    if (draft.rotation.on && draft.sort !== 'Most viewed') str += ', rotating every <b>' + esc(draft.rotation.interval) + '</b>';
     return str + '.';
   }
 
@@ -309,9 +327,27 @@
     $('rot-on').checked = draft.rotation.on;
     $('rot-int').value = draft.rotation.interval;
     $('rot-start').value = draft.rotation.start;
-    $('rot').classList.toggle('is-off', !draft.rotation.on);
-    $('rot-fields').style.display = draft.rotation.on ? '' : 'none';
-    $('next-run').textContent = draft.rotation.on ? nextRunLine(draft.rotation.start, draft.rotation.interval) : '';
+    // Rotation and a most-viewed sort are mutually exclusive in the real
+    // model: rotationEnabled is only ever saved when the sort is not views.
+    var viewsSort = draft.sort === 'Most viewed';
+    $('window-field').hidden = !viewsSort;
+    $('window-in').value = draft.windowDays;
+    $('rot-on').disabled = viewsSort;
+    $('rot-why').textContent = viewsSort
+      ? 'Not available with a most-viewed sort: that order already changes on its own.'
+      : 'Optional. Rotating swaps which matching stories show, on a timer.';
+
+    var custom = draft.searchTypes !== null;
+    $('same-as').checked = custom;
+    $('search-types').hidden = !custom;
+    $('search-types').innerHTML = custom ? POST_TYPES.filter(function (t) { return t.common; }).map(function (t) {
+      return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') +
+        '" type="button" data-searchtype="' + t.k + '">' + esc(t.n) + '</button>';
+    }).join('') : '';
+
+    $('rot').classList.toggle('is-off', !draft.rotation.on || viewsSort);
+    $('rot-fields').style.display = (draft.rotation.on && !viewsSort) ? '' : 'none';
+    $('next-run').textContent = (draft.rotation.on && !viewsSort) ? nextRunLine(draft.rotation.start, draft.rotation.interval) : '';
     $('savebar').hidden = !changed();
     $('dirty').textContent = 'Unsaved changes to ' + SHELVES[sel].n;
   }
@@ -340,6 +376,12 @@
       if (j > -1) bucket.splice(j, 1);
       return render();
     }
+    var stype = ev.target.closest('[data-searchtype]');
+    if (stype) {
+      var k = draft.searchTypes.indexOf(stype.dataset.searchtype);
+      if (k > -1) draft.searchTypes.splice(k, 1); else draft.searchTypes.push(stype.dataset.searchtype);
+      return render();
+    }
     if (ev.target.id === 'add-filter') return openPop();
     if (!ev.target.closest('.pop')) $('pop-host').innerHTML = '';
   });
@@ -347,6 +389,11 @@
   $('q').addEventListener('input', function () { q = this.value; renderList(); });
   $('count-in').addEventListener('input', function () { draft.count = +this.value || 1; render(); });
   $('sort-in').addEventListener('change', function () { draft.sort = this.value; render(); });
+  $('window-in').addEventListener('input', function () { draft.windowDays = Math.max(1, +this.value || 1); render(); });
+  $('same-as').addEventListener('change', function () {
+    draft.searchTypes = this.checked ? draft.types.slice() : null;
+    render();
+  });
   $('rot-on').addEventListener('change', function () { draft.rotation.on = this.checked; render(); });
   $('rot-int').addEventListener('input', function () { draft.rotation.interval = this.value; render(); });
   $('rot-start').addEventListener('input', function () { draft.rotation.start = this.value; render(); });

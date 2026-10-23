@@ -81,3 +81,27 @@ new one again.
 One deliberate difference remains: the old screen listed the next five rotation times as
 five lines, the new one says how many are scheduled, with Interval and Starts above it.
 Worth confirming that is wanted rather than the full list.
+
+**Settings audit against the real model — 23 October 2026**
+
+Checked the designs field by field against `QuerySettings` in
+`themes/ngn-theme/src/scripts/admin/curated-posts/types.ts` rather than against the
+screenshots. Three gaps, all now closed in Design D:
+
+| Field | Was | Now |
+| --- | --- | --- |
+| `sortWindowDays` | missing | shown only for a most-viewed sort, in the sentence too |
+| `searchPostTypes` | missing | its own step, defaulting to the auto types |
+| rotation vs sort | both offered at once | rotation is off for a most-viewed sort, and says why |
+
+The third is a rule, not a field. `settings-panel.tsx` saves
+`rotationEnabled: localSort !== 'views' && localRotationEnabled`, so the two were never
+compatible. None of the three designs knew that.
+
+Two notes carried forward rather than fixed:
+
+- `rotationInterval` is a number of minutes in the model; the designs take "1h" as text
+  and would need the repo's existing `duration-input` component.
+- Taxonomies differ per post type. Parents and Family Article offers Tag, Audience,
+  Campus, Newsfeed Display and Spotlight, where Post also offers Category, Article
+  Format, Department and Kicker Category. The designs list them globally.
