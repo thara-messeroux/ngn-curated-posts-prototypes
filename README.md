@@ -10,7 +10,7 @@ admin design system so any direction drops in without a restyle.
 | --- | --- | --- |
 | A | List table — the standard `wp-list-table` component, sortable, with row actions | [01-list-table.html](01-list-table.html) |
 | B | Grouped accordion — six families, sticky toolbar, collapsible sections | [02-grouped-accordion.html](02-grouped-accordion.html) |
-| C | Two-pane workbench — fixed searchable index, detail pane, **live headline in every slot** | [03-two-pane.html](03-two-pane.html) |
+| C | Two-pane workbench — flat searchable index, detail pane, **live headline in every slot** | [03-two-pane.html](03-two-pane.html) |
 
 ## The problem
 
@@ -30,6 +30,8 @@ All three are driven by the same data and share the same fixes:
 - Search filters on name and slug, client side, no reload
 - Collapsed by default; a shelf opens to show only the fields that are set
 - A one-line summary (`stories · post types · include terms`) tells similar shelves apart
+- One flat list, A to Z — no group headings to maintain, and shelves sharing a name
+  prefix still land together
 - Delete moved behind an overflow menu or row-actions strip, with an inline confirm that
   names the shelf and says it is live
 - A state pill: **Live**, or **Needs check** where a shelf has unresolved exclude rules

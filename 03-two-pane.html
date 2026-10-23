@@ -36,19 +36,6 @@
   background: var(--wp-surface-alt);
 }
 
-.grp-label {
-  z-index: 2;
-  font-size: 11px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--wp-text-muted);
-  background: var(--wp-surface-alt);
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--wp-border-light);
-  position: sticky;
-  top: 0;
-}
-
 .li {
   display: flex;
   align-items: center;
@@ -254,19 +241,19 @@
       return;
     }
 
-    GROUP_ORDER.forEach(function (g) {
-      var items = list.filter(function (d) { return d.g === g; });
-      if (!items.length) return;
-      html += '<div class="grp-label">' + CP.esc(g) + " · " + items.length + "</div>";
-      items.forEach(function (d) {
-        html += '<button type="button" class="li' + (sel === d.s ? " is-sel" : "") + '" ' +
-          'role="option" aria-selected="' + (sel === d.s) + '" data-sel="' + CP.esc(d.s) + '">' +
-          '<span class="dot ' + (d.state === "live" ? "dot-live" : "dot-check") + '" aria-hidden="true"></span>' +
-          '<span class="li-main">' +
-            '<span class="li-name">' + CP.esc(d.n) + "</span>" +
-            '<span class="li-sub">' + d.stories + " · " + CP.esc(d.types) + "</span>" +
-          "</span></button>";
-      });
+    // One flat list, A to Z. No group headings and no rule deciding which
+    // family a shelf belongs to, so a rename cannot quietly move it.
+    // Shelves that share a name prefix still sit together, for free.
+    list.slice().sort(function (a, b) {
+      return a.n.localeCompare(b.n);
+    }).forEach(function (d) {
+      html += '<button type="button" class="li' + (sel === d.s ? " is-sel" : "") + '" ' +
+        'role="option" aria-selected="' + (sel === d.s) + '" data-sel="' + CP.esc(d.s) + '">' +
+        '<span class="dot ' + (d.state === "live" ? "dot-live" : "dot-check") + '" aria-hidden="true"></span>' +
+        '<span class="li-main">' +
+          '<span class="li-name">' + CP.esc(d.n) + "</span>" +
+          '<span class="li-sub">' + d.stories + " · " + CP.esc(d.types) + "</span>" +
+        "</span></button>";
     });
     host.innerHTML = html;
   }

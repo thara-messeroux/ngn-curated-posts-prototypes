@@ -38,3 +38,18 @@ cost of the single-column layout, not of the data. In two panes only the selecte
 needs stories, so it is one request on selection.
 
 The workbench shipped inside NUEAC-398 instead, with one new read-only endpoint.
+
+---
+
+## Feedback from review — 23 October 2026
+
+**Grouping removed.** Xris: grouping the index into Featured, Most read and Latest is
+high maintenance for the team.
+
+He is right, and the earlier note here that it was derived "so nothing new has to be kept
+in sync" was only half true. The groups came from the key prefix, but the mapping itself
+was hardcoded and the naming convention became load-bearing: rename `latest-health` and it
+drops silently into Other; add a family and someone edits code.
+
+The index is now one flat list sorted A to Z. No rule, nothing to maintain, and shelves
+that share a name prefix still sit together because sorting puts them there.
