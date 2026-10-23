@@ -240,3 +240,43 @@ Article and under the manual lists.
 Verified at 1280 and 1440: axe clean, no overflow, no console errors, 28 types offered,
 8 taxonomies for News Post, searching "bio" in 12,460 tags returns four real terms, and
 a type with no taxonomies says so instead of showing an empty picker.
+
+---
+
+## Three gaps closed, taxonomy data corrected from the export (`08`)
+
+**Story count** was capped at 100; the real input is `min={1} max={50}`. Now 1-50, and
+typing 999 snaps the field back to 50 rather than leaving a number the screen will not
+accept.
+
+**Upcoming rotations** was one sentence; the live dialog lists the next five. Now both -
+the sentence that says what "next" is relative to, then the five times.
+
+**Manual search post types** repeat every taxonomy picker in the live screen. They all
+write to the same `taxonomyFilters` entry, so rather than repeat the pickers a third
+time the editor says so and points at the terms already set. Also fixed a real bug found
+here: an earlier edit had injected the AND group buttons into the manual search editor,
+where `gi` is undefined, so "+ Add AND group" appeared in the wrong place.
+
+**Taxonomy data** now comes from `evidence/NGN_Curated_Posts_Taxonomy_Terms.csv`, which
+carries what the dialog's own endpoint does not return: slug, parent and post count.
+14,983 terms across 14 taxonomies.
+
+- `Hide Post` and `Pin to top` do not exist. Newsfeed Display's real terms are Faculty &
+  Staff, NGN Daily, Parents & Families and Research. The invented data had them wrong.
+- **Terms are hierarchical and the dialog flattens them.** World Cup 2026 is the parent
+  of Final, First stage, Preview and four more; Photo is the parent of Seen Around
+  Northeastern; Department nests 48 children. Chips now read "World Cup 2026 › Final".
+- **Post counts are shown**, since the export has them and the dialog hides them. Art
+  Scene 18, Final 7, University News 8,072, Spotlight 0.
+- **Search matches the slug as well as the name**, which is how "digital-" finds Retain
+  Default Styles (slug `digital-default`), and why "Q-A" finds nothing - Q&A's slug is
+  `qa`.
+- **The 500 cap hides 87% of all terms** (13,108 of 14,983). Tag stops at "and
+  Innovation." The editor says so where the list is capped.
+
+Worth raising separately: three Department terms are duplicated (Health Sciences,
+History, Philosophy and Religion each appear twice, once nested and once at top level),
+101 of 210 Research Topics have no posts, and Spotlight's only term is unused.
+
+Verified at 1280 and 1440: axe clean, no overflow, no console errors.

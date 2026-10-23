@@ -143,8 +143,8 @@
     { n: 'Featured Stories', k: 'featured-stories', s: base({ count: 4, sort: 'Newest', types: ['newspost'], include: [[]], exclude: [], rotation: { on: true, interval: '1h', start: '00:00' } }) },
     { n: 'Featured research', k: 'featured-research', s: base({ count: 3, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'category', term: 'Research' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
     { n: 'Most read health', k: 'most-read-health', s: base({ count: 5, sort: 'Most viewed', types: ['newspost'], include: [[{ tax: 'category', term: 'Health' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'Latest world news', k: 'latest-world-news', s: base({ count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [[{ tax: 'category', term: 'World & National News' }]], exclude: [{ tax: 'newsfeed', term: 'Hide Post' }], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'World Cup 2026 Stories', k: 'world-cup-2026-stories', s: base({ count: 50, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'post_tag', term: 'climate resilience' }], [{ tax: 'audience', term: 'Students' }]], exclude: [{ tax: 'kicker', term: 'Final' }], rotation: { on: false, interval: '1h', start: '00:00' } }) }
+    { n: 'Latest world news', k: 'latest-world-news', s: base({ count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [[{ tax: 'category', term: 'World & National News' }]], exclude: [{ tax: 'newsfeed', term: 'Research' }], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'World Cup 2026 Stories', k: 'world-cup-2026-stories', s: base({ count: 12, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'post_tag', term: 'climate resilience' }], [{ tax: 'audience', term: 'Students' }]], exclude: [{ tax: 'kicker', term: 'Final' }], rotation: { on: false, interval: '1h', start: '00:00' } }) }
   ];
 
   var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, open = null, taxKey = null, termQuery = '', q = '';
@@ -162,6 +162,17 @@
     return draft.include.map(function (g, i) {
       return g.length ? tok('include:' + i, g.map(function (f) { return f.term; }).join(' or ')) : null;
     }).filter(Boolean).join(' <span class="plain">and also in</span> ');
+  }
+
+  /* The next five rotations, the way the live dialog lists them, with the
+     sentence above it so you know what "next" is relative to. */
+  function upcoming(rot) {
+    var times = nextRotations(rot.start, rot.interval, 5);
+    if (!times.length) return '<p class="t-body-sm muted" style="margin:0">Set an interval like 1h or 30m.</p>';
+    var clock = function (d) { return d.toLocaleTimeString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }); };
+    return '<p class="t-body-sm muted" style="margin:0 0 4px">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>' +
+      '<ol class="t-body-sm muted" style="margin:0;padding-left:18px">' +
+      times.map(function (t) { return '<li>' + esc(clock(t)) + '</li>'; }).join('') + '</ol>';
   }
 
   /* The stand-in count wants one flat list of include terms. */
@@ -205,7 +216,9 @@
     var head = function (t) { return '<h3>' + t + '</h3>'; };
     var done = '<button class="btn btn-outlined btn-sm done" type="button" data-close>Done</button>';
 
-    if (open === 'count') return '<div class="editor">' + head('How many stories') + '<input type="number" id="e-count" min="1" max="100" value="' + draft.count + '" style="width:120px">' + done + '</div>';
+    if (open === 'count') return '<div class="editor">' + head('How many stories') +
+      '<input type="number" id="e-count" min="1" max="50" value="' + draft.count + '" style="width:120px">' +
+      '<p class="t-body-sm muted" style="margin:0">1 to 50.</p>' + done + '</div>';
     if (open === 'window') return '<div class="editor">' + head('How far back a most-viewed sort looks') +
       '<div style="display:flex;gap:8px;align-items:center"><input type="number" id="e-window" min="1" value="' + draft.windowDays + '" style="width:110px"><span class="t-body-sm muted">days</span></div>' + done + '</div>';
     if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
@@ -224,12 +237,13 @@
       return '<div class="editor">' + head('Types the manual search offers') +
         '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-same" ' + (custom ? '' : 'checked') + '> <span class="t-label">Same as the types above</span></label>' +
         (custom ? '<div class="chips">' + POST_TYPES.map(function (t) {
-          return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
+          return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-stype="' + t.k + '"' +
+            (t.tax.length ? '' : ' title="No filterable taxonomies"') + '>' + esc(t.n) +
+            (t.tax.length ? '' : ' <span class="muted">\u00b7 no filters</span>') + '</button>';
         }).join('') + '</div>' : '') +
-        (gi < 0 ? '' : '<div class="chips" style="border-top:1px solid var(--ngn-outline-variant);padding-top:var(--ngn-space-2)">' +
-          '<button class="btn btn-outlined btn-sm" type="button" data-addgroup>+ Add AND group</button>' +
-          (draft.include.length > 1 ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove this group</button>' : '') +
-          '</div>') +
+        '<p class="t-body-sm muted" style="margin:0;border-top:1px solid var(--ngn-outline-variant);padding-top:var(--ngn-space-2)" id="e-manual-note">' +
+        'The live screen repeats every taxonomy picker under each of these types too. They all write to ' +
+        'the same filter, so the terms you set above already apply here \u2014 there is nothing extra to set.</p>' +
         done + '</div>';
     }
     if (open.indexOf('include') === 0 || open === 'exclude') {
@@ -251,13 +265,17 @@
             ' (' + TAXONOMIES[k].count.toLocaleString() + ')</option>';
         }).join('') + '</select>' +
         (big ? '<div class="field"><label for="e-term-q">Search ' + esc(tax.n) + ' \u2014 ' + tax.count.toLocaleString() + ' terms, too many to list</label>' +
-          '<input type="search" id="e-term-q" value="' + esc(termQuery) + '" placeholder="Type to search\u2026"></div>' : '') +
+          '<input type="search" id="e-term-q" value="' + esc(termQuery) + '" placeholder="Type a name or a slug\u2026"></div>' : '') +
         '<div class="chips">' + shown.map(function (t) {
-          var on = bucket.some(function (f) { return f.term === t; });
-          return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t) + '" data-tax="' + esc(taxKey) + '">' + esc(t) + '</button>';
+          var on = bucket.some(function (f) { return f.term === t.n; });
+          return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t.n) + '" data-tax="' + esc(taxKey) + '"' +
+            (t.p ? ' title="Inside ' + esc(t.p) + '"' : '') + '>' +
+            (t.p ? '<span class="muted">' + esc(t.p) + ' \u203a </span>' : '') + esc(t.n) +
+            ' <span class="muted">' + t.c.toLocaleString() + '</span></button>';
         }).join('') + '</div>' +
         (big ? '<p class="t-body-sm muted" style="margin:0">Showing ' + shown.length + ' of ' + tax.count.toLocaleString() +
-          (termQuery ? ' matching "' + esc(termQuery) + '"' : '') + '</p>' : '') +
+          (termQuery ? ' matching \u201c' + esc(termQuery) + '\u201d. Matches the name or the slug.'
+                     : '. The live screen stops at 500, so typing is the only way to reach the rest.') + '</p>' : '') +
         (bucket.length ? '<div class="chips picked">' + bucket.map(function (f) {
           return '<span class="chip' + (open === 'exclude' ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
             ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" aria-label="Remove ' + esc(f.term) + '">&times;</button></span>';
@@ -272,7 +290,7 @@
       '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' + (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
       '<div style="display:flex;gap:12px"><div class="field" style="width:110px"><label for="e-int">Every</label><input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '"></div>' +
       '<div class="field" style="width:150px"><label for="e-start">Starting at</label><input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"></div></div>' +
-      '<p class="t-body-sm muted" style="margin:0" id="e-next">' + (draft.rotation.on ? esc(nextRunLine(draft.rotation.start, draft.rotation.interval)) : '') + '</p>' + done + '</div>';
+      '<div id="e-next">' + (draft.rotation.on ? upcoming(draft.rotation) : '') + '</div>' + done + '</div>';
     return '';
   }
 
@@ -341,10 +359,11 @@
   });
 
   document.addEventListener('input', function (ev) {
-    if (ev.target.id === 'e-count') { draft.count = Math.max(1, +ev.target.value || 1); $('rule').innerHTML = rule(); $('count').textContent = matchCount(flat(draft)).toLocaleString(); $('savebar').hidden = !changed(); renderList(); }
+    if (ev.target.id === 'e-count') { draft.count = Math.min(50, Math.max(1, +ev.target.value || 1));
+      if (+ev.target.value > 50) ev.target.value = 50; $('rule').innerHTML = rule(); $('count').textContent = matchCount(flat(draft)).toLocaleString(); $('savebar').hidden = !changed(); renderList(); }
     if (ev.target.id === 'e-window') { draft.windowDays = Math.max(1, +ev.target.value || 1); $('rule').innerHTML = rule(); $('savebar').hidden = !changed(); }
-    if (ev.target.id === 'e-int') { draft.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); $('e-next').textContent = nextRunLine(draft.rotation.start, draft.rotation.interval); $('savebar').hidden = !changed(); }
-    if (ev.target.id === 'e-start') { draft.rotation.start = ev.target.value; $('e-next').textContent = nextRunLine(draft.rotation.start, draft.rotation.interval); $('savebar').hidden = !changed(); }
+    if (ev.target.id === 'e-int') { draft.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); $('savebar').hidden = !changed(); }
+    if (ev.target.id === 'e-start') { draft.rotation.start = ev.target.value; $('e-next').innerHTML = upcoming(draft.rotation); $('savebar').hidden = !changed(); }
     if (ev.target.id === 'q') { q = ev.target.value; renderList(); }
     if (ev.target.id === 'e-term-q') { termQuery = ev.target.value; redrawTerms(); }
   });
