@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings D — The workbench · NUEAC-398</title>
+<link rel="stylesheet" href="assets/ngn-v2.css">
+<style>
+.panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
+@media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 300px; } }
+
+/* Left: the shelves. Never covered, never moves. */
+.index { overflow: hidden; display: flex; flex-direction: column; max-height: 700px; position: sticky; top: var(--ngn-space-4); }
+.index .tools { padding: var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); }
+.index .tools input { width: 100%; }
+.index .scroll { overflow-y: auto; flex: 1 1 auto; }
+.index .foot { border-top: 1px solid var(--ngn-outline-variant); padding: var(--ngn-space-2) var(--ngn-space-3); font-size: 12px; color: var(--ngn-on-surface-variant); }
+.shelf {
+  display: flex; align-items: center; gap: var(--ngn-space-2); width: 100%; text-align: left;
+  border: 0; border-bottom: 1px solid var(--ngn-outline-variant); border-left: 3px solid transparent;
+  background: none; font: inherit; cursor: pointer; padding: var(--ngn-space-3); color: inherit;
+}
+.shelf:hover { background: var(--ngn-surface-container-low); }
+.shelf.is-sel { background: var(--ngn-surface-container); border-left-color: var(--ngn-primary); }
+.shelf .txt { min-width: 0; flex: 1 1 auto; }
+.shelf b { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shelf span { display: block; font-size: 12px; color: var(--ngn-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shelf .edited { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ngn-tertiary); }
+
+/* Right: the settings themselves. */
+.work { display: flex; flex-direction: column; min-height: 640px; }
+.work-head { padding: var(--ngn-space-4) var(--ngn-space-5) var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); display: flex; gap: var(--ngn-space-3); align-items: flex-start; flex-wrap: wrap; }
+.work-head .acts { margin-left: auto; display: flex; gap: var(--ngn-space-2); }
+
+.summary {
+  padding: var(--ngn-space-3) var(--ngn-space-5);
+  background: var(--ngn-surface-container-low);
+  border-bottom: 1px solid var(--ngn-outline-variant);
+  display: flex; align-items: center; gap: var(--ngn-space-3); flex-wrap: wrap;
+}
+.summary .sentence { flex: 1 1 340px; min-width: 0; font-size: 14px; line-height: 1.65; margin: 0; }
+.summary .sentence b { font-weight: 500; }
+.count-pill {
+  display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap;
+  background: var(--ngn-tertiary-container); color: var(--ngn-tertiary);
+  border-radius: var(--ngn-radius-full); padding: 5px 14px;
+}
+.count-pill b { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.count-pill span { font-size: 12px; }
+
+.body { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-5); flex: 1 1 auto; }
+
+.step { display: flex; gap: var(--ngn-space-4); }
+.step-n {
+  flex: none; width: 24px; height: 24px; border-radius: var(--ngn-radius-full);
+  background: var(--ngn-secondary-container); color: var(--ngn-on-secondary-container);
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; margin-top: 2px;
+}
+.step-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--ngn-space-3); }
+.step h3 { margin: 0; font-size: 15px; font-weight: 500; }
+.step .why { margin: 0; font-size: 12.5px; color: var(--ngn-on-surface-variant); }
+.row { display: flex; gap: var(--ngn-space-3); flex-wrap: wrap; align-items: flex-end; }
+.chips { display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; align-items: center; }
+.more-types { border: 0; background: none; padding: 0; cursor: pointer; color: var(--ngn-tertiary); font: inherit; font-size: 13px; text-decoration: underline; }
+
+.filter-list { display: flex; flex-direction: column; gap: var(--ngn-space-2); }
+.filter-row {
+  display: flex; align-items: center; gap: var(--ngn-space-3);
+  padding: var(--ngn-space-2) var(--ngn-space-3);
+  border: 1px solid var(--ngn-outline-variant); border-radius: var(--ngn-radius-sm);
+  background: var(--ngn-surface-container-lowest);
+}
+.filter-row.is-exclude { border-style: dashed; }
+.filter-row .kind { font-size: 12px; color: var(--ngn-on-surface-variant); min-width: 54px; }
+.filter-row .what { flex: 1 1 auto; min-width: 0; font-size: 13.5px; }
+.filter-row .what .tax { color: var(--ngn-on-surface-variant); }
+.empty-filters { border: 1px dashed var(--ngn-outline-variant); border-radius: var(--ngn-radius-sm); padding: var(--ngn-space-4); text-align: center; color: var(--ngn-on-surface-variant); font-size: 13px; }
+
+.rot { border: 1px solid var(--ngn-outline-variant); border-radius: var(--ngn-radius-sm); padding: var(--ngn-space-4); }
+.rot.is-off { opacity: .6; }
+.switch { display: flex; align-items: center; gap: var(--ngn-space-3); cursor: pointer; }
+.switch input { width: 18px; height: 18px; accent-color: var(--ngn-primary); }
+.next-run { font-size: 12.5px; color: var(--ngn-on-surface-variant); margin: var(--ngn-space-3) 0 0; }
+
+/* Appears only when something changed. Nothing is written until Save. */
+.savebar {
+  position: sticky; bottom: 0; z-index: 5;
+  border-top: 1px solid var(--ngn-outline-variant);
+  background: var(--ngn-surface);
+  padding: var(--ngn-space-3) var(--ngn-space-5);
+  display: flex; align-items: center; gap: var(--ngn-space-3);
+  box-shadow: 0 -4px 12px rgba(0,0,0,.05);
+}
+.savebar[hidden] { display: none; }
+.savebar .spacer { flex: 1 1 auto; }
+
+.pop {
+  position: absolute; z-index: 30; width: 330px;
+  background: var(--ngn-surface); border: 1px solid var(--ngn-outline-variant);
+  border-radius: var(--ngn-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,.16);
+  padding: var(--ngn-space-3); display: flex; flex-direction: column; gap: var(--ngn-space-3);
+}
+.pop select, .pop input { width: 100%; }
+.pop .terms { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.pop .term-opt { display: flex; gap: var(--ngn-space-2); padding: 7px 8px; border-radius: var(--ngn-radius-xs); cursor: pointer; font-size: 13px; border: 0; background: none; text-align: left; width: 100%; font-family: inherit; color: inherit; }
+.pop .term-opt:hover { background: var(--ngn-surface-container); }
+.pop .seg { display: flex; }
+.pop .seg button { flex: 1; border: 1px solid var(--ngn-outline-variant); background: var(--ngn-surface); font: inherit; font-size: 13px; padding: 7px 0; cursor: pointer; color: var(--ngn-on-surface); }
+.pop .seg button:first-child { border-radius: var(--ngn-radius-xs) 0 0 var(--ngn-radius-xs); }
+.pop .seg button:last-child { border-radius: 0 var(--ngn-radius-xs) var(--ngn-radius-xs) 0; border-left: 0; }
+.pop .seg button.is-on { background: var(--ngn-secondary-container); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · Settings D — The workbench</strong>
+  <span class="sep">|</span>
+  <a href="index.html">All designs</a>
+  <span class="sep">|</span>
+  <a href="04-settings-guided.html">A</a>
+  <a href="05-settings-inline.html">B</a>
+  <a href="06-settings-sentence.html">C</a>
+</div>
+
+<div class="wrap">
+  <h1 class="t-headline" style="margin:0 0 4px">Curated Posts</h1>
+  <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:72ch">
+    Settings D. A's guided steps, its sentence and its live count, put where B puts
+    them: in the pane rather than over it. The list of shelves is never covered, and
+    nothing is written until you save.
+  </p>
+
+  <div class="panes">
+
+    <div class="card index">
+      <div class="tools">
+        <label class="screen-reader-text" for="q">Search shelves</label>
+        <input type="search" id="q" placeholder="Search shelves">
+      </div>
+      <div class="scroll" id="list" role="listbox" aria-label="Shelves"></div>
+      <p class="foot" id="foot"></p>
+    </div>
+
+    <div class="card work">
+      <div class="work-head">
+        <div>
+          <h2 class="t-title" style="margin:0" id="title">Featured Stories</h2>
+          <p class="t-label-sm muted" style="margin:2px 0 0;font-family:var(--ngn-mono)" id="slug">featured-stories</p>
+        </div>
+        <div class="acts">
+          <button class="btn btn-outlined btn-sm" type="button">Rename</button>
+          <button class="btn btn-outlined btn-sm" type="button">Duplicate</button>
+        </div>
+      </div>
+
+      <div class="summary">
+        <p class="sentence" id="sentence"></p>
+        <span class="count-pill"><b id="count">—</b><span>stories match</span></span>
+      </div>
+
+      <div class="body">
+
+        <div class="step">
+          <div class="step-n">1</div>
+          <div class="step-main">
+            <h3>How many, and in what order</h3>
+            <div class="row">
+              <div class="field" style="width:120px">
+                <label for="count-in">Stories</label>
+                <input type="number" id="count-in" min="1" max="50" value="4">
+              </div>
+              <div class="field" style="width:190px">
+                <label for="sort-in">Sort by</label>
+                <select id="sort-in"><option>Newest</option><option>Most viewed</option></select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-n">2</div>
+          <div class="step-main">
+            <h3>Where the stories come from</h3>
+            <p class="why">The four NGN uses most are shown first.</p>
+            <div class="chips" id="types"></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-n">3</div>
+          <div class="step-main">
+            <h3>Narrow it down</h3>
+            <p class="why">Optional. Without filters, every story of those types is a candidate.</p>
+            <div id="filters"></div>
+            <div style="position:relative">
+              <button class="btn btn-outlined btn-sm" type="button" id="add-filter">+ Add a filter</button>
+              <div id="pop-host"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-n">4</div>
+          <div class="step-main">
+            <h3>Rotation</h3>
+            <p class="why">Optional. Rotating swaps which matching stories show, on a timer.</p>
+            <div class="rot" id="rot">
+              <label class="switch"><input type="checkbox" id="rot-on" checked> <span class="t-label">Rotate the stories automatically</span></label>
+              <div class="row" style="margin-top:var(--ngn-space-3)" id="rot-fields">
+                <div class="field" style="width:120px"><label for="rot-int">Every</label><input type="text" id="rot-int" value="1h"></div>
+                <div class="field" style="width:150px"><label for="rot-start">Starting at</label><input type="time" id="rot-start" value="00:00"></div>
+              </div>
+              <p class="next-run" id="next-run"></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="savebar" id="savebar" hidden>
+        <span class="t-body-sm" id="dirty"></span>
+        <span class="spacer"></span>
+        <button class="btn btn-text btn-sm" type="button" id="discard">Discard</button>
+        <button class="btn btn-filled btn-sm" type="button" id="save">Save</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script src="assets/settings-data.js"></script>
+<script>
+(function () {
+  var SHELVES = [
+    { n: 'Featured Stories', k: 'featured-stories', s: { count: 4, sort: 'Newest', types: ['newspost'], include: [], exclude: [], rotation: { on: true, interval: '1h', start: '00:00' } } },
+    { n: 'Featured research', k: 'featured-research', s: { count: 3, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Category', term: 'Research' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } } },
+    { n: 'Most read health', k: 'most-read-health', s: { count: 5, sort: 'Most viewed', types: ['newspost'], include: [{ tax: 'Category', term: 'Health' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } } },
+    { n: 'Latest world news', k: 'latest-world-news', s: { count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [{ tax: 'Category', term: 'World & National News' }], exclude: [{ tax: 'Newsfeed Display', term: 'Hide Post' }], rotation: { on: false, interval: '1h', start: '00:00' } } },
+    { n: 'Spotlight', k: 'spotlight', s: { count: 1, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Spotlight', term: 'Spotlight' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } } }
+  ];
+
+  var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, showAll = false, q = '';
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
+  var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
+  var changed = function () { return JSON.stringify(draft) !== JSON.stringify(SHELVES[sel].s); };
+
+  function renderList() {
+    var shown = SHELVES.map(function (x, i) { return { x: x, i: i }; })
+      .filter(function (r) { return !q || (r.x.n + ' ' + r.x.k).toLowerCase().indexOf(q.toLowerCase()) > -1; });
+
+    $('list').innerHTML = shown.map(function (r) {
+      var d = r.i === sel ? draft : (dirty[r.i] || r.x.s);
+      return '<button class="shelf' + (r.i === sel ? ' is-sel' : '') + '" type="button" role="option" aria-selected="' +
+        (r.i === sel) + '" data-sel="' + r.i + '">' +
+        '<span class="txt"><b>' + esc(r.x.n) + '</b><span>' + d.count + ' stories · ' +
+        esc(d.types.map(typeName).join(', ') || 'no type') + '</span></span>' +
+        ((dirty[r.i] || (r.i === sel && changed())) ? '<span class="edited" title="Unsaved changes"></span>' : '') +
+        '</button>';
+    }).join('');
+    $('foot').textContent = shown.length + ' of ' + SHELVES.length + ' shelves';
+  }
+
+  function renderTypes() {
+    var list = showAll ? POST_TYPES : POST_TYPES.filter(function (t) { return t.common; });
+    $('types').innerHTML = list.map(function (t) {
+      return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') +
+        '" type="button" data-type="' + t.k + '" aria-pressed="' + (draft.types.indexOf(t.k) > -1) + '">' + esc(t.n) + '</button>';
+    }).join('') + '<button class="more-types" type="button" id="toggle-types">' +
+      (showAll ? 'Show fewer' : (POST_TYPES.length - 4) + ' more types') + '</button>';
+  }
+
+  function renderFilters() {
+    var all = draft.include.map(function (f) { return { kind: 'Include', f: f }; })
+      .concat(draft.exclude.map(function (f) { return { kind: 'Exclude', f: f }; }));
+    if (!all.length) {
+      $('filters').innerHTML = '<div class="empty-filters">No filters. Every story of the chosen types is a candidate.</div>';
+      return;
+    }
+    $('filters').innerHTML = '<div class="filter-list">' + all.map(function (r) {
+      return '<div class="filter-row' + (r.kind === 'Exclude' ? ' is-exclude' : '') + '">' +
+        '<span class="kind">' + r.kind + '</span>' +
+        '<span class="what"><span class="tax">' + esc(r.f.tax) + '</span> · ' + esc(r.f.term) + '</span>' +
+        '<button class="chip-remove" type="button" aria-label="Remove filter" data-rm="' + r.kind + '|' + esc(r.f.term) + '">&times;</button>' +
+        '</div>';
+    }).join('') + '</div>';
+  }
+
+  function sentence() {
+    var types = draft.types.length ? draft.types.map(typeName).join(' or ') : 'nothing yet';
+    var str = 'Show the <b>' + draft.count + '</b> ' + (draft.sort === 'Newest' ? 'newest' : 'most viewed') + ' <b>' + esc(types) + '</b>';
+    if (draft.include.length) str += ' in <b>' + draft.include.map(function (f) { return esc(f.term); }).join(' and ') + '</b>';
+    if (draft.exclude.length) str += ', not <b>' + draft.exclude.map(function (f) { return esc(f.term); }).join(' or ') + '</b>';
+    if (draft.rotation.on) str += ', rotating every <b>' + esc(draft.rotation.interval) + '</b>';
+    return str + '.';
+  }
+
+  function render() {
+    $('title').textContent = SHELVES[sel].n;
+    $('slug').textContent = SHELVES[sel].k;
+    renderList(); renderTypes(); renderFilters();
+    $('sentence').innerHTML = sentence();
+    $('count').textContent = draft.types.length ? matchCount(draft).toLocaleString() : '0';
+    $('count-in').value = draft.count;
+    $('sort-in').value = draft.sort;
+    $('rot-on').checked = draft.rotation.on;
+    $('rot-int').value = draft.rotation.interval;
+    $('rot-start').value = draft.rotation.start;
+    $('rot').classList.toggle('is-off', !draft.rotation.on);
+    $('rot-fields').style.display = draft.rotation.on ? '' : 'none';
+    $('next-run').textContent = draft.rotation.on ? 'Next at 12:00 PM, then every ' + draft.rotation.interval + '.' : '';
+    $('savebar').hidden = !changed();
+    $('dirty').textContent = 'Unsaved changes to ' + SHELVES[sel].n;
+  }
+
+  function select(i) {
+    if (changed()) dirty[sel] = clone(draft);
+    sel = i;
+    draft = dirty[i] ? clone(dirty[i]) : clone(SHELVES[i].s);
+    showAll = false;
+    $('pop-host').innerHTML = '';
+    render();
+  }
+
+  document.addEventListener('click', function (ev) {
+    var sh = ev.target.closest('[data-sel]'), t = ev.target.closest('[data-type]'), rm = ev.target.closest('[data-rm]');
+    if (ev.target.id === 'toggle-types') { showAll = !showAll; return render(); }
+    if (sh) return select(+sh.dataset.sel);
+    if (t) {
+      var i = draft.types.indexOf(t.dataset.type);
+      if (i > -1) draft.types.splice(i, 1); else draft.types.push(t.dataset.type);
+      return render();
+    }
+    if (rm) {
+      var p = rm.dataset.rm.split('|'), bucket = p[0] === 'Include' ? draft.include : draft.exclude;
+      var j = bucket.findIndex(function (f) { return f.term === p[1]; });
+      if (j > -1) bucket.splice(j, 1);
+      return render();
+    }
+    if (ev.target.id === 'add-filter') return openPop();
+    if (!ev.target.closest('.pop')) $('pop-host').innerHTML = '';
+  });
+
+  $('q').addEventListener('input', function () { q = this.value; renderList(); });
+  $('count-in').addEventListener('input', function () { draft.count = +this.value || 1; render(); });
+  $('sort-in').addEventListener('change', function () { draft.sort = this.value; render(); });
+  $('rot-on').addEventListener('change', function () { draft.rotation.on = this.checked; render(); });
+  $('rot-int').addEventListener('input', function () { draft.rotation.interval = this.value; render(); });
+  $('rot-start').addEventListener('input', function () { draft.rotation.start = this.value; render(); });
+  $('discard').addEventListener('click', function () { draft = clone(SHELVES[sel].s); delete dirty[sel]; render(); });
+  $('save').addEventListener('click', function () { SHELVES[sel].s = clone(draft); delete dirty[sel]; render(); });
+
+  function openPop() {
+    var mode = 'include', tax = TAXONOMIES[0], term = '';
+    function draw() {
+      var terms = tax.terms.filter(function (t) { return t.toLowerCase().indexOf(term.toLowerCase()) > -1; });
+      $('pop-host').innerHTML = '<div class="pop">' +
+        '<div class="seg" role="group" aria-label="Include or exclude">' +
+          '<button type="button" data-mode="include" class="' + (mode === 'include' ? 'is-on' : '') + '">Include</button>' +
+          '<button type="button" data-mode="exclude" class="' + (mode === 'exclude' ? 'is-on' : '') + '">Exclude</button>' +
+        '</div>' +
+        '<select id="pop-tax">' + TAXONOMIES.map(function (x) {
+          return '<option value="' + x.k + '"' + (x.k === tax.k ? ' selected' : '') + '>' + esc(x.n) + '</option>';
+        }).join('') + '</select>' +
+        '<input type="search" id="pop-q" placeholder="Search ' + esc(tax.n.toLowerCase()) + ' terms" value="' + esc(term) + '">' +
+        '<div class="terms">' + (terms.length ? terms.map(function (t) {
+          return '<button class="term-opt" type="button" data-term="' + esc(t) + '">' + esc(t) + '</button>';
+        }).join('') : '<p class="t-body-sm muted" style="padding:8px">Nothing matches.</p>') + '</div>' +
+      '</div>';
+      document.getElementById('pop-q').addEventListener('input', function () { term = this.value; draw(); document.getElementById('pop-q').focus(); });
+      document.getElementById('pop-tax').addEventListener('change', function () {
+        tax = TAXONOMIES.filter(function (x) { return x.k === this.value; }.bind(this))[0]; term = ''; draw();
+      });
+      $('pop-host').querySelectorAll('[data-mode]').forEach(function (bt) { bt.addEventListener('click', function () { mode = bt.dataset.mode; draw(); }); });
+      $('pop-host').querySelectorAll('[data-term]').forEach(function (bt) {
+        bt.addEventListener('click', function () {
+          (mode === 'include' ? draft.include : draft.exclude).push({ tax: tax.n, term: bt.dataset.term });
+          $('pop-host').innerHTML = '';
+          render();
+        });
+      });
+    }
+    draw();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
