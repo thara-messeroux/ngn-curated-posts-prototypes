@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings E — The sentence, in the pane · NUEAC-398</title>
+<link rel="stylesheet" href="assets/ngn-v2.css">
+<style>
+.panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
+@media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 280px; } }
+
+.index { overflow: hidden; display: flex; flex-direction: column; max-height: 700px; position: sticky; top: var(--ngn-space-4); }
+.index .tools { padding: var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); }
+.index .tools input { width: 100%; }
+.index .scroll { overflow-y: auto; flex: 1 1 auto; }
+.index .foot { border-top: 1px solid var(--ngn-outline-variant); padding: var(--ngn-space-2) var(--ngn-space-3); font-size: 12px; color: var(--ngn-on-surface-variant); margin: 0; }
+.shelf {
+  display: flex; align-items: center; gap: var(--ngn-space-2); width: 100%; text-align: left;
+  border: 0; border-bottom: 1px solid var(--ngn-outline-variant); border-left: 3px solid transparent;
+  background: none; font: inherit; cursor: pointer; padding: var(--ngn-space-3); color: inherit;
+}
+.shelf:hover { background: var(--ngn-surface-container-low); }
+.shelf.is-sel { background: var(--ngn-surface-container); border-left-color: var(--ngn-primary); }
+.shelf .txt { min-width: 0; flex: 1 1 auto; }
+.shelf b { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shelf span { display: block; font-size: 12px; color: var(--ngn-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shelf .edited { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ngn-tertiary); }
+
+.work { display: flex; flex-direction: column; min-height: 620px; }
+.work-head { padding: var(--ngn-space-4) var(--ngn-space-5) var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); display: flex; gap: var(--ngn-space-3); align-items: flex-start; flex-wrap: wrap; }
+.work-head .acts { margin-left: auto; display: flex; gap: var(--ngn-space-2); }
+
+/* The rule itself, the whole point of this design. */
+.rule { padding: var(--ngn-space-5) var(--ngn-space-5) var(--ngn-space-4); font-size: 21px; line-height: 1.95; margin: 0; }
+.tok {
+  border: 0; background: none; font: inherit; color: var(--ngn-on-surface); cursor: pointer;
+  padding: 2px 6px; border-radius: var(--ngn-radius-xs); border-bottom: 2px solid var(--ngn-outline-variant);
+}
+.tok:hover { background: var(--ngn-surface-container); border-bottom-color: var(--ngn-on-surface-variant); }
+.tok.is-open { background: var(--ngn-secondary-container); border-bottom-color: var(--ngn-on-surface); }
+.tok.is-empty { color: var(--ngn-on-surface-variant); font-style: italic; }
+.rule .plain { color: var(--ngn-on-surface-variant); }
+
+.result {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-4);
+  padding: var(--ngn-space-3) var(--ngn-space-4);
+  background: var(--ngn-surface-container-low); border-radius: var(--ngn-radius-sm);
+  display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap;
+}
+.result b { font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.result .note { font-size: 12px; color: var(--ngn-on-surface-variant); margin-left: auto; }
+
+.editor {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
+  border: 1px solid var(--ngn-tertiary); border-radius: var(--ngn-radius-md);
+  padding: var(--ngn-space-4); display: flex; flex-direction: column; gap: var(--ngn-space-3);
+}
+.editor h3 { margin: 0; font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
+.chips { display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; }
+.editor .done { align-self: flex-start; }
+.editor .picked { padding-top: var(--ngn-space-2); border-top: 1px solid var(--ngn-outline-variant); }
+
+.savebar {
+  position: sticky; bottom: 0; margin-top: auto;
+  border-top: 1px solid var(--ngn-outline-variant); background: var(--ngn-surface);
+  padding: var(--ngn-space-3) var(--ngn-space-5); display: flex; align-items: center; gap: var(--ngn-space-3);
+  box-shadow: 0 -4px 12px rgba(0,0,0,.05);
+}
+.savebar[hidden] { display: none; }
+.savebar .spacer { flex: 1 1 auto; }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · Settings E — The sentence, in the pane</strong>
+  <span class="sep">|</span>
+  <a href="index.html">All designs</a>
+  <span class="sep">|</span>
+  <a href="06-settings-sentence.html">C</a>
+  <a href="07-settings-workbench.html">D</a>
+</div>
+
+<div class="wrap">
+  <h1 class="t-headline" style="margin:0 0 4px">Curated Posts</h1>
+  <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:74ch">
+    C's sentence with D's layout. The rule still reads as one plain line you can hand to
+    anyone, but it lives in the pane rather than over the list, so the shelves stay on
+    screen and unsaved work survives switching between them.
+  </p>
+
+  <div class="panes">
+
+    <div class="card index">
+      <div class="tools">
+        <label class="screen-reader-text" for="q">Search shelves</label>
+        <input type="search" id="q" placeholder="Search shelves">
+      </div>
+      <div class="scroll" id="list" role="listbox" aria-label="Shelves"></div>
+      <p class="foot" id="foot"></p>
+    </div>
+
+    <div class="card work">
+      <div class="work-head">
+        <div>
+          <h2 class="t-title" style="margin:0" id="title">Featured Stories</h2>
+          <p class="t-label-sm muted" style="margin:2px 0 0;font-family:var(--ngn-mono)" id="slug">featured-stories</p>
+        </div>
+        <div class="acts">
+          <button class="btn btn-outlined btn-sm" type="button">Rename</button>
+          <button class="btn btn-outlined btn-sm" type="button">Duplicate</button>
+        </div>
+      </div>
+
+      <p class="rule" id="rule"></p>
+
+      <div class="result">
+        <b id="count">—</b>
+        <span class="t-body-sm muted">stories match this rule right now</span>
+        <span class="note">prototype figure</span>
+      </div>
+
+      <div id="editor"></div>
+
+      <div class="savebar" id="savebar" hidden>
+        <span class="t-body-sm" id="dirty"></span>
+        <span class="spacer"></span>
+        <button class="btn btn-text btn-sm" type="button" id="discard">Discard</button>
+        <button class="btn btn-filled btn-sm" type="button" id="save">Save</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="assets/settings-data.js"></script>
+<script>
+(function () {
+  function base(o) {
+    return Object.assign({ windowDays: 14, searchTypes: null }, o);
+  }
+  var SHELVES = [
+    { n: 'Featured Stories', k: 'featured-stories', s: base({ count: 4, sort: 'Newest', types: ['newspost'], include: [], exclude: [], rotation: { on: true, interval: '1h', start: '00:00' } }) },
+    { n: 'Featured research', k: 'featured-research', s: base({ count: 3, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Category', term: 'Research' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'Most read health', k: 'most-read-health', s: base({ count: 5, sort: 'Most viewed', types: ['newspost'], include: [{ tax: 'Category', term: 'Health' }], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'Latest world news', k: 'latest-world-news', s: base({ count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [{ tax: 'Category', term: 'World & National News' }], exclude: [{ tax: 'Newsfeed Display', term: 'Hide Post' }], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'World Cup 2026 Stories', k: 'world-cup-2026-stories', s: base({ count: 50, sort: 'Newest', types: ['newspost'], include: [{ tax: 'Tag', term: 'world cup 2026' }], exclude: [{ tax: 'Kicker Category', term: 'Preview' }, { tax: 'Kicker Category', term: 'First Stage' }, { tax: 'Kicker Category', term: 'Round of 32' }], rotation: { on: false, interval: '1h', start: '00:00' } }) }
+  ];
+
+  var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, open = null, taxKey = TAXONOMIES[0].k, q = '';
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
+  var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
+  var changed = function () { return JSON.stringify(draft) !== JSON.stringify(SHELVES[sel].s); };
+
+  function tok(key, text, empty) {
+    return '<button class="tok' + (open === key ? ' is-open' : '') + (empty ? ' is-empty' : '') +
+      '" type="button" data-tok="' + key + '">' + esc(text) + '</button>';
+  }
+
+  function rule() {
+    var views = draft.sort === 'Most viewed';
+    var str = '<span class="plain">Show the</span> ' + tok('count', draft.count) + ' ' +
+      tok('sort', views ? 'most viewed' : 'newest') + ' ' +
+      tok('types', draft.types.length ? draft.types.map(typeName).join(' or ') : 'pick a type', !draft.types.length);
+
+    if (views) str += ' <span class="plain">from the last</span> ' + tok('window', draft.windowDays + ' days');
+
+    str += ' <span class="plain">in</span> ' +
+      tok('include', draft.include.length ? draft.include.map(function (f) { return f.term; }).join(' and ') : 'anything', !draft.include.length) +
+      ', <span class="plain">but not</span> ' +
+      tok('exclude', draft.exclude.length ? draft.exclude.map(function (f) { return f.term; }).join(' or ') : 'nothing', !draft.exclude.length) +
+      '<span class="plain">.</span>';
+
+    str += views
+      ? '<br><span class="plain">A most-viewed order changes on its own, so there is no rotation.</span>'
+      : draft.rotation.on
+        ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="plain">.</span>'
+        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="plain">.</span>';
+
+    str += '<br><span class="plain">When someone pins a story by hand, search</span> ' +
+      tok('searchTypes', draft.searchTypes === null ? 'the same types' : (draft.searchTypes.length ? draft.searchTypes.map(typeName).join(' or ') : 'nothing'), draft.searchTypes === null) +
+      '<span class="plain">.</span>';
+
+    return str;
+  }
+
+  function editor() {
+    if (!open) return '';
+    var head = function (t) { return '<h3>' + t + '</h3>'; };
+    var done = '<button class="btn btn-outlined btn-sm done" type="button" data-close>Done</button>';
+
+    if (open === 'count') return '<div class="editor">' + head('How many stories') + '<input type="number" id="e-count" min="1" max="100" value="' + draft.count + '" style="width:120px">' + done + '</div>';
+    if (open === 'window') return '<div class="editor">' + head('How far back a most-viewed sort looks') +
+      '<div style="display:flex;gap:8px;align-items:center"><input type="number" id="e-window" min="1" value="' + draft.windowDays + '" style="width:110px"><span class="t-body-sm muted">days</span></div>' + done + '</div>';
+    if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
+      ['Newest', 'Most viewed'].map(function (o) { return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>'; }).join('') +
+      '</div>' + done + '</div>';
+    if (open === 'types') return '<div class="editor">' + head('Where the stories come from') + '<div class="chips">' +
+      POST_TYPES.map(function (t) { return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '">' + esc(t.n) + '</button>'; }).join('') +
+      '</div>' + done + '</div>';
+    if (open === 'searchTypes') {
+      var custom = draft.searchTypes !== null;
+      return '<div class="editor">' + head('Types the manual search offers') +
+        '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-same" ' + (custom ? '' : 'checked') + '> <span class="t-label">Same as the types above</span></label>' +
+        (custom ? '<div class="chips">' + POST_TYPES.filter(function (t) { return t.common; }).map(function (t) {
+          return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
+        }).join('') + '</div>' : '') + done + '</div>';
+    }
+    if (open === 'include' || open === 'exclude') {
+      var bucket = open === 'include' ? draft.include : draft.exclude;
+      var tax = TAXONOMIES.filter(function (x) { return x.k === taxKey; })[0];
+      return '<div class="editor">' + head(open === 'include' ? 'Only stories tagged' : 'Never stories tagged') +
+        '<select id="e-tax">' + TAXONOMIES.map(function (x) { return '<option value="' + x.k + '"' + (x.k === taxKey ? ' selected' : '') + '>' + esc(x.n) + '</option>'; }).join('') + '</select>' +
+        '<div class="chips">' + tax.terms.map(function (t) {
+          var on = bucket.some(function (f) { return f.term === t; });
+          return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t) + '" data-tax="' + esc(tax.n) + '">' + esc(t) + '</button>';
+        }).join('') + '</div>' +
+        (bucket.length ? '<div class="chips picked">' + bucket.map(function (f) {
+          return '<span class="chip' + (open === 'exclude' ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
+            ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" aria-label="Remove ' + esc(f.term) + '">&times;</button></span>';
+        }).join('') + '</div>' : '') + done + '</div>';
+    }
+    if (open === 'rotation') return '<div class="editor">' + head('Rotation') +
+      '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' + (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
+      '<div style="display:flex;gap:12px"><div class="field" style="width:110px"><label for="e-int">Every</label><input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '"></div>' +
+      '<div class="field" style="width:150px"><label for="e-start">Starting at</label><input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"></div></div>' +
+      '<p class="t-body-sm muted" style="margin:0" id="e-next">' + (draft.rotation.on ? esc(nextRunLine(draft.rotation.start, draft.rotation.interval)) : '') + '</p>' + done + '</div>';
+    return '';
+  }
+
+  function renderList() {
+    var shown = SHELVES.map(function (x, i) { return { x: x, i: i }; })
+      .filter(function (r) { return !q || (r.x.n + ' ' + r.x.k).toLowerCase().indexOf(q.toLowerCase()) > -1; });
+    $('list').innerHTML = shown.map(function (r) {
+      var d = r.i === sel ? draft : (dirty[r.i] || r.x.s);
+      return '<button class="shelf' + (r.i === sel ? ' is-sel' : '') + '" type="button" role="option" aria-selected="' + (r.i === sel) + '" data-sel="' + r.i + '">' +
+        '<span class="txt"><b>' + esc(r.x.n) + '</b><span>' + d.count + ' stories · ' + esc(d.types.map(typeName).join(', ') || 'no type') + '</span></span>' +
+        ((dirty[r.i] || (r.i === sel && changed())) ? '<span class="edited" title="Unsaved changes"></span>' : '') + '</button>';
+    }).join('');
+    $('foot').textContent = shown.length + ' of ' + SHELVES.length + ' shelves';
+  }
+
+  function render() {
+    $('title').textContent = SHELVES[sel].n;
+    $('slug').textContent = SHELVES[sel].k;
+    $('rule').innerHTML = rule();
+    $('editor').innerHTML = editor();
+    $('count').textContent = draft.types.length ? matchCount(draft).toLocaleString() : '0';
+    $('savebar').hidden = !changed();
+    $('dirty').textContent = 'Unsaved changes to ' + SHELVES[sel].n;
+    renderList();
+    var t = $('e-tax'); if (t) t.addEventListener('change', function () { taxKey = this.value; render(); });
+  }
+
+  function select(i) {
+    if (changed()) dirty[sel] = clone(draft);
+    sel = i; draft = dirty[i] ? clone(dirty[i]) : clone(SHELVES[i].s);
+    open = null; render();
+  }
+
+  document.addEventListener('click', function (ev) {
+    var sh = ev.target.closest('[data-sel]'), t = ev.target.closest('[data-tok]'), c = ev.target.closest('[data-close]'),
+        ty = ev.target.closest('[data-type]'), so = ev.target.closest('[data-sort]'), tm = ev.target.closest('[data-term]'),
+        rm = ev.target.closest('[data-rm]'), st = ev.target.closest('[data-stype]');
+
+    if (sh) return select(+sh.dataset.sel);
+    if (c) { open = null; return render(); }
+    if (ty) { var i = draft.types.indexOf(ty.dataset.type); if (i > -1) draft.types.splice(i, 1); else draft.types.push(ty.dataset.type); return render(); }
+    if (so) { draft.sort = so.dataset.sort; return render(); }
+    if (st) { var j = draft.searchTypes.indexOf(st.dataset.stype); if (j > -1) draft.searchTypes.splice(j, 1); else draft.searchTypes.push(st.dataset.stype); return render(); }
+    if (rm) { var b = open === 'include' ? draft.include : draft.exclude; var k = b.findIndex(function (f) { return f.term === rm.dataset.rm; }); if (k > -1) b.splice(k, 1); return render(); }
+    if (tm) {
+      var bucket = open === 'include' ? draft.include : draft.exclude;
+      var at = bucket.findIndex(function (f) { return f.term === tm.dataset.term; });
+      if (at > -1) bucket.splice(at, 1); else bucket.push({ tax: tm.dataset.tax, term: tm.dataset.term });
+      return render();
+    }
+    if (t) { open = open === t.dataset.tok ? null : t.dataset.tok; return render(); }
+  });
+
+  document.addEventListener('input', function (ev) {
+    if (ev.target.id === 'e-count') { draft.count = Math.max(1, +ev.target.value || 1); $('rule').innerHTML = rule(); $('count').textContent = matchCount(draft).toLocaleString(); $('savebar').hidden = !changed(); renderList(); }
+    if (ev.target.id === 'e-window') { draft.windowDays = Math.max(1, +ev.target.value || 1); $('rule').innerHTML = rule(); $('savebar').hidden = !changed(); }
+    if (ev.target.id === 'e-int') { draft.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); $('e-next').textContent = nextRunLine(draft.rotation.start, draft.rotation.interval); $('savebar').hidden = !changed(); }
+    if (ev.target.id === 'e-start') { draft.rotation.start = ev.target.value; $('e-next').textContent = nextRunLine(draft.rotation.start, draft.rotation.interval); $('savebar').hidden = !changed(); }
+    if (ev.target.id === 'q') { q = ev.target.value; renderList(); }
+  });
+
+  document.addEventListener('change', function (ev) {
+    if (ev.target.id === 'e-rot') { draft.rotation.on = ev.target.checked; render(); }
+    if (ev.target.id === 'e-same') { draft.searchTypes = ev.target.checked ? null : draft.types.slice(); render(); }
+  });
+
+  $('discard').addEventListener('click', function () { draft = clone(SHELVES[sel].s); delete dirty[sel]; open = null; render(); });
+  $('save').addEventListener('click', function () { SHELVES[sel].s = clone(draft); delete dirty[sel]; render(); });
+
+  render();
+})();
+</script>
+</body>
+</html>

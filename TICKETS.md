@@ -138,3 +138,25 @@ impossible. The open taxonomy is now remembered.
 terms the sentence runs to 46 words over eight lines. It stays readable and the page does
 not overflow, but it is no longer a glance. Most shelves are far smaller than that, so
 this is a question of how often the worst case turns up rather than a fault.
+
+---
+
+## Settings E — the sentence, in the pane (`08-settings-sentence-workbench.html`)
+
+C's sentence with D's layout, because the two things C was short on were both the
+dialog's fault. A 600px dialog covers the shelf list and caps the sentence width, which
+is what made the 46-word worst case look bad. Moving the same sentence into the pane
+gives it the full column and leaves the list on screen.
+
+C already had a live count; what it gained here is per-shelf unsaved state. Switching
+shelf mid-edit keeps the draft and marks the row with a dot, so there is nothing to lose
+by looking at another shelf.
+
+Verified at 1280 and 1440 in a real browser: no horizontal overflow, no axe WCAG 2.1 AA
+violations, no console errors, count updates on every keystroke, and all eight settings
+reachable including `sortWindowDays`, `searchPostTypes` and the most-viewed/rotation
+rule. Screenshot at `evidence/settings-e-sentence-workbench.png`.
+
+Still carried forward from the other designs: taxonomies are listed globally rather than
+per post type, `rotationInterval` is text here but minutes in the model, and
+`matchCount()` is a stand-in that must be labelled as such in any demo.
