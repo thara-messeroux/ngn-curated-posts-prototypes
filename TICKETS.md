@@ -71,3 +71,13 @@ a routine setting means it carries no weight when something does need attention.
 are now neutral, told apart from include terms by a dashed edge and a leading minus rather
 than by colour, which also means the difference survives for anyone who cannot rely on
 hue.
+
+**Stories count restored.** Spotted in review that the new detail pane had lost it.
+
+My regression, not a decision. The count lived in the slots as the number of boxes drawn,
+so removing the slots took it with it. Every field the old screen carried is now on the
+new one again.
+
+One deliberate difference remains: the old screen listed the next five rotation times as
+five lines, the new one says how many are scheduled, with Interval and Starts above it.
+Worth confirming that is wanted rather than the full list.

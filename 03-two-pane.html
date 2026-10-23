@@ -232,6 +232,7 @@
 
     html += '<div class="detail-body">' +
       '<div class="sect"><h3>Rules</h3><dl class="kv">' +
+        "<dt>Stories</dt><dd>" + d.stories + "</dd>" +
         "<dt>Post types</dt><dd>" + CP.esc(d.types) + "</dd>" +
         "<dt>Include terms</dt><dd>" + (d.inc.length ? CP.terms(d.inc, "inc") : '<span class="unset">none set</span>') + "</dd>" +
         "<dt>Exclude terms</dt><dd>" + (d.exc.length ? CP.terms(d.exc, "exc") : '<span class="unset">none set</span>') + "</dd>" +
