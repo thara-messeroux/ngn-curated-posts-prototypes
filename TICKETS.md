@@ -280,3 +280,15 @@ History, Philosophy and Religion each appear twice, once nested and once at top 
 101 of 210 Research Topics have no posts, and Spotlight's only term is unused.
 
 Verified at 1280 and 1440: axe clean, no overflow, no console errors.
+
+---
+
+## Next-run line shortened
+
+"Every 1h from 12:00 AM. It's 2:14 PM now, so the next run is 3:00 PM — 46 min away."
+repeated the interval and start time that sit in their own fields directly above it, and
+used an em dash.
+
+Now: "It's 2:14 PM. Next run 3:00 PM, in 46 min." The current time stays, because that is
+what stopped the midnight start from reading as a mistake, and the five upcoming times
+below carry the schedule. Retested against a fixed clock across midnight.

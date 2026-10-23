@@ -13951,10 +13951,10 @@ window.nextRotations = function (start, every, count, now) {
 };
 
 /**
- * One line covering the schedule and the next run.
+ * When the next rotation lands.
  *
- * It states the current time, because without it "from 12:00 AM. Next at
- * 1:00 PM" reads as a mistake rather than as the next run from now.
+ * It opens with the current time, because "next run 3:00 PM" under a midnight
+ * start reads as a mistake with nothing to measure it against.
  */
 window.nextRunLine = function (start, every, now) {
   var times = nextRotations(start, every, 1, now);
@@ -13969,13 +13969,12 @@ window.nextRunLine = function (start, every, now) {
   anchor.setHours(parseInt(bits[0], 10) || 0, parseInt(bits[1], 10) || 0, 0, 0);
 
   var away = Math.round((t.getTime() - now.getTime()) / 60000);
-  var inWords = away < 1 ? 'under a minute'
+  var inWords = away < 1 ? 'less than a minute'
     : away < 60 ? away + ' min'
     : Math.floor(away / 60) + 'h ' + (away % 60) + 'm';
 
   var sameDay = t.toDateString() === now.toDateString();
 
-  return 'Every ' + every + ' from ' + clock(anchor) + '. ' +
-    "It's " + clock(now) + ' now, so the next run is ' + clock(t) +
-    (sameDay ? '' : ' tomorrow') + ' \u2014 ' + inWords + ' away.';
+  return "It's " + clock(now) + '. Next run ' + clock(t) +
+    (sameDay ? '' : ' tomorrow') + ', in ' + inWords + '.';
 };
