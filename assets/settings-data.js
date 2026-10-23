@@ -96,14 +96,32 @@ window.nextRotations = function (start, every, count, now) {
   return Array.from({ length: count || 1 }, function (_, i) { return new Date(first + i * step); });
 };
 
-/** One line: when it next runs, and how often after that. */
+/**
+ * One line that answers both questions at once: what the schedule is, and
+ * when the next run lands.
+ *
+ * "Next at 1:00 PM" alone reads as a mistake under a midnight start time,
+ * because it looks like the first run rather than the next one from now.
+ */
 window.nextRunLine = function (start, every, now) {
   var times = nextRotations(start, every, 1, now);
   if (!times.length) return 'Set an interval like 1h or 30m.';
 
+  now = now || new Date();
   var t = times[0];
-  var sameDay = t.toDateString() === (now || new Date()).toDateString();
-  var when = t.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  var clock = function (d) { return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); };
 
-  return 'Next at ' + when + (sameDay ? '' : ' tomorrow') + ', then every ' + every + '.';
+  var bits = String(start).split(':');
+  var anchor = new Date(now);
+  anchor.setHours(parseInt(bits[0], 10) || 0, parseInt(bits[1], 10) || 0, 0, 0);
+
+  var away = Math.round((t.getTime() - now.getTime()) / 60000);
+  var inWords = away < 1 ? 'in under a minute'
+    : away < 60 ? 'in ' + away + ' min'
+    : 'in ' + Math.floor(away / 60) + 'h ' + (away % 60) + 'm';
+
+  var sameDay = t.toDateString() === now.toDateString();
+
+  return 'Runs every ' + every + ' from ' + clock(anchor) + '. ' +
+    'Next' + (sameDay ? '' : ' tomorrow') + ' at ' + clock(t) + ', ' + inWords + '.';
 };

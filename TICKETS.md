@@ -105,3 +105,13 @@ Two notes carried forward rather than fixed:
 - Taxonomies differ per post type. Parents and Family Article offers Tag, Audience,
   Campus, Newsfeed Display and Spotlight, where Post also offers Category, Article
   Format, Department and Kicker Category. The designs list them globally.
+
+**Rotation line reworded.** Review question: under a midnight start, why does it say the
+next run is 1:00 PM and not 1:00 AM?
+
+The time was right and the sentence was not. It rotates hourly from midnight, so at
+12:37 PM the next one really is 1:00 PM. But "Next at 1:00 PM" under "Starting at
+12:00 AM" reads as a sequence, as though the first run were in the afternoon.
+
+It now says both things: "Runs every 1h from 12:00 AM. Next at 1:00 PM, in 23 min." The
+schedule and the next run are different facts and the line was only giving one of them.
