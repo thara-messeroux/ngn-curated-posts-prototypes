@@ -280,7 +280,7 @@
     $('rot').classList.toggle('is-off', !s.rotation.on);
     $('rot-fields').style.display = s.rotation.on ? '' : 'none';
     $('next-run').textContent = s.rotation.on
-      ? 'Next at 12:00 PM, then every ' + s.rotation.interval + '.'
+      ? nextRunLine(s.rotation.start, s.rotation.interval)
       : '';
     $('dirty').textContent = touched ? 'Unsaved changes' : 'No changes yet';
   }
@@ -311,6 +311,7 @@
   $('sort-in').addEventListener('change', function () { change(function () { s.sort = this.value; }.bind(this)); });
   $('rot-on').addEventListener('change', function () { change(function () { s.rotation.on = this.checked; }.bind(this)); });
   $('rot-int').addEventListener('input', function () { change(function () { s.rotation.interval = this.value; }.bind(this)); });
+  $('rot-start').addEventListener('input', function () { change(function () { s.rotation.start = this.value; }.bind(this)); });
 
   function closePop() { $('pop-host').innerHTML = ''; }
 

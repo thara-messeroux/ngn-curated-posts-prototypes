@@ -197,7 +197,7 @@
       '<div class="sect"><h3>Rotation</h3>' +
         (editing === 'rotation' ? editor('rotation')
           : line('rotation', 'Rotation', s.rotation.on ? 'Every ' + esc(s.rotation.interval) + ', from ' + esc(s.rotation.start) : 'off', !s.rotation.on)) +
-        (s.rotation.on && editing !== 'rotation' ? line('upcoming', 'Next run', 'Today 12:00 PM, then every ' + esc(s.rotation.interval)) : '') +
+        (s.rotation.on && editing !== 'rotation' ? line('upcoming', 'Next run', esc(nextRunLine(s.rotation.start, s.rotation.interval))) : '') +
       '</div>';
 
     $('savebar').hidden = changes === 0;

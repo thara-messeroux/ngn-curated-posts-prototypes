@@ -311,7 +311,7 @@
     $('rot-start').value = draft.rotation.start;
     $('rot').classList.toggle('is-off', !draft.rotation.on);
     $('rot-fields').style.display = draft.rotation.on ? '' : 'none';
-    $('next-run').textContent = draft.rotation.on ? 'Next at 12:00 PM, then every ' + draft.rotation.interval + '.' : '';
+    $('next-run').textContent = draft.rotation.on ? nextRunLine(draft.rotation.start, draft.rotation.interval) : '';
     $('savebar').hidden = !changed();
     $('dirty').textContent = 'Unsaved changes to ' + SHELVES[sel].n;
   }

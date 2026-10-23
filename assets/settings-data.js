@@ -53,3 +53,57 @@ window.matchCount = function (s) {
   s.exclude.forEach(function () { n = Math.round(n * 0.86); });
   return n;
 };
+
+/* --------------------------------------------------------------------------
+   When does this shelf next rotate?
+
+   Derived from the start time and the interval, the same way the plugin's
+   getNextRotationTimes does it: anchor to today's start time, step forward
+   by the interval until you pass now.
+   -------------------------------------------------------------------------- */
+
+/** "1h" / "90m" / "2h 30m" -> minutes. Returns 0 when it cannot be read. */
+window.intervalMinutes = function (text) {
+  var m = String(text).toLowerCase().match(/(\d+)\s*h|(\d+)\s*m/g);
+  if (!m) return 0;
+  return m.reduce(function (total, part) {
+    var n = parseInt(part, 10);
+    return total + (part.indexOf('h') > -1 ? n * 60 : n);
+  }, 0);
+};
+
+/**
+ * The next few rotation times.
+ *
+ * @param {string} start  "HH:MM" local.
+ * @param {string} every  Interval as typed.
+ * @param {number} count  How many to return.
+ * @param {Date}   now    Injectable, so this can be tested.
+ */
+window.nextRotations = function (start, every, count, now) {
+  var mins = intervalMinutes(every);
+  if (!mins) return [];
+
+  now = now || new Date();
+  var bits = String(start).split(':');
+  var anchor = new Date(now);
+  anchor.setHours(parseInt(bits[0], 10) || 0, parseInt(bits[1], 10) || 0, 0, 0);
+
+  var step = mins * 60000;
+  var elapsed = now.getTime() - anchor.getTime();
+  var first = anchor.getTime() + (elapsed < 0 ? 0 : Math.floor(elapsed / step) + 1) * step;
+
+  return Array.from({ length: count || 1 }, function (_, i) { return new Date(first + i * step); });
+};
+
+/** One line: when it next runs, and how often after that. */
+window.nextRunLine = function (start, every, now) {
+  var times = nextRotations(start, every, 1, now);
+  if (!times.length) return 'Set an interval like 1h or 30m.';
+
+  var t = times[0];
+  var sameDay = t.toDateString() === (now || new Date()).toDateString();
+  var when = t.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+
+  return 'Next at ' + when + (sameDay ? '' : ' tomorrow') + ', then every ' + every + '.';
+};
