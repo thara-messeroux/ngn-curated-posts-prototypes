@@ -13895,6 +13895,26 @@ window.termByName = function (taxKey, name) {
   return all.filter(function (t) { return t.n === name; })[0] || null;
 };
 
+/* Designs A to D were written against a flat array of
+   { k, n, terms: [ name ] }. Derived from the real data so they keep working
+   and keep showing real terms. Design E uses TAXONOMIES directly. */
+window.TAXONOMIES_V1 = Object.keys(TAXONOMIES).map(function (k) {
+  return { k: k, n: TAXONOMIES[k].n, terms: TAXONOMIES[k].terms.slice(0, 40).map(function (t) { return t.n; }) };
+});
+
+/* The shelf being edited in every one of these designs. Terms are real:
+   Health is a Category, Hide Post never existed. */
+window.SHELF = {
+  name: 'Featured Stories',
+  key: 'featured-stories',
+  count: 4,
+  sort: 'Newest',
+  types: [ 'newspost' ],
+  include: [],
+  exclude: [],
+  rotation: { on: true, interval: '1h', start: '00:00' }
+};
+
 /* A stand-in for "how many stories match these rules right now". Real
    screens should ask the server; the point is that the number exists. */
 window.matchCount = function (s) {

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings D — The workbench · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231423">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231547">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 300px; } }
@@ -100,7 +100,8 @@
   border-radius: var(--ngn-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,.16);
   padding: var(--ngn-space-3); display: flex; flex-direction: column; gap: var(--ngn-space-3);
 }
-.pop select, .pop input { width: 100%; }
+.pop input { width: 100%; }
+.pop select { width: auto; max-width: 100%; }
 .pop .terms { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .pop .term-opt { display: flex; gap: var(--ngn-space-2); padding: 7px 8px; border-radius: var(--ngn-radius-xs); cursor: pointer; font-size: 13px; border: 0; background: none; text-align: left; width: 100%; font-family: inherit; color: inherit; }
 .pop .term-opt:hover { background: var(--ngn-surface-container); }
@@ -247,7 +248,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610231423"></script>
+<script src="assets/settings-data.js?v=202610231547"></script>
 <script>
 (function () {
   var SHELVES = [
@@ -401,7 +402,7 @@
   $('save').addEventListener('click', function () { SHELVES[sel].s = clone(draft); delete dirty[sel]; render(); });
 
   function openPop() {
-    var mode = 'include', tax = TAXONOMIES[0], term = '';
+    var mode = 'include', tax = TAXONOMIES_V1[0], term = '';
     function draw() {
       var terms = tax.terms.filter(function (t) { return t.toLowerCase().indexOf(term.toLowerCase()) > -1; });
       $('pop-host').innerHTML = '<div class="pop">' +
@@ -409,7 +410,7 @@
           '<button type="button" data-mode="include" class="' + (mode === 'include' ? 'is-on' : '') + '">Include</button>' +
           '<button type="button" data-mode="exclude" class="' + (mode === 'exclude' ? 'is-on' : '') + '">Exclude</button>' +
         '</div>' +
-        '<select id="pop-tax">' + TAXONOMIES.map(function (x) {
+        '<select id="pop-tax">' + TAXONOMIES_V1.map(function (x) {
           return '<option value="' + x.k + '"' + (x.k === tax.k ? ' selected' : '') + '>' + esc(x.n) + '</option>';
         }).join('') + '</select>' +
         '<input type="search" id="pop-q" placeholder="Search ' + esc(tax.n.toLowerCase()) + ' terms" value="' + esc(term) + '">' +
@@ -419,7 +420,7 @@
       '</div>';
       document.getElementById('pop-q').addEventListener('input', function () { term = this.value; draw(); document.getElementById('pop-q').focus(); });
       document.getElementById('pop-tax').addEventListener('change', function () {
-        tax = TAXONOMIES.filter(function (x) { return x.k === this.value; }.bind(this))[0]; term = ''; draw();
+        tax = TAXONOMIES_V1.filter(function (x) { return x.k === this.value; }.bind(this))[0]; term = ''; draw();
       });
       $('pop-host').querySelectorAll('[data-mode]').forEach(function (bt) { bt.addEventListener('click', function () { mode = bt.dataset.mode; draw(); }); });
       $('pop-host').querySelectorAll('[data-term]').forEach(function (bt) {

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings A — Guided panel · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231423">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231547">
 <style>
 .sheet { width: 100%; max-width: 760px; display: flex; flex-direction: column; max-height: 680px; }
 
@@ -97,7 +97,8 @@
   border-radius: var(--ngn-radius-md); box-shadow: 0 8px 24px rgba(0,0,0,.16);
   padding: var(--ngn-space-3); display: flex; flex-direction: column; gap: var(--ngn-space-3);
 }
-.pop select, .pop input { width: 100%; }
+.pop input { width: 100%; }
+.pop select { width: auto; max-width: 100%; }
 .pop .terms { max-height: 190px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .pop .term-opt {
   display: flex; align-items: center; gap: var(--ngn-space-2);
@@ -220,7 +221,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610231423"></script>
+<script src="assets/settings-data.js?v=202610231547"></script>
 <script>
 (function () {
   var s = JSON.parse(JSON.stringify(SHELF));
@@ -316,7 +317,7 @@
   function closePop() { $('pop-host').innerHTML = ''; }
 
   function openPop() {
-    var mode = 'include', tax = TAXONOMIES[0], q = '';
+    var mode = 'include', tax = TAXONOMIES_V1[0], q = '';
 
     function draw() {
       var terms = tax.terms.filter(function (t) { return t.toLowerCase().indexOf(q.toLowerCase()) > -1; });
@@ -326,7 +327,7 @@
             '<button type="button" data-mode="include" class="' + (mode === 'include' ? 'is-on' : '') + '">Include</button>' +
             '<button type="button" data-mode="exclude" class="' + (mode === 'exclude' ? 'is-on' : '') + '">Exclude</button>' +
           '</div>' +
-          '<select id="pop-tax">' + TAXONOMIES.map(function (x) {
+          '<select id="pop-tax">' + TAXONOMIES_V1.map(function (x) {
             return '<option value="' + x.k + '"' + (x.k === tax.k ? ' selected' : '') + '>' + esc(x.n) + '</option>';
           }).join('') + '</select>' +
           '<input type="search" id="pop-q" placeholder="Search ' + esc(tax.n.toLowerCase()) + ' terms" value="' + esc(q) + '">' +
@@ -337,7 +338,7 @@
       var qi = document.getElementById('pop-q');
       qi.addEventListener('input', function () { q = this.value; draw(); document.getElementById('pop-q').focus(); });
       document.getElementById('pop-tax').addEventListener('change', function () {
-        tax = TAXONOMIES.filter(function (x) { return x.k === this.value; }.bind(this))[0]; q = ''; draw();
+        tax = TAXONOMIES_V1.filter(function (x) { return x.k === this.value; }.bind(this))[0]; q = ''; draw();
       });
       $('pop-host').querySelectorAll('[data-mode]').forEach(function (b) {
         b.addEventListener('click', function () { mode = b.dataset.mode; draw(); });

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings C — The rule as a sentence · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231423">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231547">
 <style>
 .sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; }
 .sheet-head {
@@ -108,13 +108,13 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610231423"></script>
+<script src="assets/settings-data.js?v=202610231547"></script>
 <script>
 (function () {
   var s = JSON.parse(JSON.stringify(SHELF));
   s.windowDays = 14;
   s.searchTypes = null;   // null means "same as the types above"
-  var open = null, touched = false, taxKey = TAXONOMIES[0].k;
+  var open = null, touched = false, taxKey = TAXONOMIES_V1[0].k;
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
   var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
@@ -183,7 +183,7 @@
     if (open === 'include' || open === 'exclude') {
       var bucket = open === 'include' ? s.include : s.exclude;
       return '<div class="editor">' + head(open === 'include' ? 'Only stories tagged' : 'Never stories tagged') +
-        '<select id="e-tax">' + TAXONOMIES.map(function (x) {
+        '<select id="e-tax">' + TAXONOMIES_V1.map(function (x) {
           return '<option value="' + x.k + '"' + (x.k === taxKey ? ' selected' : '') + '>' + esc(x.n) + '</option>';
         }).join('') + '</select>' +
         '<div class="chips" id="e-terms"></div>' +
@@ -225,7 +225,7 @@
     var host = $('e-terms');
     if (!host) return;
     taxKey = $('e-tax').value;
-    var tax = TAXONOMIES.filter(function (x) { return x.k === taxKey; })[0];
+    var tax = TAXONOMIES_V1.filter(function (x) { return x.k === taxKey; })[0];
     host.innerHTML = tax.terms.map(function (t) {
       return '<button class="chip" type="button" data-term="' + esc(t) + '" data-tax="' + esc(tax.n) + '">' + esc(t) + '</button>';
     }).join('');
