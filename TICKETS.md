@@ -507,3 +507,29 @@ as unparseable. Tested against eight inputs including "1h 24m", "90", "" and "ba
 
 The failure hint said "Set an interval like 1h or 30m", which did not mention the plain
 number it now accepts. Now "Try 1h, 30m, 1h 30m, or a number of minutes."
+
+---
+
+## Direction D: the index on the NGN system (`09-direction-d-ngn.html`)
+
+The index and the settings screen were built on two different systems. Direction C uses
+`wp-admin.css`, Settings E uses `ngn-v2.css`, so side by side they look like two products.
+
+Direction C is untouched and stays as the record. Direction D is a new fourth direction:
+the same two panes, the same flat A to Z list, the same behaviour, rebuilt on the NGN
+tokens so it sits beside Settings E without a seam.
+
+What changed beyond the tokens:
+
+- **State reads as a word.** "Live" and "Draft" rather than a coloured dot, so it does not
+  depend on colour alone.
+- **Delete is a named button with a confirm strip**, instead of hiding behind a kebab menu.
+  The strip uses a left border in the error colour, which is what the error token is for,
+  rather than the brand red that Xris wanted reserved.
+- **"1 story" / "4 stories"**, matching the plural work in Settings E.
+- Badge contrast measured at 8.42:1 after swapping a token that did not exist
+  (`--ngn-on-tertiary-container`) for `--ngn-tertiary`.
+
+Verified: 47 shelves listed, search filters, selecting a shelf swaps only the right pane,
+delete asks first and Keep it cancels, no `wp-admin.css` anywhere on the page, axe clean
+at 1440, 1280, 1024 and 900 with no overflow and no console errors.
