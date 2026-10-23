@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings E: the sentence, in the pane · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231655">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231659">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 280px; } }
@@ -78,6 +78,8 @@
 }
 .savebar[hidden] { display: none; }
 .savebar .spacer { flex: 1 1 auto; }
+.savebar .problem { color: var(--ngn-error); }
+.savebar .btn[disabled] { opacity: .45; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -133,6 +135,7 @@
 
       <div class="savebar" id="savebar" hidden>
         <span class="t-body-sm" id="dirty"></span>
+        <span class="t-body-sm problem" id="problem" role="status"></span>
         <span class="spacer"></span>
         <button class="btn btn-text btn-sm" type="button" id="discard">Discard</button>
         <button class="btn btn-filled btn-sm" type="button" id="save">Save</button>
@@ -142,7 +145,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610231655"></script>
+<script src="assets/settings-data.js?v=202610231659"></script>
 <script>
 (function () {
   function base(o) {
@@ -158,6 +161,23 @@
 
   var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, open = null, taxKey = null, termQ = {}, q = '';
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  /* Everything wrong with the rule as it stands, in the order you would want
+     to hear it. An empty list means it is safe to save. */
+  function problems(d) {
+    var out = [];
+    if (!d.types.length) out.push('Pick at least one post type.');
+    if (d.sort !== 'Most viewed' && d.rotation.on && !intervalMinutes(d.rotation.interval)) {
+      out.push('"' + (d.rotation.interval || 'blank') + '" is not an interval. Try 1h, 30m or a number of minutes.');
+    }
+    var inc = d.include.reduce(function (a, g) { return a.concat(g); }, []);
+    d.exclude.forEach(function (x) {
+      if (inc.some(function (i) { return i.term === x.term && i.tax === x.tax; })) {
+        out.push('\u201c' + x.term + '\u201d is both required and skipped, so nothing can match it.');
+      }
+    });
+    return out;
+  }
 
   /* Whole numbers only, held inside the range, so the box and the sentence
      can never show different values. */
@@ -268,7 +288,7 @@
         ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
         : 'pick a type', !draft.types.length);
 
-    if (views) str += ' <span class="plain">from the last</span> ' + tok('window', draft.windowDays + ' days');
+    if (views) str += ' <span class="plain">from the last</span> ' + tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
 
     str += ' <span class="plain">in</span> ' + groupTokens() +
       ', <span class="plain">skipping</span> ' +
@@ -349,18 +369,19 @@
     }
     if (open === 'rotation') return '<div class="editor">' + head('Rotation') +
       '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' + (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
+      (draft.rotation.on ? '' : '<p class="t-body-sm muted" style="margin:0">Turn this on to set an interval.</p>') +
       '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
         '<div class="field"><label for="e-every">Every</label>' +
-          '<select id="e-every">' + INTERVALS.map(function (o) {
+          '<select id="e-every"' + (draft.rotation.on ? '' : ' disabled') + '>' + INTERVALS.map(function (o) {
             return '<option value="' + o + '"' + (o === draft.rotation.interval ? ' selected' : '') + '>' + o + '</option>';
           }).join('') +
           '<option value="custom"' + (isCustom(draft.rotation.interval) ? ' selected' : '') + '>Custom\u2026</option>' +
           '</select></div>' +
         (isCustom(draft.rotation.interval)
           ? '<div class="field" style="width:130px"><label for="e-int">How long</label>' +
-            '<input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '" placeholder="1h 30m"></div>'
+            '<input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '" placeholder="1h 30m"' + (draft.rotation.on ? '' : ' disabled') + '></div>'
           : '') +
-        '<div class="field" style="width:150px"><label for="e-start">Starting at</label><input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"></div>' +
+        '<div class="field" style="width:150px"><label for="e-start">Starting at</label><input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"' + (draft.rotation.on ? '' : ' disabled') + '></div>' +
       '</div>' +
       '<div id="e-next">' + (draft.rotation.on ? upcoming(draft.rotation) : '') + '</div>' + done + '</div>';
     return '';
@@ -378,14 +399,22 @@
     $('foot').textContent = shown.length + ' of ' + SHELVES.length + ' shelves';
   }
 
+  /* Hidden, blocked with a reason, or ready to save. */
+  function refreshSave() {
+    $('savebar').hidden = !changed();
+    var bad = problems(draft);
+    $('dirty').textContent = bad.length ? '' : 'Unsaved changes to ' + SHELVES[sel].n;
+    $('problem').textContent = bad[0] || '';
+    $('save').disabled = bad.length > 0;
+  }
+
   function render() {
     $('title').textContent = SHELVES[sel].n;
     $('slug').textContent = SHELVES[sel].k;
     $('rule').innerHTML = rule();
     $('editor').innerHTML = editor();
     $('count').textContent = draft.types.length ? matchCount(flat(draft)).toLocaleString() : '0';
-    $('savebar').hidden = !changed();
-    $('dirty').textContent = 'Unsaved changes to ' + SHELVES[sel].n;
+    refreshSave();
     renderList();
     bindTax();
   }
@@ -407,6 +436,25 @@
     if (t) t.addEventListener('change', function () { taxKey = this.value; termQ = {}; render(); });
   }
 
+  /* Opening a word puts you in its editor and closing returns you to the
+     word, so the keyboard path is a loop rather than a trip through every
+     other token. */
+  var lastTok = null;
+
+  function focusEditor() {
+    var ed = $('editor');
+    var first = ed && ed.querySelector('input, select, button');
+    if (first) first.focus();
+  }
+
+  function closeEditor() {
+    var back = lastTok;
+    open = null; termQ = {};
+    render();
+    var el = back && document.querySelector('[data-tok="' + back + '"]');
+    if (el) el.focus();
+  }
+
   function select(i) {
     if (changed()) dirty[sel] = clone(draft);
     sel = i; draft = dirty[i] ? clone(dirty[i]) : clone(SHELVES[i].s);
@@ -419,7 +467,7 @@
         rm = ev.target.closest('[data-rm]'), st = ev.target.closest('[data-stype]');
 
     if (sh) return select(+sh.dataset.sel);
-    if (c) { open = null; return render(); }
+    if (c) { closeEditor(); return; }
     if (ty) { var i = draft.types.indexOf(ty.dataset.type); if (i > -1) draft.types.splice(i, 1); else draft.types.push(ty.dataset.type); return render(); }
     if (so) { draft.sort = so.dataset.sort; return render(); }
     if (st) { var j = draft.searchTypes.indexOf(st.dataset.stype); if (j > -1) draft.searchTypes.splice(j, 1); else draft.searchTypes.push(st.dataset.stype); return render(); }
@@ -427,13 +475,36 @@
     if (tm) {
       var bucket = open === 'exclude' ? draft.exclude : draft.include[+tm.dataset.gi];
       var at = bucket.findIndex(function (f) { return f.term === tm.dataset.term; });
-      if (at > -1) bucket.splice(at, 1); else bucket.push({ tax: taxKey, term: tm.dataset.term });
+      if (at > -1) { bucket.splice(at, 1); }
+      else {
+        // A term cannot be required and skipped at once, so taking it on one
+        // side releases it from the other.
+        var other = open === 'exclude'
+          ? draft.include.reduce(function (a, g) { return a.concat(g); }, [])
+          : draft.exclude;
+        for (var oi = other.length - 1; oi >= 0; oi--) {
+          if (other[oi].term === tm.dataset.term && other[oi].tax === taxKey) {
+            if (open === 'exclude') {
+              draft.include.forEach(function (g) {
+                var k = g.findIndex(function (f) { return f.term === tm.dataset.term && f.tax === taxKey; });
+                if (k > -1) g.splice(k, 1);
+              });
+            } else { other.splice(oi, 1); }
+          }
+        }
+        bucket.push({ tax: taxKey, term: tm.dataset.term });
+      }
       return render();
     }
     if (ev.target.closest('[data-addgroup]')) { draft.include.push([]); return render(); }
     var dg = ev.target.closest('[data-dropgroup]');
     if (dg) { draft.include.splice(+dg.dataset.dropgroup, 1); termQ = {}; return render(); }
-    if (t) { open = open === t.dataset.tok ? null : t.dataset.tok; termQ = {}; return render(); }
+    if (t) {
+      if (open === t.dataset.tok) { closeEditor(); return; }
+      open = t.dataset.tok; termQ = {}; lastTok = t.dataset.tok;
+      render(); focusEditor();
+      return;
+    }
   });
 
   document.addEventListener('input', function (ev) {
@@ -441,14 +512,14 @@
       draft.count = clampWhole(ev.target.value, 1, 50);
       if (ev.target.value !== '' && +ev.target.value !== draft.count) ev.target.value = draft.count;
       var note = $('e-count-note');
-      if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.'; $('rule').innerHTML = rule(); $('count').textContent = matchCount(flat(draft)).toLocaleString(); $('savebar').hidden = !changed(); renderList(); }
+      if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.'; $('rule').innerHTML = rule(); $('count').textContent = matchCount(flat(draft)).toLocaleString(); refreshSave(); renderList(); }
     if (ev.target.id === 'e-window') {
       draft.windowDays = clampWhole(ev.target.value, 1, 3650);
       if (ev.target.value !== '' && +ev.target.value !== draft.windowDays) ev.target.value = draft.windowDays;
-      $('rule').innerHTML = rule(); $('savebar').hidden = !changed();
+      $('rule').innerHTML = rule(); refreshSave();
     }
-    if (ev.target.id === 'e-int') { draft.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); $('savebar').hidden = !changed(); }
-    if (ev.target.id === 'e-start') { draft.rotation.start = ev.target.value; $('e-next').innerHTML = upcoming(draft.rotation); $('savebar').hidden = !changed(); }
+    if (ev.target.id === 'e-int') { draft.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); refreshSave(); }
+    if (ev.target.id === 'e-start') { draft.rotation.start = ev.target.value; $('e-next').innerHTML = upcoming(draft.rotation); refreshSave(); }
     if (ev.target.id === 'q') { q = ev.target.value; renderList(); }
     if (ev.target.dataset && ev.target.dataset.q !== undefined) { termQ[ev.target.dataset.q] = ev.target.value; redrawTerms(ev.target.id); }
   });
@@ -463,8 +534,17 @@
     }
   });
 
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Escape' || !open) return;
+    var inEditor = $('editor').contains(document.activeElement);
+    if (inEditor || document.activeElement.dataset.tok) { ev.preventDefault(); closeEditor(); }
+  });
+
   $('discard').addEventListener('click', function () { draft = clone(SHELVES[sel].s); delete dirty[sel]; open = null; render(); });
-  $('save').addEventListener('click', function () { SHELVES[sel].s = clone(draft); delete dirty[sel]; render(); });
+  $('save').addEventListener('click', function () {
+    if (problems(draft).length) return;
+    SHELVES[sel].s = clone(draft); delete dirty[sel]; render();
+  });
 
   render();
 })();

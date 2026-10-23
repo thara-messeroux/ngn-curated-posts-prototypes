@@ -579,3 +579,32 @@ Measured, short shelf at 1280:
 | D now | 418px | 1px |
 | E was | 620px (forced) | ~300px of nothing |
 | E now | 319px | 17px, which is the result block's own margin |
+
+---
+
+## Five defects from the independent review
+
+**1. Save accepted a rule that cannot run.** "Rotate them every banana" saved without
+complaint. There is now one `problems()` function that returns everything wrong with the
+draft, and the save bar has three states: hidden, blocked with the reason in the error
+colour, or ready. Save also refuses on click, not only by looking disabled.
+
+**2. A term could be required and skipped at once.** Including Sports while excluding
+Sports saved happily and the count claimed 638 matches. Picking a term on one side now
+releases it from the other, since no story can satisfy both.
+
+**3. The interval and start time stayed editable with rotation off**, so you could set a
+schedule that would never run. Both are disabled now, with "Turn this on to set an
+interval" where the fields were.
+
+**4. "1 days".** Now "1 day" / "14 days".
+
+**5. The keyboard path was a one-way trip.** Enter opened an editor but left focus in the
+sentence, so you had to Tab past every remaining word to reach it, Escape did nothing,
+and after Done focus was lost to the address bar. Opening a word now moves focus to the
+first control in its editor, Escape closes, and both Escape and Done return focus to the
+word you came from.
+
+Verified: Save blocked on "banana" and re-enabled on "2h", the contradiction resolves
+itself, both rotation fields disable, "1 day" reads correctly, and the keyboard loop
+holds. axe clean at 1440, 1280 and 900, no console errors.
