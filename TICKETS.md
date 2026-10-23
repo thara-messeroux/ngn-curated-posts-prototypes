@@ -557,3 +557,25 @@ cleared AA by 0.06. The nine shelves that need a look keep their amber "Check" c
 
 Caught while measuring: `.shelf span` was overriding `.state` on specificity, so the
 chip had been rendering in muted grey rather than the warning colour.
+
+---
+
+## Cards hug their content again
+
+Both NGN cards carried a `min-height` I had put there, 560px on Direction D and 620px on
+Settings E, so a short shelf left a block of empty card beneath it. Direction C never had
+one, which is why it looked tidier side by side.
+
+Removed from both. Direction D's card now ends 1px below its last section, the same as C.
+Settings E's save bar is still flush at the bottom, because it was sticky rather than
+relying on the forced height.
+
+Measured, short shelf at 1280:
+
+| | card height | gap below content |
+| --- | --- | --- |
+| C | 399px | 1px |
+| D was | 560px (forced) | ~160px of nothing |
+| D now | 418px | 1px |
+| E was | 620px (forced) | ~300px of nothing |
+| E now | 319px | 17px, which is the result block's own margin |
