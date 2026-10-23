@@ -24,6 +24,13 @@
 
   /* Error. Note how close this sits to primary: #bf0229 against #c8102e.
      That is exactly why red cannot be spent on routine things here. */
+  /* Status. Added for the index: the system had no colour for "this is on
+     the site right now", and red is reserved for things that matter. */
+  --ngn-success:           #15692e;
+  --ngn-success-container: #e9f6ec;
+  --ngn-warning:           #8a5a00;
+  --ngn-warning-container: #fdf2e0;
+
   --ngn-error:             #bf0229;
   --ngn-error-container:   #ffdad8;
   --ngn-on-error-container:#92001c;

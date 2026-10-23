@@ -13920,9 +13920,22 @@ window.SHELF = {
 window.matchCount = function (s) {
   var base = { newspost: 4120, post: 9800, 'magazine-article': 310, 'eight-oh-five': 95 };
   var n = s.types.reduce(function (t, k) { return t + (base[k] || 140); }, 0);
-  s.include.forEach(function () { n = Math.round(n * 0.18); });
+
+  // Terms inside a group are OR, so each extra one can only widen the group.
+  // Separate groups are AND, so each group narrows what is left.
+  (s.groups || (s.include.length ? [ s.include ] : [])).forEach(function (g) {
+    if (!g.length) return;
+    n = Math.round(n * (1 - Math.pow(1 - 0.18, g.length)));
+  });
+
+  // Excludes only remove, never add.
   s.exclude.forEach(function () { n = Math.round(n * 0.86); });
-  return n;
+
+  // A most-viewed window is a date filter, so a shorter window matches less.
+  if (s.sort === 'Most viewed' && s.windowDays) {
+    n = Math.round(n * Math.min(1, s.windowDays / 365));
+  }
+  return Math.max(0, n);
 };
 
 /* --------------------------------------------------------------------------
@@ -13990,7 +14003,7 @@ window.nextRunLine = function (start, every, now) {
   var anchor = new Date(now);
   anchor.setHours(parseInt(bits[0], 10) || 0, parseInt(bits[1], 10) || 0, 0, 0);
 
-  var away = Math.round((t.getTime() - now.getTime()) / 60000);
+  var away = Math.ceil((t.getTime() - now.getTime()) / 60000);
   var inWords = away < 1 ? 'less than a minute'
     : away < 60 ? away + ' min'
     : Math.floor(away / 60) + 'h ' + (away % 60) + 'm';

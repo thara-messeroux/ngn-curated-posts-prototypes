@@ -533,3 +533,27 @@ What changed beyond the tokens:
 Verified: 47 shelves listed, search filters, selecting a shelf swaps only the right pane,
 delete asks first and Keep it cancels, no `wp-admin.css` anywhere on the page, axe clean
 at 1440, 1280, 1024 and 900 with no overflow and no console errors.
+
+---
+
+## Direction D: Delete protected again, and a real status green
+
+**Delete behind a menu.** Porting C to the NGN system I promoted Delete to a visible
+button next to Duplicate. That was a regression: C hid it behind a kebab precisely so it
+could not be hit on the way to something else. The menu is back, with Rename, Duplicate,
+a separator and Delete in the error colour, and the confirm strip still follows. It opens
+with the first item focused, closes on Escape and on an outside click, and carries
+`aria-haspopup`, `aria-expanded` and `role="menu"`.
+
+**Status colours are now tokens, not a one-off hex.** The system had no green at all, so
+rather than paste WordPress's `#00a32a` into one rule, `ngn-v2.css` gains four semantic
+tokens: `--ngn-success` / `--ngn-success-container` and `--ngn-warning` /
+`--ngn-warning-container`. Red stays reserved for the brand and for errors.
+
+Live is a delicate green again: a 7px dot on live rows and a soft green badge in the
+detail pane, measured at 6.10:1 after darkening the green from #1a7f37, which only
+cleared AA by 0.06. The nine shelves that need a look keep their amber "Check" chip at
+5.35:1, so the exception is still visible rather than blending into 38 identical rows.
+
+Caught while measuring: `.shelf span` was overriding `.state` on specificity, so the
+chip had been rendering in muted grey rather than the warning colour.

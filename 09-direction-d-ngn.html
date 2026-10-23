@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Direction D: the index, on the NGN system · Curated Posts prototypes</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231640">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231651">
 <style>
 .panes { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 320px; position: static; } }
@@ -27,19 +27,25 @@
 .shelf span { display: block; font-size: 12px; color: var(--ngn-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* State as a word, not only a colour. */
-.state { flex: none; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
-.state.is-live { color: var(--ngn-tertiary); }
+.dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ngn-success); }
+/* .shelf span sets a muted colour, so this needs the extra specificity. */
+.shelf .state {
+  flex: none; display: block; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ngn-warning); background: var(--ngn-warning-container);
+  border-radius: 999px; padding: 2px 8px;
+}
 
 .detail { display: flex; flex-direction: column; min-height: 560px; }
 .detail-head { padding: var(--ngn-space-4) var(--ngn-space-5) var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); display: flex; gap: var(--ngn-space-3); align-items: flex-start; flex-wrap: wrap; }
 .detail-head .acts { margin-left: auto; display: flex; gap: var(--ngn-space-2); }
 
+.title-line { display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap; }
 .badge {
-  font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
-  padding: 3px 10px; border-radius: 999px; align-self: center;
+  font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
+  padding: 2px 9px; border-radius: 999px; white-space: nowrap;
   background: var(--ngn-surface-container); color: var(--ngn-on-surface-variant);
 }
-.badge.is-live { background: var(--ngn-tertiary-container); color: var(--ngn-tertiary); }
+.badge.is-live { background: var(--ngn-success-container); color: var(--ngn-success); }
 
 .sections { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-5); }
 .sect h3 { margin: 0 0 var(--ngn-space-3); font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
@@ -58,6 +64,22 @@
   display: flex; align-items: center; gap: var(--ngn-space-3); flex-wrap: wrap; font-size: 13.5px;
 }
 .confirm .btns { margin-left: auto; display: flex; gap: var(--ngn-space-2); }
+
+.menu-wrap { position: relative; display: inline-flex; }
+.kebab { min-width: 36px; padding-left: 0; padding-right: 0; }
+.menu {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 10; min-width: 190px;
+  background: var(--ngn-surface); border: 1px solid var(--ngn-outline-variant);
+  border-radius: var(--ngn-radius-sm); box-shadow: 0 6px 20px rgba(0,0,0,.12);
+  padding: var(--ngn-space-1) 0; display: flex; flex-direction: column;
+}
+.menu button {
+  border: 0; background: none; font: inherit; font-size: 13.5px; text-align: left;
+  padding: var(--ngn-space-2) var(--ngn-space-4); cursor: pointer; color: inherit;
+}
+.menu button:hover { background: var(--ngn-surface-container-low); }
+.menu .is-delete { color: var(--ngn-error); }
+.menu-sep { height: 1px; background: var(--ngn-outline-variant); margin: var(--ngn-space-1) 0; }
 </style>
 </head>
 <body>
@@ -98,7 +120,7 @@
   </div>
 </div>
 
-<script src="assets/data.js?v=202610231640"></script>
+<script src="assets/data.js?v=202610231651"></script>
 <script>
 (function () {
   var sel = CURATED[0].s, confirming = null, deleted = {};
@@ -124,8 +146,9 @@
           'aria-selected="' + (sel === d.s) + '" data-sel="' + esc(d.s) + '">' +
           '<span class="txt"><b>' + esc(d.n) + '</b>' +
           '<span>' + stories(d.stories) + ' · ' + esc(d.types) + '</span></span>' +
-          '<span class="state' + (d.state === 'live' ? ' is-live' : '') + '">' +
-          (d.state === 'live' ? 'Live' : 'Draft') + '</span></button>';
+          (d.state === 'live'
+            ? '<span class="dot" title="Live"></span>'
+            : '<span class="state">Check</span>') + '</button>';
       }).join('');
   }
 
@@ -146,14 +169,17 @@
     if (!d) { $('detail').innerHTML = '<p class="empty">Pick a shelf on the left to see its settings.</p>'; return; }
 
     var html = '<div class="detail-head">' +
-      '<div><h2 class="t-title" style="margin:0">' + esc(d.n) + '</h2>' +
-      '<p class="t-label-sm muted" style="margin:2px 0 0;font-family:var(--ngn-mono)">' + esc(d.s) + '</p></div>' +
+      '<div><span class="title-line"><h2 class="t-title" style="margin:0">' + esc(d.n) + '</h2>' +
       '<span class="badge' + (d.state === 'live' ? ' is-live' : '') + '">' +
-      (d.state === 'live' ? 'Live' : 'Draft') + '</span>' +
+      (d.state === 'live' ? 'Live' : 'Needs check') + '</span></span>' +
+      '<p class="t-label-sm muted" style="margin:2px 0 0;font-family:var(--ngn-mono)">' + esc(d.s) + '</p></div>' +
       '<div class="acts">' +
         '<button class="btn btn-outlined btn-sm" type="button">Rename</button>' +
         '<button class="btn btn-outlined btn-sm" type="button">Duplicate</button>' +
-        '<button class="btn btn-text btn-sm" type="button" data-del="' + esc(d.s) + '">Delete</button>' +
+        '<span class="menu-wrap">' +
+          '<button class="btn btn-outlined btn-sm kebab" type="button" aria-haspopup="menu" ' +
+            'aria-expanded="false" aria-label="More actions for ' + esc(d.n) + '" data-menu="' + esc(d.s) + '">\u22ef</button>' +
+        '</span>' +
       '</div></div>';
 
     if (confirming === d.s) {
@@ -184,13 +210,45 @@
 
   function render() { renderList(); renderDetail(); }
 
+  function closeMenu() {
+    var m = document.querySelector('.menu');
+    if (m) {
+      var btn = m.parentElement.querySelector('[data-menu]');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+      m.remove();
+    }
+  }
+
+  function openMenu(btn) {
+    var already = btn.parentElement.querySelector('.menu');
+    closeMenu();
+    if (already) return;
+    var m = document.createElement('div');
+    m.className = 'menu';
+    m.setAttribute('role', 'menu');
+    m.innerHTML = '<button type="button" role="menuitem">Rename</button>' +
+      '<button type="button" role="menuitem">Duplicate</button>' +
+      '<div class="menu-sep"></div>' +
+      '<button type="button" role="menuitem" class="is-delete" data-del="' + esc(btn.dataset.menu) + '">Delete\u2026</button>';
+    btn.parentElement.appendChild(m);
+    btn.setAttribute('aria-expanded', 'true');
+    m.querySelector('button').focus();
+  }
+
   document.addEventListener('click', function (ev) {
     var s = ev.target.closest('[data-sel]'), del = ev.target.closest('[data-del]'),
+        menu = ev.target.closest('[data-menu]'),
         y = ev.target.closest('[data-yes]'), n = ev.target.closest('[data-no]');
-    if (y)   { deleted[y.dataset.yes] = true; confirming = null; sel = (live()[0] || {}).s; return render(); }
-    if (n)   { confirming = null; return render(); }
-    if (del) { confirming = del.dataset.del; return render(); }
-    if (s)   { sel = s.dataset.sel; confirming = null; return render(); }
+    if (y)    { deleted[y.dataset.yes] = true; confirming = null; sel = (live()[0] || {}).s; closeMenu(); return render(); }
+    if (n)    { confirming = null; return render(); }
+    if (del)  { confirming = del.dataset.del; closeMenu(); return render(); }
+    if (menu) { return openMenu(menu); }
+    if (s)    { sel = s.dataset.sel; confirming = null; closeMenu(); return render(); }
+    closeMenu();
+  });
+
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') closeMenu();
   });
 
   $('q').addEventListener('input', function () {
