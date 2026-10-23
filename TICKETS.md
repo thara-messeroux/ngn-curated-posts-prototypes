@@ -160,3 +160,18 @@ rule. Screenshot at `evidence/settings-e-sentence-workbench.png`.
 Still carried forward from the other designs: taxonomies are listed globally rather than
 per post type, `rotationInterval` is text here but minutes in the model, and
 `matchCount()` is a stand-in that must be labelled as such in any demo.
+
+---
+
+## Next-run sentence reworded (`assets/settings-data.js`)
+
+"Runs every 1h from 12:00 AM. Next at 1:00 PM" was read as a mistake twice, because
+1:00 AM is what follows 12:00 AM. The maths was right — 1:00 AM ran twelve hours ago,
+and 1:00 PM is the next one from now — but the sentence never said what time it was,
+so there was nothing to anchor "next" to.
+
+Now: "Every 1h from 12:00 AM. It's 12:44 PM now, so the next run is 1:00 PM — 16 min
+away." Tested against a fixed clock, including half past midnight (correctly says 1:00
+AM), the last minute of the day, and an interval that crosses midnight.
+
+Shared by Settings A, B, D and E.
