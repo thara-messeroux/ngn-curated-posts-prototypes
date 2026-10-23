@@ -275,10 +275,20 @@ select:focus {
   border: 1px solid var(--wp-border-light);
   color: var(--wp-text-2);
 }
+/* An excluded term is configuration, not a problem. Red is reserved for
+   things that need attention, so this stays neutral and is told apart by a
+   dashed edge and a leading minus. */
 .term-exclude {
-  background: var(--wp-red-bg);
-  border-color: #f0b4b5;
-  color: var(--wp-red);
+  background: var(--wp-surface-alt);
+  border-style: dashed;
+  border-color: var(--wp-border);
+  color: var(--wp-text-2);
+}
+
+.term-exclude::before {
+  content: "\2212";
+  margin-right: 4px;
+  color: var(--wp-text-muted);
 }
 
 /* --------------------------------------------------------------------------

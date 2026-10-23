@@ -62,3 +62,12 @@ did not, which changes the comparison rather than just trimming the screen. With
 slots gone the right pane holds the rules alone, and the case for two panes over a plain
 list table is narrower: it is now about finding a shelf and keeping your place while you
 edit, not about seeing what a shelf is publishing.
+
+**Red removed from exclude terms.** Xris: red should be kept for things that genuinely
+matter.
+
+Right. An excluded term is configuration, not a problem, and spending the alarm colour on
+a routine setting means it carries no weight when something does need attention. The chips
+are now neutral, told apart from include terms by a dashed edge and a leading minus rather
+than by colour, which also means the difference survives for anyone who cannot rely on
+hue.
