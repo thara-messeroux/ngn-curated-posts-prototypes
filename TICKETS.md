@@ -322,3 +322,37 @@ no groups.
 Verified at 1280 and 1440: two boxes after Add, counts track per box, the two searches do
 not interfere, focus and caret survive typing, Remove drops the right group, axe clean,
 no overflow, no console errors.
+
+---
+
+## Copy pass on the whole design (`08`)
+
+Ten sentences rewritten. The worst was the manual search note, which spent 32 words and
+an em dash explaining what the old screen does internally:
+
+> The live screen repeats every taxonomy picker under each of these types too. They all
+> write to the same filter, so the terms you set above already apply here - there is
+> nothing extra to set.
+
+Now: "Your filters above already apply here." An editor does not need to know how the old
+screen was built, only whether there is anything left to do here.
+
+Others:
+
+- "but not nothing" was not English. The clause is now "skipping nothing", which reads as
+  a sentence whether or not anything is excluded.
+- "A most-viewed order changes on its own, so there is no rotation." became "Most viewed
+  reshuffles itself, so there is no rotation."
+- "When someone pins a story by hand" became "When you pin a story by hand."
+- The capped-list note was explaining the old screen's limit instead of what to do about
+  it: "The live screen stops at 500, so typing is the only way past it" became "Type to
+  find the rest."
+- The search label repeated the term count printed directly below it: "Search Tag, 12,710
+  terms" became "Search Tag."
+- Headings trimmed: "How far back a most-viewed sort looks" to "How far back to look",
+  "Types the manual search offers" to "Types you can pin by hand".
+- "The chosen post types have no taxonomies to filter on" became "These post types have
+  nothing to filter on."
+
+No em dashes anywhere on the page, checked against the rendered text rather than the
+source. Axe clean at 1280 and 1440, no overflow, no console errors.

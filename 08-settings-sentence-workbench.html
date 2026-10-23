@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Settings E — The sentence, in the pane · NUEAC-398</title>
+<title>Settings E: the sentence, in the pane · NUEAC-398</title>
 <link rel="stylesheet" href="assets/ngn-v2.css?v=202610231423">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
@@ -82,7 +82,7 @@
 <body>
 
 <div class="proto-bar">
-  <strong>NUEAC-398 · Settings E — The sentence, in the pane</strong>
+  <strong>NUEAC-398 · Settings E: the sentence, in the pane</strong>
   <span class="sep">|</span>
   <a href="index.html">All designs</a>
   <span class="sep">|</span>
@@ -93,9 +93,8 @@
 <div class="wrap">
   <h1 class="t-headline" style="margin:0 0 4px">Curated Posts</h1>
   <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:74ch">
-    C's sentence with D's layout. The rule still reads as one plain line you can hand to
-    anyone, but it lives in the pane rather than over the list, so the shelves stay on
-    screen and unsaved work survives switching between them.
+    The rule reads as one plain sentence. Click any underlined word to change it. The
+    shelf list stays on screen the whole time, and unsaved work is kept per shelf.
   </p>
 
   <div class="panes">
@@ -124,7 +123,7 @@
       <p class="rule" id="rule"></p>
 
       <div class="result">
-        <b id="count">—</b>
+        <b id="count">&ndash;</b>
         <span class="t-body-sm muted">stories match this rule right now</span>
         <span class="note">prototype figure</span>
       </div>
@@ -198,7 +197,7 @@
         (!isEx && draft.include.length > 1
           ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove</button>' : '') +
       '</div>' +
-      (big ? '<div class="field"><label for="e-q-' + gi + '">Search ' + esc(tax.n) + ', ' + tax.count.toLocaleString() + ' terms</label>' +
+      (big ? '<div class="field"><label for="e-q-' + gi + '">Search ' + esc(tax.n) + '</label>' +
         '<input type="search" id="e-q-' + gi + '" data-q="' + gi + '" value="' + esc(q) + '" placeholder="Type a name or a slug\u2026"></div>' : '') +
       '<div class="chips">' + shown.map(function (t) {
         var on = bucket.some(function (f) { return f.term === t.n; });
@@ -208,7 +207,7 @@
           ' <span class="muted">' + t.c.toLocaleString() + '</span></button>';
       }).join('') + '</div>' +
       (big ? '<p class="t-body-sm muted" style="margin:0">Showing ' + shown.length + ' of ' + tax.count.toLocaleString() +
-        (q ? ' matching \u201c' + esc(q) + '\u201d' : '. The live screen stops at 500, so typing is the only way past it') + '.</p>' : '') +
+        (q ? ' matching \u201c' + esc(q) + '\u201d.' : '. Type to find the rest.') + '</p>' : '') +
       (bucket.length ? '<div class="chips picked">' + bucket.map(function (f) {
         return '<span class="chip' + (isEx ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
           ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" data-gi="' + gi +
@@ -232,17 +231,17 @@
     if (views) str += ' <span class="plain">from the last</span> ' + tok('window', draft.windowDays + ' days');
 
     str += ' <span class="plain">in</span> ' + groupTokens() +
-      ', <span class="plain">but not</span> ' +
+      ', <span class="plain">skipping</span> ' +
       tok('exclude', draft.exclude.length ? draft.exclude.map(function (f) { return f.term; }).join(' or ') : 'nothing', !draft.exclude.length) +
       '<span class="plain">.</span>';
 
     str += views
-      ? '<br><span class="plain">A most-viewed order changes on its own, so there is no rotation.</span>'
+      ? '<br><span class="plain">Most viewed reshuffles itself, so there is no rotation.</span>'
       : draft.rotation.on
         ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="plain">.</span>'
         : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="plain">.</span>';
 
-    str += '<br><span class="plain">When someone pins a story by hand, search</span> ' +
+    str += '<br><span class="plain">When you pin a story by hand, search</span> ' +
       tok('searchTypes', draft.searchTypes === null ? 'the same types' : (draft.searchTypes.length ? draft.searchTypes.map(typeName).join(' or ') : 'nothing'), draft.searchTypes === null) +
       '<span class="plain">.</span>';
 
@@ -257,12 +256,12 @@
     if (open === 'count') return '<div class="editor">' + head('How many stories') +
       '<input type="number" id="e-count" min="1" max="50" value="' + draft.count + '" style="width:120px">' +
       '<p class="t-body-sm muted" style="margin:0">1 to 50.</p>' + done + '</div>';
-    if (open === 'window') return '<div class="editor">' + head('How far back a most-viewed sort looks') +
+    if (open === 'window') return '<div class="editor">' + head('How far back to look') +
       '<div style="display:flex;gap:8px;align-items:center"><input type="number" id="e-window" min="1" value="' + draft.windowDays + '" style="width:110px"><span class="t-body-sm muted">days</span></div>' + done + '</div>';
     if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
       ['Newest', 'Most viewed'].map(function (o) { return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>'; }).join('') +
       '</div>' + done + '</div>';
-    if (open === 'types') return '<div class="editor">' + head('Where the stories come from') + '<div class="chips">' +
+    if (open === 'types') return '<div class="editor">' + head('Where stories come from') + '<div class="chips">' +
       POST_TYPES.map(function (t) {
         return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '"' +
           (t.tax.length ? '' : ' title="No filterable taxonomies"') + '>' + esc(t.n) +
@@ -272,7 +271,7 @@
       taxonomiesFor(draft.types).length + ' taxonomies available</p>' + done + '</div>';
     if (open === 'searchTypes') {
       var custom = draft.searchTypes !== null;
-      return '<div class="editor">' + head('Types the manual search offers') +
+      return '<div class="editor">' + head('Types you can pin by hand') +
         '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-same" ' + (custom ? '' : 'checked') + '> <span class="t-label">Same as the types above</span></label>' +
         (custom ? '<div class="chips">' + POST_TYPES.map(function (t) {
           return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-stype="' + t.k + '"' +
@@ -280,15 +279,14 @@
             (t.tax.length ? '' : ' <span class="muted">\u00b7 no filters</span>') + '</button>';
         }).join('') + '</div>' : '') +
         '<p class="t-body-sm muted" style="margin:0;border-top:1px solid var(--ngn-outline-variant);padding-top:var(--ngn-space-2)" id="e-manual-note">' +
-        'The live screen repeats every taxonomy picker under each of these types too. They all write to ' +
-        'the same filter, so the terms you set above already apply here \u2014 there is nothing extra to set.</p>' +
+        'Your filters above already apply here.</p>' +
         done + '</div>';
     }
     if (open === 'include' || open === 'exclude') {
       var isEx = open === 'exclude';
       var available = taxonomiesFor(draft.types);
       if (!available.length) return '<div class="editor">' + head('No filters available') +
-        '<p class="t-body-sm" style="margin:0">The chosen post types have no taxonomies to filter on.</p>' + done + '</div>';
+        '<p class="t-body-sm" style="margin:0">These post types have nothing to filter on.</p>' + done + '</div>';
       if (available.indexOf(taxKey) < 0) taxKey = available[0];
       var tax = TAXONOMIES[taxKey];
 
