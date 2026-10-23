@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings E: the sentence, in the pane · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231551">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231621">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 280px; } }
@@ -142,7 +142,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610231551"></script>
+<script src="assets/settings-data.js?v=202610231621"></script>
 <script>
 (function () {
   function base(o) {
@@ -158,9 +158,25 @@
 
   var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, open = null, taxKey = null, termQ = {}, q = '';
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  /* Whole numbers only, held inside the range, so the box and the sentence
+     can never show different values. */
+  function clampWhole(raw, lo, hi) {
+    var n = Math.round(parseFloat(raw));
+    if (!isFinite(n)) return lo;
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  var stories = function (n) { return n + (n === 1 ? ' story' : ' stories'); };
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
   var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
+
+  /* "4 News Posts", but "1 News Post". */
+  var pluralType = function (k, n) {
+    var name = typeName(k);
+    return n === 1 || /s$/.test(name) ? name : name + 's';
+  };
   var changed = function () { return JSON.stringify(draft) !== JSON.stringify(SHELVES[sel].s); };
 
   /* Each AND group is its own token. Terms inside a group are "or"; the
@@ -237,7 +253,9 @@
     var views = draft.sort === 'Most viewed';
     var str = '<span class="plain">Show the</span> ' + tok('count', draft.count) + ' ' +
       tok('sort', views ? 'most viewed' : 'newest') + ' ' +
-      tok('types', draft.types.length ? draft.types.map(typeName).join(' or ') : 'pick a type', !draft.types.length);
+      tok('types', draft.types.length
+        ? draft.types.map(function (k) { return pluralType(k, draft.count); }).join(' or ')
+        : 'pick a type', !draft.types.length);
 
     if (views) str += ' <span class="plain">from the last</span> ' + tok('window', draft.windowDays + ' days');
 
@@ -265,10 +283,14 @@
     var done = '<button class="btn btn-outlined btn-sm done" type="button" data-close>Done</button>';
 
     if (open === 'count') return '<div class="editor">' + head('How many stories') +
-      '<input type="number" id="e-count" min="1" max="50" value="' + draft.count + '" style="width:120px">' +
-      '<p class="t-body-sm muted" style="margin:0">1 to 50.</p>' + done + '</div>';
+      '<label class="screen-reader-text" for="e-count">How many stories</label>' +
+      '<input type="number" id="e-count" min="1" max="50" step="1" value="' + draft.count + '" style="width:120px">' +
+      '<p class="t-body-sm muted" style="margin:0" id="e-count-note">1 to 50.</p>' + done + '</div>';
     if (open === 'window') return '<div class="editor">' + head('How far back to look') +
-      '<div style="display:flex;gap:8px;align-items:center"><input type="number" id="e-window" min="1" value="' + draft.windowDays + '" style="width:110px"><span class="t-body-sm muted">days</span></div>' + done + '</div>';
+      '<div style="display:flex;gap:8px;align-items:center">' +
+      '<label class="screen-reader-text" for="e-window">How many days back</label>' +
+      '<input type="number" id="e-window" min="1" step="1" value="' + draft.windowDays + '" style="width:110px">' +
+      '<span class="t-body-sm muted">days</span></div>' + done + '</div>';
     if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
       ['Newest', 'Most viewed'].map(function (o) { return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>'; }).join('') +
       '</div>' + done + '</div>';
@@ -326,7 +348,7 @@
     $('list').innerHTML = shown.map(function (r) {
       var d = r.i === sel ? draft : (dirty[r.i] || r.x.s);
       return '<button class="shelf' + (r.i === sel ? ' is-sel' : '') + '" type="button" role="option" aria-selected="' + (r.i === sel) + '" data-sel="' + r.i + '">' +
-        '<span class="txt"><b>' + esc(r.x.n) + '</b><span>' + d.count + ' stories · ' + esc(d.types.map(typeName).join(', ') || 'no type') + '</span></span>' +
+        '<span class="txt"><b>' + esc(r.x.n) + '</b><span>' + stories(d.count) + ' · ' + esc(d.types.map(typeName).join(', ') || 'no type') + '</span></span>' +
         ((dirty[r.i] || (r.i === sel && changed())) ? '<span class="edited" title="Unsaved changes"></span>' : '') + '</button>';
     }).join('');
     $('foot').textContent = shown.length + ' of ' + SHELVES.length + ' shelves';
@@ -391,9 +413,16 @@
   });
 
   document.addEventListener('input', function (ev) {
-    if (ev.target.id === 'e-count') { draft.count = Math.min(50, Math.max(1, +ev.target.value || 1));
-      if (+ev.target.value > 50) ev.target.value = 50; $('rule').innerHTML = rule(); $('count').textContent = matchCount(flat(draft)).toLocaleString(); $('savebar').hidden = !changed(); renderList(); }
-    if (ev.target.id === 'e-window') { draft.windowDays = Math.max(1, +ev.target.value || 1); $('rule').innerHTML = rule(); $('savebar').hidden = !changed(); }
+    if (ev.target.id === 'e-count') {
+      draft.count = clampWhole(ev.target.value, 1, 50);
+      if (ev.target.value !== '' && +ev.target.value !== draft.count) ev.target.value = draft.count;
+      var note = $('e-count-note');
+      if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.'; $('rule').innerHTML = rule(); $('count').textContent = matchCount(flat(draft)).toLocaleString(); $('savebar').hidden = !changed(); renderList(); }
+    if (ev.target.id === 'e-window') {
+      draft.windowDays = clampWhole(ev.target.value, 1, 3650);
+      if (ev.target.value !== '' && +ev.target.value !== draft.windowDays) ev.target.value = draft.windowDays;
+      $('rule').innerHTML = rule(); $('savebar').hidden = !changed();
+    }
     if (ev.target.id === 'e-int') { draft.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); $('savebar').hidden = !changed(); }
     if (ev.target.id === 'e-start') { draft.rotation.start = ev.target.value; $('e-next').innerHTML = upcoming(draft.rotation); $('savebar').hidden = !changed(); }
     if (ev.target.id === 'q') { q = ev.target.value; renderList(); }

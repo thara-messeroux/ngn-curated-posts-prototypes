@@ -71,7 +71,10 @@ Every field of `QuerySettings` is reachable, verified by clicking each one.
 | Returning to the shelf restores the draft | Pass |
 | Discard reverts | Pass |
 | Save clears the bar and the marker | Pass |
-| Count typed as 999 clamps to 50, 0 floors at 1 | Pass |
+| Count typed as 999 or 51 clamps to 50 | Pass |
+| Count typed as 0 or -5 floors at 1, in the box as well as the sentence | Pass |
+| Count typed as 3.7 rounds to a whole number | Pass |
+| Plurals: "1 story" / "4 stories", "1 News Post" / "4 News Posts" | Pass |
 | Interval typed as "banana" explains itself | Pass |
 | Add AND group creates a visible box with its own count, search and Remove | Pass |
 | Two groups search independently | Pass |
@@ -84,7 +87,7 @@ Every field of `QuerySettings` is reachable, verified by clicking each one.
 
 | Check | Result |
 | --- | --- |
-| axe WCAG 2.1 AA at 1280 and 1440 | 0 violations, all nine pages |
+| axe WCAG 2.1 AA at 1280 and 1440 | 0 violations, all nine pages, **scanned in every editor state** |
 | Horizontal overflow at 1440, 1280, 1024, 900, 768 | None |
 | Two columns down to 1024, one column at 900 and below | Pass |
 | Reachable and operable by keyboard alone | Pass |
@@ -129,6 +132,21 @@ Found while auditing, all evidenced, none yet filed.
 | 101 of 210 Research Topics have no posts; Spotlight's only term is unused | Data |
 
 ---
+
+## 6a. Corrections after an independent review
+
+Claude in Chrome reviewed the page separately and found four defects my own audit had
+missed. All four were real, all four are fixed.
+
+| What it found | Why I missed it |
+| --- | --- |
+| Typing 0 or -5 left the box showing 0 while the sentence said 1 | I asserted on the sentence and never read the box back. |
+| 3.7 was accepted, giving "Show the 3.7 newest" | I only tested integers. |
+| The stories box and the days box had no label a screen reader could read | My axe runs scanned the page with those editors closed. Running axe in **every** editor state found two `label` violations. |
+| "1 stories" in the shelf list, and "News Post" never pluralised | No plural handling existed anywhere. |
+
+The axe gap is the serious one. "0 violations, all nine pages" was true only of the
+states I happened to leave open. The scan now walks every editor.
 
 ## 7. Verdict
 

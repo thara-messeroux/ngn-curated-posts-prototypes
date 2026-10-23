@@ -443,3 +443,23 @@ most-viewed sort and `sortWindowDays` appears in its place, matching
 
 Still outstanding and unchanged: `rotationInterval` is text here and minutes in the
 model, and the repo has a `duration-input` component for it.
+
+---
+
+## Four defects from an independent review, all real
+
+Claude in Chrome audited the page separately and found four things my own audit missed.
+
+1. **The box and the sentence disagreed.** Typing 0 or -5 left the box showing the typed
+   value while the sentence said 1. I had asserted on the sentence and never read the box
+   back. Both now clamp through one `clampWhole()`.
+2. **3.7 was accepted**, giving "Show the 3.7 newest". Rounds now, and `step="1"` is set.
+3. **Two inputs had no accessible name**: the stories box and the days box. My axe runs
+   had scanned the page with those editors closed, so "0 violations" was true only of the
+   states I left open. Scanning every editor state found both. This was the serious miss;
+   the scan now walks all eight editors.
+4. **No plural handling anywhere**: "1 stories" in the shelf list, and "News Post" never
+   pluralised. Now "1 story" / "4 stories" and "4 News Posts or Magazine Articles".
+
+Not a defect, answered for the record: there is no separate token for the rotation start
+time because it lives inside the "every 1h" editor, alongside the interval it anchors.
