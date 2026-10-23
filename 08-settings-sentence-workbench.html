@@ -141,13 +141,13 @@
   }
   var SHELVES = [
     { n: 'Featured Stories', k: 'featured-stories', s: base({ count: 4, sort: 'Newest', types: ['newspost'], include: [[]], exclude: [], rotation: { on: true, interval: '1h', start: '00:00' } }) },
-    { n: 'Featured research', k: 'featured-research', s: base({ count: 3, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'Category', term: 'Research' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'Most read health', k: 'most-read-health', s: base({ count: 5, sort: 'Most viewed', types: ['newspost'], include: [[{ tax: 'Category', term: 'Health' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'Latest world news', k: 'latest-world-news', s: base({ count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [[{ tax: 'Category', term: 'World & National News' }]], exclude: [{ tax: 'Newsfeed Display', term: 'Hide Post' }], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'World Cup 2026 Stories', k: 'world-cup-2026-stories', s: base({ count: 50, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'Tag', term: 'world cup 2026' }], [{ tax: 'Audience', term: 'Students' }]], exclude: [{ tax: 'Kicker Category', term: 'Preview' }, { tax: 'Kicker Category', term: 'First Stage' }, { tax: 'Kicker Category', term: 'Round of 32' }], rotation: { on: false, interval: '1h', start: '00:00' } }) }
+    { n: 'Featured research', k: 'featured-research', s: base({ count: 3, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'category', term: 'Research' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'Most read health', k: 'most-read-health', s: base({ count: 5, sort: 'Most viewed', types: ['newspost'], include: [[{ tax: 'category', term: 'Health' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'Latest world news', k: 'latest-world-news', s: base({ count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [[{ tax: 'category', term: 'World & National News' }]], exclude: [{ tax: 'newsfeed', term: 'Hide Post' }], rotation: { on: false, interval: '1h', start: '00:00' } }) },
+    { n: 'World Cup 2026 Stories', k: 'world-cup-2026-stories', s: base({ count: 50, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'post_tag', term: 'climate resilience' }], [{ tax: 'audience', term: 'Students' }]], exclude: [{ tax: 'kicker', term: 'Final' }], rotation: { on: false, interval: '1h', start: '00:00' } }) }
   ];
 
-  var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, open = null, taxKey = TAXONOMIES[0].k, q = '';
+  var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, open = null, taxKey = null, termQuery = '', q = '';
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
@@ -212,13 +212,18 @@
       ['Newest', 'Most viewed'].map(function (o) { return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>'; }).join('') +
       '</div>' + done + '</div>';
     if (open === 'types') return '<div class="editor">' + head('Where the stories come from') + '<div class="chips">' +
-      POST_TYPES.map(function (t) { return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '">' + esc(t.n) + '</button>'; }).join('') +
-      '</div>' + done + '</div>';
+      POST_TYPES.map(function (t) {
+        return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '"' +
+          (t.tax.length ? '' : ' title="No filterable taxonomies"') + '>' + esc(t.n) +
+          (t.tax.length ? '' : ' <span class="muted">\u00b7 no filters</span>') + '</button>';
+      }).join('') +
+      '</div><p class="t-body-sm muted" style="margin:0">' + draft.types.length + ' selected \u00b7 ' +
+      taxonomiesFor(draft.types).length + ' taxonomies available</p>' + done + '</div>';
     if (open === 'searchTypes') {
       var custom = draft.searchTypes !== null;
       return '<div class="editor">' + head('Types the manual search offers') +
         '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-same" ' + (custom ? '' : 'checked') + '> <span class="t-label">Same as the types above</span></label>' +
-        (custom ? '<div class="chips">' + POST_TYPES.filter(function (t) { return t.common; }).map(function (t) {
+        (custom ? '<div class="chips">' + POST_TYPES.map(function (t) {
           return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
         }).join('') + '</div>' : '') +
         (gi < 0 ? '' : '<div class="chips" style="border-top:1px solid var(--ngn-outline-variant);padding-top:var(--ngn-space-2)">' +
@@ -230,16 +235,29 @@
     if (open.indexOf('include') === 0 || open === 'exclude') {
       var gi = open === 'exclude' ? -1 : +open.split(':')[1];
       var bucket = gi < 0 ? draft.exclude : draft.include[gi];
-      var tax = TAXONOMIES.filter(function (x) { return x.k === taxKey; })[0];
+      var available = taxonomiesFor(draft.types);
+      if (!available.length) return '<div class="editor">' + head('No filters available') +
+        '<p class="t-body-sm" style="margin:0">The chosen post types have no taxonomies to filter on.</p>' + done + '</div>';
+      if (available.indexOf(taxKey) < 0) taxKey = available[0];
+      var tax = TAXONOMIES[taxKey];
+      var big = tax.count > CHIP_LIMIT;
+      var shown = big ? searchTerms(taxKey, termQuery, 40) : tax.terms;
       var heading = gi < 0 ? 'Never stories tagged'
         : gi === 0 ? 'Only stories tagged' : 'And also tagged (group ' + (gi + 1) + ')';
       return '<div class="editor">' + head(heading) +
         '<label class="screen-reader-text" for="e-tax">Taxonomy</label>' +
-        '<select id="e-tax">' + TAXONOMIES.map(function (x) { return '<option value="' + x.k + '"' + (x.k === taxKey ? ' selected' : '') + '>' + esc(x.n) + '</option>'; }).join('') + '</select>' +
-        '<div class="chips">' + tax.terms.map(function (t) {
+        '<select id="e-tax">' + available.map(function (k) {
+          return '<option value="' + k + '"' + (k === taxKey ? ' selected' : '') + '>' + esc(TAXONOMIES[k].n) +
+            ' (' + TAXONOMIES[k].count.toLocaleString() + ')</option>';
+        }).join('') + '</select>' +
+        (big ? '<div class="field"><label for="e-term-q">Search ' + esc(tax.n) + ' \u2014 ' + tax.count.toLocaleString() + ' terms, too many to list</label>' +
+          '<input type="search" id="e-term-q" value="' + esc(termQuery) + '" placeholder="Type to search\u2026"></div>' : '') +
+        '<div class="chips">' + shown.map(function (t) {
           var on = bucket.some(function (f) { return f.term === t; });
-          return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t) + '" data-tax="' + esc(tax.n) + '">' + esc(t) + '</button>';
+          return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t) + '" data-tax="' + esc(taxKey) + '">' + esc(t) + '</button>';
         }).join('') + '</div>' +
+        (big ? '<p class="t-body-sm muted" style="margin:0">Showing ' + shown.length + ' of ' + tax.count.toLocaleString() +
+          (termQuery ? ' matching "' + esc(termQuery) + '"' : '') + '</p>' : '') +
         (bucket.length ? '<div class="chips picked">' + bucket.map(function (f) {
           return '<span class="chip' + (open === 'exclude' ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
             ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" aria-label="Remove ' + esc(f.term) + '">&times;</button></span>';
@@ -279,7 +297,18 @@
     $('savebar').hidden = !changed();
     $('dirty').textContent = 'Unsaved changes to ' + SHELVES[sel].n;
     renderList();
-    var t = $('e-tax'); if (t) t.addEventListener('change', function () { taxKey = this.value; render(); });
+    var t = $('e-tax'); if (t) t.addEventListener('change', function () { taxKey = this.value; termQuery = ''; render(); });
+  }
+
+  /* Redraw just the chips, so typing in the search box never loses focus. */
+  function redrawTerms() {
+    var ed = $('editor'), box = $('e-term-q');
+    if (!ed || !box) return;
+    var at = box.selectionStart;
+    ed.innerHTML = editor();
+    var again = $('e-term-q');
+    if (again) { again.focus(); again.setSelectionRange(at, at); }
+    $('e-tax').addEventListener('change', function () { taxKey = this.value; termQuery = ''; render(); });
   }
 
   function select(i) {
@@ -308,7 +337,7 @@
     if (ev.target.closest('[data-addgroup]')) { draft.include.push([]); open = 'include:' + (draft.include.length - 1); return render(); }
     var dg = ev.target.closest('[data-dropgroup]');
     if (dg) { draft.include.splice(+dg.dataset.dropgroup, 1); open = 'include:0'; return render(); }
-    if (t) { open = open === t.dataset.tok ? null : t.dataset.tok; return render(); }
+    if (t) { open = open === t.dataset.tok ? null : t.dataset.tok; termQuery = ''; return render(); }
   });
 
   document.addEventListener('input', function (ev) {
@@ -317,6 +346,7 @@
     if (ev.target.id === 'e-int') { draft.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); $('e-next').textContent = nextRunLine(draft.rotation.start, draft.rotation.interval); $('savebar').hidden = !changed(); }
     if (ev.target.id === 'e-start') { draft.rotation.start = ev.target.value; $('e-next').textContent = nextRunLine(draft.rotation.start, draft.rotation.interval); $('savebar').hidden = !changed(); }
     if (ev.target.id === 'q') { q = ev.target.value; renderList(); }
+    if (ev.target.id === 'e-term-q') { termQuery = ev.target.value; redrawTerms(); }
   });
 
   document.addEventListener('change', function (ev) {

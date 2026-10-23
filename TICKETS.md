@@ -206,3 +206,37 @@ silently wipes that taxonomy's AND groups.
 
 Also fixed here: the taxonomy `<select>` had no label (axe `select-name`).
 Verified at 1280 and 1440 — axe clean, no overflow, no console errors.
+
+---
+
+## Real data, per-type taxonomies and term search (`08`, `assets/settings-data.js`)
+
+The post type and taxonomy data was invented. It is now exported from the running site
+with WP-CLI, reproducing exactly what `class-post-selector-data.php` localises:
+`get_post_types( show_ui )` minus attachment, and each type's selectable taxonomies.
+
+**28 post types, not the 15 I had.** Eleven of them offer no filterable taxonomy at all
+(Pattern, Navigation Menu, Taxonomies, Post Type, Options Pages, Field Group, Search
+overlay template, Form, Ceremony, Custom Search Result). They are listed as curation
+sources anyway, which is worth questioning separately.
+
+**Taxonomies differ per post type**, so the picker now offers only what the chosen types
+have: News Post 8, Parents and Family Article 5, Page 4, Research Article 11.
+
+**Search is mandatory, not a nicety.** Real counts: Tag 12,460, Expertise 2,428,
+publication 1,148, Faculty Member 737. `useTerms` already says why — the REST endpoint
+caps at 500 alphabetical results, so an unfiltered list silently drops everything past
+the cutoff. Anything over 20 terms now gets a search box with a "showing 40 of 12,460"
+line; anything smaller stays as chips. Typing redraws only the term list so focus and
+caret survive, which the live dialog does not manage.
+
+**The duplication is worse than it looked.** `taxonomyFilters` is keyed by taxonomy
+alone, but the dialog renders a section per ticked post type, in both the auto and the
+manual search list. News Post and Page ticked in both sections is 24 taxonomy sections
+for at most 9 distinct filters, each a view of the same value. Chrome confirmed it:
+setting a Tag under News Post showed the same chip and badge under Parents and Family
+Article and under the manual lists.
+
+Verified at 1280 and 1440: axe clean, no overflow, no console errors, 28 types offered,
+8 taxonomies for News Post, searching "bio" in 12,460 tags returns four real terms, and
+a type with no taxonomies says so instead of showing an empty picker.
