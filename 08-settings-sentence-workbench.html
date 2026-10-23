@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings E — The sentence, in the pane · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231416">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231418">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 280px; } }
@@ -133,7 +133,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610231416"></script>
+<script src="assets/settings-data.js?v=202610231418"></script>
 <script>
 (function () {
   function base(o) {
@@ -164,15 +164,10 @@
     }).filter(Boolean).join(' <span class="plain">and also in</span> ');
   }
 
-  /* The next five rotations, the way the live dialog lists them, with the
-     sentence above it so you know what "next" is relative to. */
+  /* One line. The live dialog lists the next five, but at a fixed interval
+     every one of them is just the interval field again. */
   function upcoming(rot) {
-    var times = nextRotations(rot.start, rot.interval, 5);
-    if (!times.length) return '<p class="t-body-sm muted" style="margin:0">Set an interval like 1h or 30m.</p>';
-    var clock = function (d) { return d.toLocaleTimeString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }); };
-    return '<p class="t-body-sm muted" style="margin:0 0 4px">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>' +
-      '<ol class="t-body-sm muted" style="margin:0;padding-left:18px">' +
-      times.map(function (t) { return '<li>' + esc(clock(t)) + '</li>'; }).join('') + '</ol>';
+    return '<p class="t-body-sm muted" style="margin:0">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>';
   }
 
   /* The stand-in count wants one flat list of include terms. */

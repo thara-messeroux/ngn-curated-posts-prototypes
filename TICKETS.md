@@ -249,8 +249,10 @@ a type with no taxonomies says so instead of showing an empty picker.
 typing 999 snaps the field back to 50 rather than leaving a number the screen will not
 accept.
 
-**Upcoming rotations** was one sentence; the live dialog lists the next five. Now both -
-the sentence that says what "next" is relative to, then the five times.
+**Upcoming rotations.** The live dialog lists the next five times. Matching it was the
+wrong call: at a fixed interval every row in that list is the interval field restated,
+so five rows said what "every 1h" already said. Reverted to the one line. A list would
+earn its place only if the schedule were irregular, which it never is.
 
 **Manual search post types** repeat every taxonomy picker in the live screen. They all
 write to the same `taxonomyFilters` entry, so rather than repeat the pickers a third
