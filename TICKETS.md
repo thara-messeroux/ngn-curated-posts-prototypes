@@ -463,3 +463,28 @@ Claude in Chrome audited the page separately and found four things my own audit 
 
 Not a defect, answered for the record: there is no separate token for the rotation start
 time because it lives inside the "every 1h" editor, alongside the interval it anchors.
+
+---
+
+## Reading the sentence aloud in every state
+
+Ran check K from the review prompt myself rather than waiting: read the whole sentence in
+eight states. Two more English problems, both now fixed.
+
+**"News Posts or Posts or Magazine Articles"** repeated "or" once per item, which reads
+like a machine. English uses commas until the last item. A `listJoin()` helper now gives
+"a", "a or b", "a, b or c", and it applies to post types, manual search types, include
+terms within a group, and exclude terms.
+
+**"search News Post"** left the manual search types singular. They name kinds of thing
+rather than a count, so they read plural: "search News Posts."
+
+Before and after, worst case:
+
+- was: Show the 50 newest News Posts or Posts or Magazine Articles in Arts & Entertainment
+  and also in Digital Projects, skipping Faculty & Staff.
+- now: Show the 50 newest News Posts, Posts or Magazine Articles in Arts & Entertainment
+  and also in Digital Projects, skipping Faculty & Staff.
+
+Left alone deliberately: "and also in" between AND groups. It is wordier than "and", but
+it is carrying the one thing about this rule that is easy to get wrong.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings E: the sentence, in the pane · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231621">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231624">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 280px; } }
@@ -142,7 +142,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610231621"></script>
+<script src="assets/settings-data.js?v=202610231624"></script>
 <script>
 (function () {
   function base(o) {
@@ -168,6 +168,12 @@
   }
 
   var stories = function (n) { return n + (n === 1 ? ' story' : ' stories'); };
+
+  /* "a", "a or b", "a, b or c" - repeating "or" reads like a machine. */
+  function listJoin(items, word) {
+    if (items.length < 3) return items.join(' ' + (word || 'or') + ' ');
+    return items.slice(0, -1).join(', ') + ' ' + (word || 'or') + ' ' + items[items.length - 1];
+  }
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
   var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
@@ -185,7 +191,7 @@
     var filled = draft.include.filter(function (g) { return g.length; });
     if (!filled.length) return tok('include', 'anything', true);
     return draft.include.map(function (g, i) {
-      return g.length ? tok('include', g.map(function (f) { return f.term; }).join(' or '), false, i) : null;
+      return g.length ? tok('include', listJoin(g.map(function (f) { return f.term; })), false, i) : null;
     }).filter(Boolean).join(' <span class="plain">and also in</span> ');
   }
 
@@ -254,14 +260,14 @@
     var str = '<span class="plain">Show the</span> ' + tok('count', draft.count) + ' ' +
       tok('sort', views ? 'most viewed' : 'newest') + ' ' +
       tok('types', draft.types.length
-        ? draft.types.map(function (k) { return pluralType(k, draft.count); }).join(' or ')
+        ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
         : 'pick a type', !draft.types.length);
 
     if (views) str += ' <span class="plain">from the last</span> ' + tok('window', draft.windowDays + ' days');
 
     str += ' <span class="plain">in</span> ' + groupTokens() +
       ', <span class="plain">skipping</span> ' +
-      tok('exclude', draft.exclude.length ? draft.exclude.map(function (f) { return f.term; }).join(' or ') : 'nothing', !draft.exclude.length) +
+      tok('exclude', draft.exclude.length ? listJoin(draft.exclude.map(function (f) { return f.term; })) : 'nothing', !draft.exclude.length) +
       '<span class="plain">.</span>';
 
     str += views
@@ -271,7 +277,9 @@
         : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="plain">.</span>';
 
     str += '<br><span class="plain">When you pin a story by hand, search</span> ' +
-      tok('searchTypes', draft.searchTypes.length ? draft.searchTypes.map(typeName).join(' or ') : 'every type', !draft.searchTypes.length) +
+      tok('searchTypes', draft.searchTypes.length
+        ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, 2); }))
+        : 'every type', !draft.searchTypes.length) +
       '<span class="plain">.</span>';
 
     return str;
