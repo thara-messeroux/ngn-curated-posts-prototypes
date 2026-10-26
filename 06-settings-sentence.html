@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings C — The rule as a sentence · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610231659">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261535">
 <style>
 .sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; }
 .sheet-head {
@@ -54,9 +54,24 @@
 }
 .sheet-foot .spacer { flex: 1 1 auto; }
 
-.advanced { border-top: 1px solid var(--ngn-outline-variant); padding: var(--ngn-space-4) var(--ngn-space-5); }
-.advanced summary { cursor: pointer; font-size: 13px; color: var(--ngn-tertiary); }
-.advanced .body { padding-top: var(--ngn-space-3); font-size: 13px; color: var(--ngn-on-surface-variant); line-height: 1.6; }
+.result .note { font-size: 12px; color: var(--ngn-on-surface-variant); margin-left: auto; }
+
+.group {
+  border: 1px solid var(--ngn-outline-variant); border-radius: var(--ngn-radius-sm);
+  padding: var(--ngn-space-3); display: flex; flex-direction: column; gap: var(--ngn-space-2);
+}
+.group + .group { margin-top: calc(var(--ngn-space-2) * -1); }
+.group-head { display: flex; align-items: center; gap: var(--ngn-space-2); }
+.group-head b { font-size: 13px; font-weight: 500; }
+.group-head .btn { margin-left: auto; }
+
+.sheet-foot .problem { color: var(--ngn-error); font-size: 13px; }
+.sheet-foot .btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* The dialog scrolls rather than the page, so a long rule never pushes the
+   footer out of reach. */
+.sheet { max-height: calc(100vh - 80px); }
+.sheet-scroll { overflow-y: auto; flex: 1 1 auto; }
 </style>
 </head>
 <body>
@@ -81,81 +96,174 @@
       <button class="x" type="button" aria-label="Close">&times;</button>
     </div>
 
-    <p class="rule" id="rule"></p>
+    <div class="sheet-scroll">
+      <p class="rule" id="rule"></p>
 
-    <div class="result">
-      <b id="count">—</b><span class="t-body-sm muted">stories match this rule right now</span>
-    </div>
-
-    <div id="editor"></div>
-
-    <details class="advanced">
-      <summary>Advanced: match several groups of terms</summary>
-      <div class="body">
-        Most shelves need one set of terms. When a shelf needs two sets matched together,
-        the sentence gets a second clause rather than a nested builder, so the rule still
-        reads as one thing.
+      <div class="result">
+        <b id="count">&ndash;</b>
+        <span class="t-body-sm muted">stories match this rule right now</span>
+        <span class="note">prototype figure</span>
       </div>
-    </details>
+
+      <div id="editor"></div>
+    </div>
 
     <div class="sheet-foot">
       <span class="t-body-sm muted" id="dirty">No changes yet</span>
+      <span class="problem" id="problem" role="status"></span>
       <span class="spacer"></span>
-      <button class="btn btn-text" type="button">Cancel</button>
-      <button class="btn btn-filled" type="button">Save</button>
+      <button class="btn btn-text" type="button" id="cancel">Cancel</button>
+      <button class="btn btn-filled" type="button" id="save">Save</button>
     </div>
 
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610231659"></script>
+<script src="assets/settings-data.js?v=202610261535"></script>
 <script>
 (function () {
-  var s = JSON.parse(JSON.stringify(SHELF));
-  s.windowDays = 14;
-  s.searchTypes = null;   // null means "same as the types above"
-  var open = null, touched = false, taxKey = TAXONOMIES_V1[0].k;
-  var $ = function (id) { return document.getElementById(id); };
-  var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
-  var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
+  /* One shelf, shown in a dialog. Same engine as the two-pane design, so the
+     rule, the validation and the term data are identical. */
+  var SAVED = {
+    count: 4, sort: 'Newest', types: ['newspost'],
+    include: [[]], exclude: [], windowDays: 14, searchTypes: [],
+    rotation: { on: true, interval: '1h', start: '00:00' }
+  };
 
-  function tok(key, text, empty) {
+  var draft = clone(SAVED), open = null, lastTok = null, taxKey = null, termQ = {};
+  var $ = function (id) { return document.getElementById(id); };
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
+  var changed = function () { return JSON.stringify(draft) !== JSON.stringify(SAVED); };
+
+  var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
+  var pluralType = function (k, n) { var nm = typeName(k); return n === 1 || /s$/.test(nm) ? nm : nm + 's'; };
+  var INTERVALS = ['15m', '30m', '1h', '2h', '3h', '4h', '6h', '12h', '24h'];
+  var isCustom = function (v) { return INTERVALS.indexOf(v) < 0; };
+
+  /* Whole numbers only, held in range, so the box and the sentence agree. */
+  function clampWhole(raw, lo, hi) {
+    var n = Math.round(parseFloat(raw));
+    if (!isFinite(n)) return lo;
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  /* "a", "a or b", "a, b or c". Repeating "or" reads like a machine. */
+  function listJoin(items) {
+    if (items.length < 3) return items.join(' or ');
+    return items.slice(0, -1).join(', ') + ' or ' + items[items.length - 1];
+  }
+
+  /* Everything wrong with the rule as it stands. Empty means safe to save. */
+  function problems(d) {
+    var out = [];
+    if (!d.types.length) out.push('Pick at least one post type.');
+    if (d.sort !== 'Most viewed' && d.rotation.on && !intervalMinutes(d.rotation.interval)) {
+      out.push('"' + (d.rotation.interval || 'blank') + '" is not an interval. Try 1h, 30m or a number of minutes.');
+    }
+    var inc = d.include.reduce(function (a, g) { return a.concat(g); }, []);
+    d.exclude.forEach(function (x) {
+      if (inc.some(function (i) { return i.term === x.term && i.tax === x.tax; })) {
+        out.push('\u201c' + x.term + '\u201d is both required and skipped, so nothing can match it.');
+      }
+    });
+    return out;
+  }
+
+  function tok(key, text, empty, nth) {
     return '<button class="tok' + (open === key ? ' is-open' : '') + (empty ? ' is-empty' : '') +
-      '" type="button" data-tok="' + key + '">' + esc(text) + '</button>';
+      '" type="button" data-tok="' + key + '"' + (nth === undefined ? '' : ' data-nth="' + nth + '"') +
+      '>' + esc(text) + '</button>';
+  }
+
+  /* Each AND group is its own token: terms within a group are "or", the groups
+     themselves are "and also", which is how the query treats them. */
+  function groupTokens() {
+    var filled = draft.include.filter(function (g) { return g.length; });
+    if (!filled.length) return tok('include', 'anything', true);
+    return draft.include.map(function (g, i) {
+      return g.length ? tok('include', listJoin(g.map(function (f) { return f.term; })), false, i) : null;
+    }).filter(Boolean).join(' <span class="plain">and also in</span> ');
+  }
+
+  function flat(d) {
+    return { types: d.types, groups: d.include, sort: d.sort, windowDays: d.windowDays,
+             include: d.include.reduce(function (a, g) { return a.concat(g); }, []), exclude: d.exclude };
   }
 
   function rule() {
-    var views = s.sort === 'Most viewed';
-
-    var main = '<span class="plain">Show the</span> ' + tok('count', s.count) + ' ' +
+    var views = draft.sort === 'Most viewed';
+    var str = '<span class="plain">Show the</span> ' + tok('count', draft.count) + ' ' +
       tok('sort', views ? 'most viewed' : 'newest') + ' ' +
-      tok('types', s.types.length ? s.types.map(typeName).join(' or ') : 'pick a type', !s.types.length);
+      tok('types', draft.types.length
+        ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
+        : 'pick a type', !draft.types.length);
 
-    // A most-viewed sort only counts recent posts, so the window belongs in
-    // the sentence rather than hidden in a field somewhere.
-    if (views) main += ' <span class="plain">from the last</span> ' + tok('window', s.windowDays + ' days');
+    if (views) str += ' <span class="plain">from the last</span> ' +
+      tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
 
-    main += ' <span class="plain">in</span> ' +
-      tok('include', s.include.length ? s.include.map(function (f) { return f.term; }).join(' and ') : 'anything', !s.include.length) +
-      ', <span class="plain">but not</span> ' +
-      tok('exclude', s.exclude.length ? s.exclude.map(function (f) { return f.term; }).join(' or ') : 'nothing', !s.exclude.length) +
+    str += ' <span class="plain">in</span> ' + groupTokens() +
+      ', <span class="plain">skipping</span> ' +
+      tok('exclude', draft.exclude.length ? listJoin(draft.exclude.map(function (f) { return f.term; })) : 'nothing', !draft.exclude.length) +
       '<span class="plain">.</span>';
 
-    // Rotation and a most-viewed sort are mutually exclusive in the model,
-    // so the sentence says so rather than offering a control that is dropped.
-    var rot = views
-      ? '<br><span class="plain">A most-viewed order changes on its own, so there is no rotation.</span>'
-      : '<br><span class="plain">Rotate them</span> ' +
-        tok('rotation', s.rotation.on ? 'every ' + s.rotation.interval : 'never', !s.rotation.on) +
-        '<span class="plain">.</span>';
+    str += views
+      ? '<br><span class="plain">Most viewed reshuffles itself, so there is no rotation.</span>'
+      : (draft.rotation.on
+        ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="plain">.</span>'
+        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="plain">.</span>');
 
-    // Which types a hand-pinned search offers is a different question from
-    // what fills the shelf, so it gets its own short sentence.
-    var manual = '<br><span class="plain">When someone pins a story by hand, search</span> ' +
-      tok('searchTypes', s.searchTypes === null ? 'the same types' : (s.searchTypes.length ? s.searchTypes.map(typeName).join(' or ') : 'nothing'), s.searchTypes === null) +
+    str += '<br><span class="plain">When you pin a story by hand, search</span> ' +
+      tok('searchTypes', draft.searchTypes.length
+        ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, 2); }))
+        : 'every type', !draft.searchTypes.length) +
       '<span class="plain">.</span>';
 
-    return main + rot + manual;
+    return str;
+  }
+
+  function countLine(tax, showing, q) {
+    if (q) return showing === 0
+      ? 'Nothing matches \u201c' + esc(q) + '\u201d.'
+      : showing + ' of ' + tax.count.toLocaleString() + ' match \u201c' + esc(q) + '\u201d.';
+    if (showing >= tax.count) return tax.count.toLocaleString() + (tax.count === 1 ? ' term.' : ' terms.');
+    return 'Showing ' + showing + ' of ' + tax.count.toLocaleString() + '. Type to find the rest.';
+  }
+
+  /* One AND group: its own count, search, term list and Remove. Every taxonomy
+     gets the search box whatever its size today. */
+  function groupBox(tax, bucket, gi, isEx) {
+    var q = termQ[gi] || '';
+    var shown = searchTerms(taxKey, q, 40);
+    var title = isEx ? 'Has any of' : (gi === 0 ? 'Has any of' : 'AND has any of');
+    return '<div class="group">' +
+      '<div class="group-head"><b>' + title + ' <span class="muted">(' + bucket.length + ' selected)</span></b>' +
+        (!isEx && draft.include.length > 1
+          ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove</button>' : '') +
+      '</div>' +
+      '<div class="field"><label for="e-q-' + gi + '">Search ' + esc(tax.n) + '</label>' +
+        '<input type="search" id="e-q-' + gi + '" data-q="' + gi + '" value="' + esc(q) +
+        '" placeholder="Type a name or a slug\u2026"></div>' +
+      '<div class="chips">' + shown.map(function (t) {
+        var on = bucket.some(function (f) { return f.term === t.n; });
+        return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t.n) +
+          '" data-gi="' + gi + '"' + (t.p ? ' title="Inside ' + esc(t.p) + '"' : '') + '>' +
+          (t.p ? '<span class="muted">' + esc(t.p) + ' \u203a </span>' : '') + esc(t.n) +
+          ' <span class="muted">' + t.c.toLocaleString() + '</span></button>';
+      }).join('') + '</div>' +
+      '<p class="t-body-sm muted" style="margin:0">' + countLine(tax, shown.length, q) + '</p>' +
+      (bucket.length ? '<div class="chips" style="padding-top:var(--ngn-space-2);border-top:1px solid var(--ngn-outline-variant)">' +
+        bucket.map(function (f) {
+          return '<span class="chip' + (isEx ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
+            ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" data-gi="' + gi +
+            '" aria-label="Remove ' + esc(f.term) + '">&times;</button></span>';
+        }).join('') + '</div>' : '') +
+    '</div>';
+  }
+
+  /* One line, because the fields above already carry the schedule. */
+  function upcoming(rot) {
+    return '<p class="t-body-sm muted" style="margin:0">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>';
   }
 
   function editor() {
@@ -163,122 +271,218 @@
     var head = function (t) { return '<h3>' + t + '</h3>'; };
     var done = '<button class="btn btn-outlined btn-sm done" type="button" data-close>Done</button>';
 
-    if (open === 'count') {
-      return '<div class="editor">' + head('How many stories') +
-        '<input type="number" id="e-count" min="1" max="50" value="' + s.count + '" style="width:120px">' + done + '</div>';
-    }
-    if (open === 'sort') {
-      return '<div class="editor">' + head('Order') +
-        '<div class="chips">' +
-          '<button class="chip' + (s.sort === 'Newest' ? ' is-on' : '') + '" type="button" data-sort="Newest">Newest</button>' +
-          '<button class="chip' + (s.sort === 'Most viewed' ? ' is-on' : '') + '" type="button" data-sort="Most viewed">Most viewed</button>' +
-        '</div>' + done + '</div>';
-    }
-    if (open === 'types') {
-      return '<div class="editor">' + head('Where the stories come from') +
-        '<div class="chips">' + POST_TYPES.map(function (t) {
-          return '<button class="chip' + (s.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '">' + esc(t.n) + '</button>';
-        }).join('') + '</div>' + done + '</div>';
-    }
+    if (open === 'count') return '<div class="editor">' + head('How many stories') +
+      '<label class="screen-reader-text" for="e-count">How many stories</label>' +
+      '<input type="number" id="e-count" min="1" max="50" step="1" value="' + draft.count + '" style="width:120px">' +
+      '<p class="t-body-sm muted" style="margin:0" id="e-count-note">1 to 50.</p>' + done + '</div>';
+
+    if (open === 'window') return '<div class="editor">' + head('How far back to look') +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+      '<label class="screen-reader-text" for="e-window">How many days back</label>' +
+      '<input type="number" id="e-window" min="1" step="1" value="' + draft.windowDays + '" style="width:110px">' +
+      '<span class="t-body-sm muted">days</span></div>' + done + '</div>';
+
+    if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
+      ['Newest', 'Most viewed'].map(function (o) {
+        return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>';
+      }).join('') + '</div>' + done + '</div>';
+
+    if (open === 'types') return '<div class="editor">' + head('Where stories come from') + '<div class="chips">' +
+      POST_TYPES.map(function (t) {
+        return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '"' +
+          (t.tax.length ? '' : ' title="No filterable taxonomies"') + '>' + esc(t.n) +
+          (t.tax.length ? '' : ' <span class="muted">\u00b7 no filters</span>') + '</button>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' + draft.types.length + ' selected \u00b7 ' +
+      taxonomiesFor(draft.types).length + ' taxonomies available</p>' + done + '</div>';
+
+    if (open === 'searchTypes') return '<div class="editor">' + head('Types you can pin by hand') +
+      '<div class="chips">' + POST_TYPES.map(function (t) {
+        return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') +
+          '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' +
+      (draft.searchTypes.length
+        ? draft.searchTypes.length + ' of ' + POST_TYPES.length + ' selected.'
+        : 'Nothing selected, so the search offers all ' + POST_TYPES.length + ' types.') +
+      '</p>' + done + '</div>';
+
     if (open === 'include' || open === 'exclude') {
-      var bucket = open === 'include' ? s.include : s.exclude;
-      return '<div class="editor">' + head(open === 'include' ? 'Only stories tagged' : 'Never stories tagged') +
-        '<select id="e-tax">' + TAXONOMIES_V1.map(function (x) {
-          return '<option value="' + x.k + '"' + (x.k === taxKey ? ' selected' : '') + '>' + esc(x.n) + '</option>';
+      var isEx = open === 'exclude';
+      var available = taxonomiesFor(draft.types);
+      if (!available.length) return '<div class="editor">' + head('No filters available') +
+        '<p class="t-body-sm" style="margin:0">These post types have nothing to filter on.</p>' + done + '</div>';
+      if (available.indexOf(taxKey) < 0) taxKey = available[0];
+      var tax = TAXONOMIES[taxKey];
+      var groups = isEx ? [draft.exclude] : draft.include;
+      return '<div class="editor">' + head(isEx ? 'Never show stories tagged' : 'Only stories tagged') +
+        '<label class="screen-reader-text" for="e-tax">Taxonomy</label>' +
+        '<select id="e-tax">' + available.map(function (k) {
+          return '<option value="' + k + '"' + (k === taxKey ? ' selected' : '') + '>' + esc(TAXONOMIES[k].n) +
+            ' (' + TAXONOMIES[k].count.toLocaleString() + ')</option>';
         }).join('') + '</select>' +
-        '<div class="chips" id="e-terms"></div>' +
-        (bucket.length ? '<div class="chips" style="padding-top:8px;border-top:1px solid var(--ngn-outline-variant)">' +
-          bucket.map(function (f) {
-            return '<span class="chip' + (open === 'exclude' ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
-              ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" aria-label="Remove">&times;</button></span>';
-          }).join('') + '</div>' : '') +
+        groups.map(function (bucket, gi) { return groupBox(tax, bucket, gi, isEx); }).join('') +
+        (isEx ? '' : '<button class="btn btn-outlined btn-sm" type="button" data-addgroup style="align-self:flex-start">+ Add AND group</button>') +
         done + '</div>';
     }
-    if (open === 'window') {
-      return '<div class="editor">' + head('How far back a most-viewed sort looks') +
-        '<div style="display:flex;gap:8px;align-items:center"><input type="number" id="e-window" min="1" value="' + s.windowDays + '" style="width:110px">' +
-        '<span class="t-body-sm muted">days</span></div>' +
-        '<p class="t-body-sm muted" style="margin:0">Only posts published inside this window are counted.</p>' + done + '</div>';
-    }
-    if (open === 'searchTypes') {
-      var custom = s.searchTypes !== null;
-      return '<div class="editor">' + head('Types the manual search offers') +
-        '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-same" ' +
-        (custom ? '' : 'checked') + '> <span class="t-label">Same as the types above</span></label>' +
-        (custom ? '<div class="chips">' + POST_TYPES.filter(function (t) { return t.common; }).map(function (t) {
-          return '<button class="chip' + (s.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
-        }).join('') + '</div>' : '') + done + '</div>';
-    }
-    if (open === 'rotation') {
-      return '<div class="editor">' + head('Rotation') +
-        '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' +
-        (s.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
-        '<div style="display:flex;gap:12px"><div class="field" style="width:110px"><label for="e-int">Every</label>' +
-        '<input type="text" id="e-int" value="' + esc(s.rotation.interval) + '"></div>' +
-        '<div class="field" style="width:140px"><label for="e-start">Starting at</label>' +
-        '<input type="time" id="e-start" value="' + esc(s.rotation.start) + '"></div></div>' + done + '</div>';
-    }
+
+    if (open === 'rotation') return '<div class="editor">' + head('Rotation') +
+      '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' +
+      (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
+      (draft.rotation.on ? '' : '<p class="t-body-sm muted" style="margin:0">Turn this on to set an interval.</p>') +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
+        '<div class="field"><label for="e-every">Every</label>' +
+          '<select id="e-every"' + (draft.rotation.on ? '' : ' disabled') + '>' +
+          INTERVALS.map(function (o) { return '<option value="' + o + '"' + (o === draft.rotation.interval ? ' selected' : '') + '>' + o + '</option>'; }).join('') +
+          '<option value="custom"' + (isCustom(draft.rotation.interval) ? ' selected' : '') + '>Custom\u2026</option>' +
+          '</select></div>' +
+        (isCustom(draft.rotation.interval)
+          ? '<div class="field" style="width:130px"><label for="e-int">How long</label>' +
+            '<input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '" placeholder="1h 30m"' +
+            (draft.rotation.on ? '' : ' disabled') + '></div>' : '') +
+        '<div class="field" style="width:150px"><label for="e-start">Starting at</label>' +
+        '<input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"' + (draft.rotation.on ? '' : ' disabled') + '></div>' +
+      '</div>' +
+      '<div id="e-next">' + (draft.rotation.on ? upcoming(draft.rotation) : '') + '</div>' + done + '</div>';
     return '';
   }
 
-  function drawTerms() {
-    var host = $('e-terms');
-    if (!host) return;
-    taxKey = $('e-tax').value;
-    var tax = TAXONOMIES_V1.filter(function (x) { return x.k === taxKey; })[0];
-    host.innerHTML = tax.terms.map(function (t) {
-      return '<button class="chip" type="button" data-term="' + esc(t) + '" data-tax="' + esc(tax.n) + '">' + esc(t) + '</button>';
-    }).join('');
+  /* Hidden, blocked with a reason, or ready to save. */
+  function refreshSave() {
+    var bad = problems(draft);
+    $('dirty').textContent = bad.length ? '' : (changed() ? 'Unsaved changes' : 'No changes yet');
+    $('problem').textContent = bad[0] || '';
+    $('save').disabled = bad.length > 0 || !changed();
+  }
+
+  function bindTax() {
+    var t = $('e-tax');
+    if (t) t.addEventListener('change', function () { taxKey = this.value; termQ = {}; render(); });
   }
 
   function render() {
     $('rule').innerHTML = rule();
     $('editor').innerHTML = editor();
-    $('count').textContent = s.types.length ? matchCount(s).toLocaleString() : '0';
-    $('dirty').textContent = touched ? 'Unsaved changes' : 'No changes yet';
-    drawTerms();
-    var tax = $('e-tax'); if (tax) tax.addEventListener('change', drawTerms);
+    $('count').textContent = draft.types.length ? matchCount(flat(draft)).toLocaleString() : '0';
+    refreshSave();
+    bindTax();
+  }
+
+  /* Typing in a search box must not lose the caret. */
+  function redrawTerms(boxId) {
+    var ed = $('editor'), box = $(boxId);
+    if (!ed || !box) return;
+    var at = box.selectionStart;
+    ed.innerHTML = editor();
+    var again = $(boxId);
+    if (again) { again.focus(); again.setSelectionRange(at, at); }
+    bindTax();
+  }
+
+  /* Opening a word puts you in its editor; closing returns you to the word. */
+  function focusEditor() {
+    var first = $('editor').querySelector('input, select, button');
+    if (first) first.focus();
+  }
+
+  function closeEditor() {
+    var back = lastTok;
+    open = null; termQ = {};
+    render();
+    var el = back && document.querySelector('[data-tok="' + back + '"]');
+    if (el) el.focus();
   }
 
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest('[data-tok]'), c = ev.target.closest('[data-close]'),
         ty = ev.target.closest('[data-type]'), so = ev.target.closest('[data-sort]'),
-        tm = ev.target.closest('[data-term]'), rm = ev.target.closest('[data-rm]');
+        tm = ev.target.closest('[data-term]'), rm = ev.target.closest('[data-rm]'),
+        st = ev.target.closest('[data-stype]'), dg = ev.target.closest('[data-dropgroup]');
 
-    if (c) { open = null; return render(); }
-    if (ty) { touched = true; var i = s.types.indexOf(ty.dataset.type); if (i > -1) s.types.splice(i, 1); else s.types.push(ty.dataset.type); return render(); }
-    if (so) { touched = true; s.sort = so.dataset.sort; return render(); }
+    if (c) { closeEditor(); return; }
+    if (ty) { var i = draft.types.indexOf(ty.dataset.type); if (i > -1) draft.types.splice(i, 1); else draft.types.push(ty.dataset.type); return render(); }
+    if (so) { draft.sort = so.dataset.sort; return render(); }
+    if (st) { var j = draft.searchTypes.indexOf(st.dataset.stype); if (j > -1) draft.searchTypes.splice(j, 1); else draft.searchTypes.push(st.dataset.stype); return render(); }
+    if (rm) { var b = open === 'exclude' ? draft.exclude : draft.include[+rm.dataset.gi];
+              var k = b.findIndex(function (f) { return f.term === rm.dataset.rm; }); if (k > -1) b.splice(k, 1); return render(); }
     if (tm) {
-      touched = true;
-      var bucket = open === 'include' ? s.include : s.exclude;
-      if (!bucket.some(function (f) { return f.term === tm.dataset.term; })) bucket.push({ tax: tm.dataset.tax, term: tm.dataset.term });
+      var bucket = open === 'exclude' ? draft.exclude : draft.include[+tm.dataset.gi];
+      var at = bucket.findIndex(function (f) { return f.term === tm.dataset.term; });
+      if (at > -1) { bucket.splice(at, 1); }
+      else {
+        // A term cannot be required and skipped at once.
+        if (open === 'exclude') {
+          draft.include.forEach(function (g) {
+            var q = g.findIndex(function (f) { return f.term === tm.dataset.term && f.tax === taxKey; });
+            if (q > -1) g.splice(q, 1);
+          });
+        } else {
+          var e = draft.exclude.findIndex(function (f) { return f.term === tm.dataset.term && f.tax === taxKey; });
+          if (e > -1) draft.exclude.splice(e, 1);
+        }
+        bucket.push({ tax: taxKey, term: tm.dataset.term });
+      }
       return render();
     }
-    if (rm) {
-      touched = true;
-      var b2 = open === 'include' ? s.include : s.exclude;
-      var j = b2.findIndex(function (f) { return f.term === rm.dataset.rm; });
-      if (j > -1) b2.splice(j, 1);
-      return render();
+    if (ev.target.closest('[data-addgroup]')) { draft.include.push([]); return render(); }
+    if (dg) { draft.include.splice(+dg.dataset.dropgroup, 1); termQ = {}; return render(); }
+    if (t) {
+      if (open === t.dataset.tok) { closeEditor(); return; }
+      open = t.dataset.tok; termQ = {}; lastTok = t.dataset.tok;
+      render(); focusEditor();
+      return;
     }
-    var st = ev.target.closest('[data-stype]');
-    if (st) {
-      touched = true;
-      var si = s.searchTypes.indexOf(st.dataset.stype);
-      if (si > -1) s.searchTypes.splice(si, 1); else s.searchTypes.push(st.dataset.stype);
-      return render();
-    }
-    if (t) { open = open === t.dataset.tok ? null : t.dataset.tok; return render(); }
   });
 
   document.addEventListener('input', function (ev) {
-    if (ev.target.id === 'e-count') { touched = true; s.count = +ev.target.value || 1; $('rule').innerHTML = rule(); $('count').textContent = matchCount(s).toLocaleString(); }
-    if (ev.target.id === 'e-int') { touched = true; s.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); }
-    if (ev.target.id === 'e-window') { touched = true; s.windowDays = Math.max(1, +ev.target.value || 1); render(); }
+    if (ev.target.id === 'e-count') {
+      draft.count = clampWhole(ev.target.value, 1, 50);
+      if (ev.target.value !== '' && +ev.target.value !== draft.count) ev.target.value = draft.count;
+      var note = $('e-count-note');
+      if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.';
+      $('rule').innerHTML = rule();
+      $('count').textContent = matchCount(flat(draft)).toLocaleString();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-window') {
+      draft.windowDays = clampWhole(ev.target.value, 1, 3650);
+      if (ev.target.value !== '' && +ev.target.value !== draft.windowDays) ev.target.value = draft.windowDays;
+      $('rule').innerHTML = rule();
+      $('count').textContent = matchCount(flat(draft)).toLocaleString();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-int') {
+      draft.rotation.interval = ev.target.value;
+      $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
+    }
+    if (ev.target.id === 'e-start') {
+      draft.rotation.start = ev.target.value;
+      $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
+    }
+    if (ev.target.dataset && ev.target.dataset.q !== undefined) {
+      termQ[ev.target.dataset.q] = ev.target.value;
+      redrawTerms(ev.target.id);
+    }
   });
+
   document.addEventListener('change', function (ev) {
-    if (ev.target.id === 'e-rot') { touched = true; s.rotation.on = ev.target.checked; render(); }
-    if (ev.target.id === 'e-same') { touched = true; s.searchTypes = ev.target.checked ? null : s.types.slice(); render(); }
+    if (ev.target.id === 'e-rot') { draft.rotation.on = ev.target.checked; render(); }
+    if (ev.target.id === 'e-every') {
+      draft.rotation.interval = ev.target.value === 'custom' ? '' : ev.target.value;
+      render();
+      var box = $('e-int'); if (box) box.focus();
+    }
+  });
+
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Escape' || !open) return;
+    if ($('editor').contains(document.activeElement) || document.activeElement.dataset.tok) {
+      ev.preventDefault(); closeEditor();
+    }
+  });
+
+  $('cancel').addEventListener('click', function () { draft = clone(SAVED); open = null; termQ = {}; render(); });
+  $('save').addEventListener('click', function () {
+    if (problems(draft).length || !changed()) return;
+    SAVED = clone(draft); render();
   });
 
   render();
