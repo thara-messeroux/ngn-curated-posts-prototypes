@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings C — The rule as a sentence · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261549">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261607">
 <style>
 .sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; }
 .sheet-head {
@@ -50,6 +50,11 @@
 .editor h3 { margin: 0; font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
 .chips { display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; }
 .editor .done { align-self: flex-start; }
+.upcoming {
+  margin: 0; padding: 0; list-style: none;
+  font-size: 13px; color: var(--ngn-on-surface-variant);
+  display: grid; gap: 2px; font-variant-numeric: tabular-nums;
+}
 
 .sheet-foot {
   border-top: 1px solid var(--ngn-outline-variant);
@@ -123,7 +128,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610261549"></script>
+<script src="assets/settings-data.js?v=202610261607"></script>
 <script>
 (function () {
   /* One shelf, shown in a dialog. Same engine as the two-pane design, so the
@@ -266,8 +271,22 @@
   }
 
   /* One line, because the fields above already carry the schedule. */
+  /* The next five runs, always. A list that comes and goes is harder to
+     trust than one that is always in the same place, and the line underneath
+     says which kind of schedule it is so the list is useful either way. */
   function upcoming(rot) {
-    return '<p class="t-body-sm muted" style="margin:0">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>';
+    var times = nextRotations(rot.start, rot.interval, 5);
+    if (!times.length) return '<p class="t-body-sm muted" style="margin:0">Try 1h, 30m, 1h 30m, or a number of minutes.</p>';
+
+    var clock = function (d) { return d.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }); };
+    var mins = intervalMinutes(rot.interval);
+    var repeats = 1440 % mins === 0;
+
+    return '<p class="t-body-sm muted" style="margin:0 0 4px">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>' +
+      '<ol class="upcoming">' + times.map(function (t) { return '<li>' + esc(clock(t)) + '</li>'; }).join('') + '</ol>' +
+      '<p class="t-body-sm muted" style="margin:4px 0 0">' +
+      (repeats ? 'Same times every day.' : 'These times shift each day, because ' + esc(rot.interval) + ' does not divide evenly into 24 hours.') +
+      '</p>';
   }
 
   function editor() {

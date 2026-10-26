@@ -636,3 +636,26 @@ screenshot, obvious on a shared screen.
 Both designs verified: all ten `QuerySettings` fields reachable, AND groups working,
 search on every taxonomy, Save blocked on an invalid or contradictory rule, keyboard loop
 intact, axe clean at 1440, 1280 and 900, no overflow, no console errors.
+
+---
+
+## Upcoming rotations: always shown, and it says which kind of schedule
+
+I argued for showing the list only when the schedule is unpredictable, on the grounds
+that at 1h every row is the interval restated. Thara pushed back: a control that appears
+and disappears is harder to trust than one that is always in the same place. That is the
+same principle that put the search box on every taxonomy, and it is right here too.
+
+So the list is always there, five runs, and the line underneath earns the space in both
+cases rather than only one:
+
+- repeating schedule: "Same times every day."
+- drifting schedule: "These times shift each day, because 7h does not divide evenly into
+  24 hours."
+
+The test is `1440 % intervalMinutes === 0`. All nine presets repeat; only a custom value
+such as 7h, 5h or 1h 24m drifts, and that is exactly the case where a reader cannot work
+the times out for themselves.
+
+Applied to both sentence designs. Verified: five rows at 1h and at 7h, the right line
+under each, a bad interval still explains itself instead of listing nothing.
