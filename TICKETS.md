@@ -675,3 +675,25 @@ rather than reading as five loose timestamps under a sentence.
 
 The block now reads, top to bottom: the next run in words, the labelled list of five, and
 the line saying whether the schedule repeats daily.
+
+---
+
+## "Same times every day" removed
+
+At a 3h interval the list reads 6PM, 9PM, 12AM, 3AM, 6AM, with a caption underneath
+saying "Same times every day." The caption was technically true, since 3h divides into
+24 and the daily set repeats, but nobody reads five different clock times and accepts a
+line telling them they are the same. It contradicted the thing it sat under.
+
+It was also there for the wrong reason: I added it to justify always showing the list.
+A caption that exists to defend a design decision is not carrying information.
+
+Gone for every repeating schedule. The warning stays only where the times genuinely move,
+where a reader could otherwise think the schedule is broken:
+
+> The times move each day, because 7h does not divide evenly into 24 hours.
+
+Worth separating from the earlier decision: a **control** that appears and disappears is
+hard to trust, which is why search is on every taxonomy and the list is always shown. A
+**warning** is conditional by nature; it means something is unusual, and showing it when
+nothing is unusual is what makes warnings worthless.
