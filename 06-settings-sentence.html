@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings C — The rule as a sentence · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261535">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261549">
 <style>
 .sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; }
 .sheet-head {
@@ -28,6 +28,10 @@
 .tok.is-empty { color: var(--ngn-on-surface-variant); font-style: italic; }
 
 .rule .plain { color: var(--ngn-on-surface-variant); }
+
+/* A token carries side padding, which leaves a visible gap before the comma
+   or full stop that follows it. Pull the punctuation back onto the word. */
+.rule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
 
 .result {
   margin: 0 var(--ngn-space-5) var(--ngn-space-5);
@@ -119,7 +123,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610261535"></script>
+<script src="assets/settings-data.js?v=202610261549"></script>
 <script>
 (function () {
   /* One shelf, shown in a dialog. Same engine as the two-pane design, so the
@@ -193,7 +197,7 @@
 
   function rule() {
     var views = draft.sort === 'Most viewed';
-    var str = '<span class="plain">Show the</span> ' + tok('count', draft.count) + ' ' +
+    var str = '<span class="plain">Show the</span> ' + tok('count', draft.count === 1 ? 'single' : draft.count) + ' ' +
       tok('sort', views ? 'most viewed' : 'newest') + ' ' +
       tok('types', draft.types.length
         ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
@@ -203,21 +207,21 @@
       tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
 
     str += ' <span class="plain">in</span> ' + groupTokens() +
-      ', <span class="plain">skipping</span> ' +
+      '<span class="punc">,</span> <span class="plain">skipping</span> ' +
       tok('exclude', draft.exclude.length ? listJoin(draft.exclude.map(function (f) { return f.term; })) : 'nothing', !draft.exclude.length) +
-      '<span class="plain">.</span>';
+      '<span class="punc">.</span>';
 
     str += views
       ? '<br><span class="plain">Most viewed reshuffles itself, so there is no rotation.</span>'
       : (draft.rotation.on
-        ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="plain">.</span>'
-        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="plain">.</span>');
+        ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="punc">.</span>'
+        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="punc">.</span>');
 
     str += '<br><span class="plain">When you pin a story by hand, search</span> ' +
       tok('searchTypes', draft.searchTypes.length
         ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, 2); }))
         : 'every type', !draft.searchTypes.length) +
-      '<span class="plain">.</span>';
+      '<span class="punc">.</span>';
 
     return str;
   }

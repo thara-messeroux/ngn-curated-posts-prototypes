@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings E: the sentence, in the pane · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261535">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261549">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 280px; } }
@@ -40,6 +40,10 @@
 .tok.is-open { background: var(--ngn-secondary-container); border-bottom-color: var(--ngn-on-surface); }
 .tok.is-empty { color: var(--ngn-on-surface-variant); font-style: italic; }
 .rule .plain { color: var(--ngn-on-surface-variant); }
+
+/* A token carries side padding, which leaves a visible gap before the comma
+   or full stop that follows it. Pull the punctuation back onto the word. */
+.rule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
 
 .result {
   margin: 0 var(--ngn-space-5) var(--ngn-space-4);
@@ -145,7 +149,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610261535"></script>
+<script src="assets/settings-data.js?v=202610261549"></script>
 <script>
 (function () {
   function base(o) {
@@ -282,7 +286,7 @@
 
   function rule() {
     var views = draft.sort === 'Most viewed';
-    var str = '<span class="plain">Show the</span> ' + tok('count', draft.count) + ' ' +
+    var str = '<span class="plain">Show the</span> ' + tok('count', draft.count === 1 ? 'single' : draft.count) + ' ' +
       tok('sort', views ? 'most viewed' : 'newest') + ' ' +
       tok('types', draft.types.length
         ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
@@ -291,21 +295,21 @@
     if (views) str += ' <span class="plain">from the last</span> ' + tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
 
     str += ' <span class="plain">in</span> ' + groupTokens() +
-      ', <span class="plain">skipping</span> ' +
+      '<span class="punc">,</span> <span class="plain">skipping</span> ' +
       tok('exclude', draft.exclude.length ? listJoin(draft.exclude.map(function (f) { return f.term; })) : 'nothing', !draft.exclude.length) +
-      '<span class="plain">.</span>';
+      '<span class="punc">.</span>';
 
     str += views
       ? '<br><span class="plain">Most viewed reshuffles itself, so there is no rotation.</span>'
       : draft.rotation.on
-        ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="plain">.</span>'
-        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="plain">.</span>';
+        ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="punc">.</span>'
+        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="punc">.</span>';
 
     str += '<br><span class="plain">When you pin a story by hand, search</span> ' +
       tok('searchTypes', draft.searchTypes.length
         ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, 2); }))
         : 'every type', !draft.searchTypes.length) +
-      '<span class="plain">.</span>';
+      '<span class="punc">.</span>';
 
     return str;
   }
@@ -357,7 +361,7 @@
 
       /* Groups are OR within, AND between, so each one gets its own box. */
       var groups = isEx ? [draft.exclude] : draft.include;
-      return '<div class="editor">' + head(isEx ? 'Never stories tagged' : 'Only stories tagged') +
+      return '<div class="editor">' + head(isEx ? 'Never show stories tagged' : 'Only stories tagged') +
         '<label class="screen-reader-text" for="e-tax">Taxonomy</label>' +
         '<select id="e-tax">' + available.map(function (k) {
           return '<option value="' + k + '"' + (k === taxKey ? ' selected' : '') + '>' + esc(TAXONOMIES[k].n) +

@@ -608,3 +608,31 @@ word you came from.
 Verified: Save blocked on "banana" and re-enabled on "2h", the contradiction resolves
 itself, both rotation fields disable, "1 day" reads correctly, and the keyboard loop
 holds. axe clean at 1440, 1280 and 900, no console errors.
+
+---
+
+## Settings C rebuilt, and the last three cosmetic items
+
+**C was two days behind E.** Its "Advanced: match several groups of terms" was a paragraph
+describing a feature that did not exist, it had no term search against a 12,710-term
+taxonomy, it listed nine taxonomies globally rather than per post type, and it still
+carried the invented "search the same types" rule, "but not nothing", no plurals and no
+validation. The dialog, the sentence and the layout are unchanged; everything behind them
+is now the same engine as the two-pane design.
+
+Then the three items the independent review raised that were still open in both:
+
+**"Show the 1 newest News Post"** is not English. A shelf holding one story now reads
+"Show the **single** newest News Post", which keeps the count clickable rather than
+dropping the control to fix the grammar.
+
+**A visible gap before every comma and full stop.** The token carries 6px of side padding,
+so the punctuation that follows it sat 6px off the word. Punctuation is now wrapped in a
+`.punc` span pulled back 5px, leaving the ~1px a comma should have. Invisible in a
+screenshot, obvious on a shared screen.
+
+**"NEVER STORIES TAGGED"** became "Never show stories tagged".
+
+Both designs verified: all ten `QuerySettings` fields reachable, AND groups working,
+search on every taxonomy, Save blocked on an invalid or contradictory rule, keyboard loop
+intact, axe clean at 1440, 1280 and 900, no overflow, no console errors.
