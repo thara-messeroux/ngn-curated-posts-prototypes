@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings C — The rule as a sentence · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261613">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261621">
 <style>
 .sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; }
 .sheet-head {
@@ -50,7 +50,9 @@
 .editor h3 { margin: 0; font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
 .chips { display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; }
 .editor .done { align-self: flex-start; }
-.upcoming-label { margin: 0 0 4px; font-size: 13px; font-weight: 500; }
+/* The next-run line answers the question; the list is supporting detail,
+   so it gets a gap rather than running straight on. */
+.upcoming-label { margin: var(--ngn-space-3) 0 6px; font-size: 13px; font-weight: 500; }
 .upcoming {
   margin: 0; padding: 0; list-style: none;
   font-size: 13px; color: var(--ngn-on-surface-variant);
@@ -129,7 +131,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610261613"></script>
+<script src="assets/settings-data.js?v=202610261621"></script>
 <script>
 (function () {
   /* One shelf, shown in a dialog. Same engine as the two-pane design, so the
