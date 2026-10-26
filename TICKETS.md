@@ -659,3 +659,19 @@ the times out for themselves.
 
 Applied to both sentence designs. Verified: five rows at 1h and at 7h, the right line
 under each, a bad interval still explains itself instead of listing nothing.
+
+---
+
+## Upcoming rotations: full dates and a heading
+
+Two changes to match the format Thara asked for, both in C and E.
+
+**The date is spelled out**: "Mon, Oct 26, 5:00 PM" rather than "Mon 5:00 PM". The
+weekday alone is ambiguous past the first few runs, and at a 24h interval the list spans
+five different days, where "Thu" could mean this week or next.
+
+**The list is labelled "Upcoming rotations"**, so it says what it is before you read it
+rather than reading as five loose timestamps under a sentence.
+
+The block now reads, top to bottom: the next run in words, the labelled list of five, and
+the line saying whether the schedule repeats daily.
