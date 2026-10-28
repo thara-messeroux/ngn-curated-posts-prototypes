@@ -749,3 +749,31 @@ excluding Health only releases Health from Category, not a same-named term elsew
 
 Applied to both C and E. All ten pages axe clean at 1440, 1280 and 900, no overflow, no
 console errors.
+
+---
+
+## Checked against the live DOM
+
+Thara pasted the rendered page. Three things came out of it.
+
+**The post type map is right.** All 28 types and their taxonomy counts match
+`curatedPostsConfig` exactly: post 9, page 4, newspost 8, parents 5, research 11, and the
+ten types with none. The WP-CLI export and the page agree.
+
+**"Post types: All" is a real state, and I was blocking it.** The instance card for
+"Parents - Latest" renders `<dd>All</dd>` for Post types, so an empty list means every
+type rather than an error. My `problems()` refused to save with "Pick at least one post
+type", which would have stopped a rule the system already runs. Removed. The sentence now
+reads "Show the 4 newest stories of any type", and the editor says what empty means
+instead of treating it as a mistake.
+
+**A defect for the ticket list: duplicate DOM ids.** `PostTypeList` renders
+`id="ngn-cp-pt-{slug}"` in both the auto section and the manual search section, so every
+post type id exists twice on the page. Labels bind by `for`, and a duplicate id resolves
+to the first match, so clicking a post type under "Manual search post types" toggles the
+checkbox in "Auto post types" instead. That is wrong behaviour, not just invalid HTML,
+and it would also confuse a screen reader.
+
+Not a defect, worth noting: the taxonomy accordions keep independent open and closed
+state between the two sections while sharing the same filter data, which is consistent
+with `taxonomyFilters` being keyed by taxonomy alone.

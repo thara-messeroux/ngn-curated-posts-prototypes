@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings E: the sentence, in the pane · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610281526">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610281529">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 280px; } }
@@ -157,7 +157,7 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610281526"></script>
+<script src="assets/settings-data.js?v=202610281529"></script>
 <script>
 (function () {
   /* The query groups terms BY TAXONOMY. buildQueryParams emits one
@@ -237,7 +237,6 @@
 
   function problems(d) {
     var out = [];
-    if (!d.types.length) out.push('Pick at least one post type.');
     if (d.sort !== 'Most viewed' && d.rotation.on && !intervalMinutes(d.rotation.interval)) {
       out.push('"' + (d.rotation.interval || 'blank') + '" is not an interval. Try 1h, 30m or a number of minutes.');
     }
@@ -286,7 +285,7 @@
       tok('sort', views ? 'most viewed' : 'newest') + ' ' +
       tok('types', draft.types.length
         ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
-        : 'pick a type', !draft.types.length);
+        : 'stories of any type', !draft.types.length);
 
     if (views) str += ' <span class="plain">from the last</span> ' +
       tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
@@ -412,8 +411,11 @@
         return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '"' +
           (t.tax.length ? '' : ' title="No filterable taxonomies"') + '>' + esc(t.n) +
           (t.tax.length ? '' : ' <span class="muted">\u00b7 no filters</span>') + '</button>';
-      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' + draft.types.length + ' selected \u00b7 ' +
-      taxonomiesFor(draft.types).length + ' taxonomies available</p>' + done + '</div>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' +
+      (draft.types.length
+        ? draft.types.length + ' selected \u00b7 ' + taxonomiesFor(draft.types).length + ' taxonomies available'
+        : 'Nothing selected, so every type is included. Pick some to narrow it, and to filter by term.') +
+      '</p>' + done + '</div>';
 
     if (open === 'searchTypes') return '<div class="editor">' + head('Types you can pin by hand') +
       '<div class="chips">' + POST_TYPES.map(function (t) {
@@ -429,7 +431,10 @@
       var isEx = open === 'exclude';
       var available = taxonomiesFor(draft.types);
       if (!available.length) return '<div class="editor">' + head('No filters available') +
-        '<p class="t-body-sm" style="margin:0">These post types have nothing to filter on.</p>' + done + '</div>';
+        '<p class="t-body-sm" style="margin:0">' +
+        (draft.types.length
+          ? 'These post types have nothing to filter on.'
+          : 'Pick a post type first. Term filters belong to a type.') + '</p>' + done + '</div>';
       if (available.indexOf(taxKey) < 0) taxKey = available[0];
       var tax = TAXONOMIES[taxKey];
       var f = fil(taxKey);
