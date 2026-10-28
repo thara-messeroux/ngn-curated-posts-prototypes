@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings C — The rule as a sentence · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610281529">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610281548">
 <style>
 .sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; }
 .sheet-head {
@@ -131,7 +131,8 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610281529"></script>
+<script src="assets/terms.js?v=202610281548"></script>
+<script src="assets/settings-data.js?v=202610281548"></script>
 <script>
 (function () {
   /* The query groups terms BY TAXONOMY. buildQueryParams emits one
@@ -273,9 +274,12 @@
   }
 
   function countLine(tax, showing, q) {
-    if (q) return showing === 0
-      ? 'Nothing matches \u201c' + esc(q) + '\u201d.'
-      : showing + ' of ' + tax.count.toLocaleString() + ' match \u201c' + esc(q) + '\u201d.';
+    if (q) {
+      var hits = countMatches(taxKey, q);
+      if (!hits) return 'Nothing matches \u201c' + esc(q) + '\u201d.';
+      return hits.toLocaleString() + (hits === 1 ? ' term matches \u201c' : ' terms match \u201c') +
+        esc(q) + '\u201d' + (hits > showing ? ', showing the closest ' + showing : '') + '.';
+    }
     if (showing >= tax.count) return tax.count.toLocaleString() + (tax.count === 1 ? ' term.' : ' terms.');
     return 'Showing ' + showing + ' of ' + tax.count.toLocaleString() + '. Type to find the rest.';
   }

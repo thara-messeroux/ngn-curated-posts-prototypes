@@ -777,3 +777,36 @@ and it would also confuse a screen reader.
 Not a defect, worth noting: the taxonomy accordions keep independent open and closed
 state between the two sections while sharing the same filter data, which is consistent
 with `taxonomyFilters` being keyed by taxonomy alone.
+
+---
+
+## Every term now ships, because a demo has to find what you type
+
+Searching Tag for "Ahmaud Arbery" or "AI" returned nothing. The data file carried an
+alphabet-wide sample of 400 tags out of 12,710, so anything outside the sample simply did
+not exist. Fine for proving a search box works, useless in front of a manager.
+
+The full set now ships: **17,435 terms across 21 taxonomies**, in `assets/terms.js`,
+889KB raw and about 200KB over the wire. The page is interactive in 45ms and a keystroke
+redraws in 23ms, so there was no reason to be precious about it.
+
+**Search is ranked rather than first-come.** A substring sweep of 12,710 tags buries the
+obvious answer: "AI" used to surface Air Force Life Cycle Management Center. Now exact
+matches come first, then starts-with, then anywhere, each sorted by how many stories use
+the term. Typing "AI" gives AI (302), AI ethics (40), AI-Robotics (30).
+
+**The count line tells the truth.** It said "5 of 12,710 match" when 404 matched and only
+40 were shown. Now: "404 terms match "AI", showing the closest 40."
+
+Two data faults the completeness check caught:
+
+- **A wrong slug.** The export labels the taxonomy "Internal or External" and I keyed it
+  `internal-external`, but the real slug is `external-research`. Research Article was
+  therefore offering 10 taxonomies instead of 11.
+- **A filtered post type map.** `POST_TYPES` had been built only from taxonomies I had
+  terms for, so any taxonomy without data silently vanished from the type that owns it.
+  Rebuilt unfiltered from `get_object_taxonomies`, and every count now matches
+  `curatedPostsConfig`: post 9, page 4, newspost 8, parents 5, research 11.
+
+Seen Around Audience is registered with no terms, so it is listed and says "0 terms"
+rather than being hidden. That is what the real dialog does.
