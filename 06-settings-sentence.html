@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings C — The rule as a sentence · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610281548">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610281615">
 <style>
 .sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; }
 .sheet-head {
@@ -131,8 +131,8 @@
   </div>
 </div>
 
-<script src="assets/terms.js?v=202610281548"></script>
-<script src="assets/settings-data.js?v=202610281548"></script>
+<script src="assets/terms.js?v=202610281615"></script>
+<script src="assets/settings-data.js?v=202610281615"></script>
 <script>
 (function () {
   /* The query groups terms BY TAXONOMY. buildQueryParams emits one
@@ -267,7 +267,7 @@
     str += '<br><span class="plain">When you pin a story by hand, search</span> ' +
       tok('searchTypes', draft.searchTypes.length
         ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, 2); }))
-        : 'every type', !draft.searchTypes.length) +
+        : 'any type', !draft.searchTypes.length) +
       '<span class="punc">.</span>';
 
     return str;
@@ -458,7 +458,7 @@
   function render() {
     $('rule').innerHTML = rule();
     $('editor').innerHTML = editor();
-    $('count').textContent = draft.types.length ? matchCount(flat(draft)).toLocaleString() : '0';
+    $('count').textContent = matchCount(flat(draft)).toLocaleString();
     refreshSave();
     bindTax();
   }

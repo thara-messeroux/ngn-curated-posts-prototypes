@@ -330,7 +330,10 @@ window.SHELF = {
    screens should ask the server; the point is that the number exists. */
 window.matchCount = function (s) {
   var base = { newspost: 4120, post: 9800, 'magazine-article': 310, 'eight-oh-five': 95 };
-  var n = s.types.reduce(function (t, k) { return t + (base[k] || 140); }, 0);
+
+  // An empty list means every type, which is the widest the shelf can be.
+  var types = s.types.length ? s.types : POST_TYPES.map(function (p) { return p.k; });
+  var n = types.reduce(function (t, k) { return t + (base[k] || 140); }, 0);
 
   // Terms inside a group are OR, so each extra one can only widen the group.
   // Separate groups are AND, so each group narrows what is left.

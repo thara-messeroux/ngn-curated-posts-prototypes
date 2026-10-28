@@ -810,3 +810,17 @@ Two data faults the completeness check caught:
 
 Seen Around Audience is registered with no terms, so it is listed and says "0 terms"
 rather than being hidden. That is what the real dialog does.
+
+---
+
+## "0 stories match" when every type was allowed
+
+With no post type selected the count read 0, which is the opposite of the truth: an
+empty list means every type, so it is the widest the shelf can be. `matchCount()` summed
+over `s.types` and an empty array sums to nothing, and the caller then short-circuited to
+'0' as well. Both fixed; the count now reads 17,685 against 4,120 for News Post alone.
+
+Also unified the vocabulary. The two sentences said "stories of any type" and "every
+type" for the same idea, which reads as two different settings. Both now say "any type",
+so the difference lives where it actually is: one sentence is about what fills the shelf,
+the other about what you can pin by hand.
