@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings C — The rule as a sentence · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261631">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610281526">
 <style>
 .sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; }
 .sheet-head {
@@ -131,14 +131,19 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610261631"></script>
+<script src="assets/settings-data.js?v=202610281526"></script>
 <script>
 (function () {
-  /* One shelf, shown in a dialog. Same engine as the two-pane design, so the
-     rule, the validation and the term data are identical. */
+  /* The query groups terms BY TAXONOMY. buildQueryParams emits one
+     { taxonomy, terms } clause per group, and clauses are ANDed, so a single
+     OR group can never span two taxonomies. The state mirrors that shape:
+
+       filters[taxSlug] = { groups: [ [term, term], [term] ], exclude: [term] }
+
+     groups[0] is the taxonomy's base include; the rest are its AND groups. */
   var SAVED = {
-    count: 4, sort: 'Newest', types: ['newspost'],
-    include: [[]], exclude: [], windowDays: 14, searchTypes: [],
+    count: 4, sort: 'Newest', types: ['newspost'], windowDays: 14, searchTypes: [],
+    filters: {},
     rotation: { on: true, interval: '1h', start: '00:00' }
   };
 
@@ -153,59 +158,92 @@
   var INTERVALS = ['15m', '30m', '1h', '2h', '3h', '4h', '6h', '12h', '24h'];
   var isCustom = function (v) { return INTERVALS.indexOf(v) < 0; };
 
-  /* Whole numbers only, held in range, so the box and the sentence agree. */
+  /* The filter record for one taxonomy, created on first use. */
+  function fil(tax) {
+    if (!draft.filters[tax]) draft.filters[tax] = { groups: [[]], exclude: [] };
+    if (!draft.filters[tax].groups.length) draft.filters[tax].groups = [[]];
+    return draft.filters[tax];
+  }
+
+  /* Every include clause the query would emit: one per non-empty group, each
+     tagged with the taxonomy it belongs to. */
+  function clauses() {
+    var out = [];
+    Object.keys(draft.filters).forEach(function (tax) {
+      draft.filters[tax].groups.forEach(function (g, gi) {
+        if (g.length) out.push({ tax: tax, gi: gi, terms: g });
+      });
+    });
+    return out;
+  }
+
+  function allExcluded() {
+    var out = [];
+    Object.keys(draft.filters).forEach(function (tax) {
+      draft.filters[tax].exclude.forEach(function (t) { out.push({ tax: tax, term: t }); });
+    });
+    return out;
+  }
+
   function clampWhole(raw, lo, hi) {
     var n = Math.round(parseFloat(raw));
     if (!isFinite(n)) return lo;
     return Math.min(hi, Math.max(lo, n));
   }
 
-  /* "a", "a or b", "a, b or c". Repeating "or" reads like a machine. */
   function listJoin(items) {
     if (items.length < 3) return items.join(' or ');
     return items.slice(0, -1).join(', ') + ' or ' + items[items.length - 1];
   }
 
-  /* Everything wrong with the rule as it stands. Empty means safe to save. */
   function problems(d) {
     var out = [];
     if (!d.types.length) out.push('Pick at least one post type.');
     if (d.sort !== 'Most viewed' && d.rotation.on && !intervalMinutes(d.rotation.interval)) {
       out.push('"' + (d.rotation.interval || 'blank') + '" is not an interval. Try 1h, 30m or a number of minutes.');
     }
-    var inc = d.include.reduce(function (a, g) { return a.concat(g); }, []);
-    d.exclude.forEach(function (x) {
-      if (inc.some(function (i) { return i.term === x.term && i.tax === x.tax; })) {
-        out.push('\u201c' + x.term + '\u201d is both required and skipped, so nothing can match it.');
-      }
+    Object.keys(d.filters).forEach(function (tax) {
+      var f = d.filters[tax];
+      var inc = f.groups.reduce(function (a, g) { return a.concat(g); }, []);
+      f.exclude.forEach(function (t) {
+        if (inc.indexOf(t) > -1) {
+          out.push('\u201c' + t + '\u201d is both required and skipped, so nothing can match it.');
+        }
+      });
     });
     return out;
   }
 
-  function tok(key, text, empty, nth) {
+  function tok(key, text, empty, ref) {
     return '<button class="tok' + (open === key ? ' is-open' : '') + (empty ? ' is-empty' : '') +
-      '" type="button" data-tok="' + key + '"' + (nth === undefined ? '' : ' data-nth="' + nth + '"') +
+      '" type="button" data-tok="' + key + '"' + (ref ? ' data-ref="' + ref + '"' : '') +
       '>' + esc(text) + '</button>';
   }
 
-  /* Each AND group is its own token: terms within a group are "or", the groups
-     themselves are "and also", which is how the query treats them. */
+  /* One token per clause, joined by "and also in", because separate clauses
+     are ANDed while the terms inside one are ORed. */
   function groupTokens() {
-    var filled = draft.include.filter(function (g) { return g.length; });
-    if (!filled.length) return tok('include', 'anything', true);
-    return draft.include.map(function (g, i) {
-      return g.length ? tok('include', listJoin(g.map(function (f) { return f.term; })), false, i) : null;
-    }).filter(Boolean).join(' <span class="plain">and also in</span> ');
+    var c = clauses();
+    if (!c.length) return tok('include', 'anything', true);
+    return c.map(function (x) {
+      return tok('include', listJoin(x.terms), false, x.tax + ':' + x.gi);
+    }).join(' <span class="plain">and also in</span> ');
   }
 
   function flat(d) {
-    return { types: d.types, groups: d.include, sort: d.sort, windowDays: d.windowDays,
-             include: d.include.reduce(function (a, g) { return a.concat(g); }, []), exclude: d.exclude };
+    var groups = [], exclude = [];
+    Object.keys(d.filters).forEach(function (tax) {
+      d.filters[tax].groups.forEach(function (g) { if (g.length) groups.push(g); });
+      d.filters[tax].exclude.forEach(function (t) { exclude.push(t); });
+    });
+    return { types: d.types, groups: groups, include: groups.reduce(function (a, g) { return a.concat(g); }, []),
+             exclude: exclude, sort: d.sort, windowDays: d.windowDays };
   }
 
   function rule() {
     var views = draft.sort === 'Most viewed';
-    var str = '<span class="plain">Show the</span> ' + tok('count', draft.count === 1 ? 'single' : draft.count) + ' ' +
+    var str = '<span class="plain">Show the</span> ' +
+      tok('count', draft.count === 1 ? 'single' : draft.count) + ' ' +
       tok('sort', views ? 'most viewed' : 'newest') + ' ' +
       tok('types', draft.types.length
         ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
@@ -214,9 +252,10 @@
     if (views) str += ' <span class="plain">from the last</span> ' +
       tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
 
+    var ex = allExcluded();
     str += ' <span class="plain">in</span> ' + groupTokens() +
       '<span class="punc">,</span> <span class="plain">skipping</span> ' +
-      tok('exclude', draft.exclude.length ? listJoin(draft.exclude.map(function (f) { return f.term; })) : 'nothing', !draft.exclude.length) +
+      tok('exclude', ex.length ? listJoin(ex.map(function (f) { return f.term; })) : 'nothing', !ex.length) +
       '<span class="punc">.</span>';
 
     str += views
@@ -242,52 +281,64 @@
     return 'Showing ' + showing + ' of ' + tax.count.toLocaleString() + '. Type to find the rest.';
   }
 
-  /* One AND group: its own count, search, term list and Remove. Every taxonomy
-     gets the search box whatever its size today. */
+  /* One group within one taxonomy. gi -1 means the taxonomy's exclude list. */
   function groupBox(tax, bucket, gi, isEx) {
-    var q = termQ[gi] || '';
+    var key = (isEx ? 'x' : gi);
+    var q = termQ[key] || '';
     var shown = searchTerms(taxKey, q, 40);
-    var title = isEx ? 'Has any of' : (gi === 0 ? 'Has any of' : 'AND has any of');
+    var title = isEx ? 'Never tagged' : (gi === 0 ? 'Has any of' : 'AND has any of');
+    var groupCount = fil(taxKey).groups.length;
+
     return '<div class="group">' +
       '<div class="group-head"><b>' + title + ' <span class="muted">(' + bucket.length + ' selected)</span></b>' +
-        (!isEx && draft.include.length > 1
+        (!isEx && groupCount > 1
           ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove</button>' : '') +
       '</div>' +
-      '<div class="field"><label for="e-q-' + gi + '">Search ' + esc(tax.n) + '</label>' +
-        '<input type="search" id="e-q-' + gi + '" data-q="' + gi + '" value="' + esc(q) +
+      '<div class="field"><label for="e-q-' + key + '">Search ' + esc(tax.n) + '</label>' +
+        '<input type="search" id="e-q-' + key + '" data-q="' + key + '" value="' + esc(q) +
         '" placeholder="Type a name or a slug\u2026"></div>' +
       '<div class="chips">' + shown.map(function (t) {
-        var on = bucket.some(function (f) { return f.term === t.n; });
+        var on = bucket.indexOf(t.n) > -1;
         return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t.n) +
-          '" data-gi="' + gi + '"' + (t.p ? ' title="Inside ' + esc(t.p) + '"' : '') + '>' +
+          '" data-gi="' + key + '"' + (t.p ? ' title="Inside ' + esc(t.p) + '"' : '') + '>' +
           (t.p ? '<span class="muted">' + esc(t.p) + ' \u203a </span>' : '') + esc(t.n) +
           ' <span class="muted">' + t.c.toLocaleString() + '</span></button>';
       }).join('') + '</div>' +
       '<p class="t-body-sm muted" style="margin:0">' + countLine(tax, shown.length, q) + '</p>' +
       (bucket.length ? '<div class="chips" style="padding-top:var(--ngn-space-2);border-top:1px solid var(--ngn-outline-variant)">' +
-        bucket.map(function (f) {
-          return '<span class="chip' + (isEx ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
-            ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" data-gi="' + gi +
-            '" aria-label="Remove ' + esc(f.term) + '">&times;</button></span>';
+        bucket.map(function (t) {
+          return '<span class="chip' + (isEx ? ' chip-exclude' : ' is-on') + '">' + esc(t) +
+            ' <button class="chip-remove" type="button" data-rm="' + esc(t) + '" data-gi="' + key +
+            '" aria-label="Remove ' + esc(t) + '">&times;</button></span>';
         }).join('') + '</div>' : '') +
     '</div>';
   }
 
-  /* One line, because the fields above already carry the schedule. */
-  /* The next five runs, always. A list that comes and goes is harder to
-     trust than one that is always in the same place, and the line underneath
-     says which kind of schedule it is so the list is useful either way. */
+  /* Which other taxonomies already carry filters, so switching away does not
+     hide what is set. */
+  function elsewhere() {
+    var others = Object.keys(draft.filters).filter(function (t) {
+      if (t === taxKey) return false;
+      var f = draft.filters[t];
+      return f.groups.some(function (g) { return g.length; }) || f.exclude.length;
+    });
+    if (!others.length) return '';
+    return '<p class="t-body-sm muted" style="margin:0">Also filtered: ' +
+      others.map(function (t) {
+        var f = draft.filters[t];
+        var n = f.groups.reduce(function (a, g) { return a + g.length; }, 0) + f.exclude.length;
+        return esc(TAXONOMIES[t].n) + ' (' + n + ')';
+      }).join(', ') + '.</p>';
+  }
+
   function upcoming(rot) {
     var times = nextRotations(rot.start, rot.interval, 5);
     if (!times.length) return '<p class="t-body-sm muted" style="margin:0">Try 1h, 30m, 1h 30m, or a number of minutes.</p>';
-
     var clock = function (d) {
       return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric',
                                            hour: 'numeric', minute: '2-digit' });
     };
-    var mins = intervalMinutes(rot.interval);
-    var repeats = 1440 % mins === 0;
-
+    var repeats = 1440 % intervalMinutes(rot.interval) === 0;
     return '<p class="t-body-sm muted" style="margin:0 0 4px">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>' +
       '<p class="upcoming-label">Upcoming rotations</p>' +
       '<ol class="upcoming">' + times.map(function (t) { return '<li>' + esc(clock(t)) + '</li>'; }).join('') + '</ol>' +
@@ -342,15 +393,23 @@
         '<p class="t-body-sm" style="margin:0">These post types have nothing to filter on.</p>' + done + '</div>';
       if (available.indexOf(taxKey) < 0) taxKey = available[0];
       var tax = TAXONOMIES[taxKey];
-      var groups = isEx ? [draft.exclude] : draft.include;
-      return '<div class="editor">' + head(isEx ? 'Never show stories tagged' : 'Only stories tagged') +
+      var f = fil(taxKey);
+
+      return '<div class="editor">' +
+        head(isEx ? 'Never show stories tagged' : 'Only stories tagged') +
         '<label class="screen-reader-text" for="e-tax">Taxonomy</label>' +
         '<select id="e-tax">' + available.map(function (k) {
+          var ff = draft.filters[k];
+          var n = ff ? ff.groups.reduce(function (a, g) { return a + g.length; }, 0) + ff.exclude.length : 0;
           return '<option value="' + k + '"' + (k === taxKey ? ' selected' : '') + '>' + esc(TAXONOMIES[k].n) +
-            ' (' + TAXONOMIES[k].count.toLocaleString() + ')</option>';
+            ' (' + TAXONOMIES[k].count.toLocaleString() + ')' + (n ? ' \u2022 ' + n + ' set' : '') + '</option>';
         }).join('') + '</select>' +
-        groups.map(function (bucket, gi) { return groupBox(tax, bucket, gi, isEx); }).join('') +
-        (isEx ? '' : '<button class="btn btn-outlined btn-sm" type="button" data-addgroup style="align-self:flex-start">+ Add AND group</button>') +
+        (isEx
+          ? groupBox(tax, f.exclude, -1, true)
+          : f.groups.map(function (g, gi) { return groupBox(tax, g, gi, false); }).join('') +
+            '<button class="btn btn-outlined btn-sm" type="button" data-addgroup style="align-self:flex-start">' +
+            '+ Add AND group to ' + esc(tax.n) + '</button>') +
+        elsewhere() +
         done + '</div>';
     }
 
@@ -375,7 +434,6 @@
     return '';
   }
 
-  /* Hidden, blocked with a reason, or ready to save. */
   function refreshSave() {
     var bad = problems(draft);
     $('dirty').textContent = bad.length ? '' : (changed() ? 'Unsaved changes' : 'No changes yet');
@@ -396,7 +454,6 @@
     bindTax();
   }
 
-  /* Typing in a search box must not lose the caret. */
   function redrawTerms(boxId) {
     var ed = $('editor'), box = $(boxId);
     if (!ed || !box) return;
@@ -407,7 +464,6 @@
     bindTax();
   }
 
-  /* Opening a word puts you in its editor; closing returns you to the word. */
   function focusEditor() {
     var first = $('editor').querySelector('input, select, button');
     if (first) first.focus();
@@ -421,6 +477,11 @@
     if (el) el.focus();
   }
 
+  /* The bucket a term click belongs to: a numbered group, or the exclude list. */
+  function bucketFor(gi) {
+    return gi === 'x' ? fil(taxKey).exclude : fil(taxKey).groups[+gi];
+  }
+
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest('[data-tok]'), c = ev.target.closest('[data-close]'),
         ty = ev.target.closest('[data-type]'), so = ev.target.closest('[data-sort]'),
@@ -431,32 +492,28 @@
     if (ty) { var i = draft.types.indexOf(ty.dataset.type); if (i > -1) draft.types.splice(i, 1); else draft.types.push(ty.dataset.type); return render(); }
     if (so) { draft.sort = so.dataset.sort; return render(); }
     if (st) { var j = draft.searchTypes.indexOf(st.dataset.stype); if (j > -1) draft.searchTypes.splice(j, 1); else draft.searchTypes.push(st.dataset.stype); return render(); }
-    if (rm) { var b = open === 'exclude' ? draft.exclude : draft.include[+rm.dataset.gi];
-              var k = b.findIndex(function (f) { return f.term === rm.dataset.rm; }); if (k > -1) b.splice(k, 1); return render(); }
+    if (rm) { var b = bucketFor(rm.dataset.gi); var k = b.indexOf(rm.dataset.rm); if (k > -1) b.splice(k, 1); return render(); }
     if (tm) {
-      var bucket = open === 'exclude' ? draft.exclude : draft.include[+tm.dataset.gi];
-      var at = bucket.findIndex(function (f) { return f.term === tm.dataset.term; });
+      var bucket = bucketFor(tm.dataset.gi), term = tm.dataset.term, at = bucket.indexOf(term);
       if (at > -1) { bucket.splice(at, 1); }
       else {
-        // A term cannot be required and skipped at once.
-        if (open === 'exclude') {
-          draft.include.forEach(function (g) {
-            var q = g.findIndex(function (f) { return f.term === tm.dataset.term && f.tax === taxKey; });
-            if (q > -1) g.splice(q, 1);
-          });
+        // Within one taxonomy a term cannot be required and skipped at once.
+        var f = fil(taxKey);
+        if (tm.dataset.gi === 'x') {
+          f.groups.forEach(function (g) { var q = g.indexOf(term); if (q > -1) g.splice(q, 1); });
         } else {
-          var e = draft.exclude.findIndex(function (f) { return f.term === tm.dataset.term && f.tax === taxKey; });
-          if (e > -1) draft.exclude.splice(e, 1);
+          var e = f.exclude.indexOf(term); if (e > -1) f.exclude.splice(e, 1);
         }
-        bucket.push({ tax: taxKey, term: tm.dataset.term });
+        bucket.push(term);
       }
       return render();
     }
-    if (ev.target.closest('[data-addgroup]')) { draft.include.push([]); return render(); }
-    if (dg) { draft.include.splice(+dg.dataset.dropgroup, 1); termQ = {}; return render(); }
+    if (ev.target.closest('[data-addgroup]')) { fil(taxKey).groups.push([]); return render(); }
+    if (dg) { fil(taxKey).groups.splice(+dg.dataset.dropgroup, 1); termQ = {}; return render(); }
     if (t) {
-      if (open === t.dataset.tok) { closeEditor(); return; }
+      if (open === t.dataset.tok && !t.dataset.ref) { closeEditor(); return; }
       open = t.dataset.tok; termQ = {}; lastTok = t.dataset.tok;
+      if (t.dataset.ref) taxKey = t.dataset.ref.split(':')[0];
       render(); focusEditor();
       return;
     }

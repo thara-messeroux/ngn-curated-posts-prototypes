@@ -697,3 +697,55 @@ Worth separating from the earlier decision: a **control** that appears and disap
 hard to trust, which is why search is on every taxonomy and the list is always shown. A
 **warning** is conditional by nature; it means something is unusual, and showing it when
 nothing is unusual is what makes warnings worthless.
+
+---
+
+## The AND groups were modelled at the wrong level
+
+Thara compared the designs against the real dialog and said the information architecture
+did not look right. She was correct, and it was structural rather than cosmetic.
+
+`buildQueryParams()` loops over `taxonomyFilters` and emits one `{ taxonomy, terms }`
+clause per group:
+
+```
+for ( const [ taxonomy, filter ] of Object.entries( settings.taxonomyFilters ) ) {
+  if ( include.length ) termsInclude.push( { taxonomy, terms: include } );
+  for ( const group of filter.andGroups ?? [] ) termsInclude.push( { taxonomy, terms: [ ...group ] } );
+}
+```
+
+Terms inside one clause are ORed, clauses are ANDed, and **every clause belongs to
+exactly one taxonomy**. That is why the live screen has a separate "+ Add AND group"
+under Category, under Tag, under Audience, rather than one button for the whole filter.
+
+My model held a flat list of groups whose members carried their own `tax`, so a single
+OR group could span two taxonomies. Proven reachable before the fix:
+
+> Show the 4 newest News Posts in **Health or #LikeAHusky**, skipping nothing.
+
+Category OR Tag. `buildQueryParams` cannot produce that, so the UI was offering a query
+the system cannot run.
+
+**The state now mirrors the real shape:**
+
+```
+filters[taxonomySlug] = { groups: [ [term, term], [term] ], exclude: [term] }
+```
+
+`groups[0]` is that taxonomy's base include and the rest are its AND groups, which is
+`TaxonomyFilterState.terms` plus `andGroups` exactly. Picking a term in a second taxonomy
+now opens its own clause rather than joining the first one.
+
+Three things that fell out of the fix:
+
+- The add button names its scope: "+ Add AND group to Category".
+- The taxonomy picker marks what is already set: "Category (12) • 3 set".
+- A line under the editor says what is filtered elsewhere, so switching taxonomy does not
+  hide the rest of the rule.
+
+The include/exclude contradiction check is now scoped per taxonomy too, which is correct:
+excluding Health only releases Health from Category, not a same-named term elsewhere.
+
+Applied to both C and E. All ten pages axe clean at 1440, 1280 and 900, no overflow, no
+console errors.

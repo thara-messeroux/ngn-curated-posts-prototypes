@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Settings E: the sentence, in the pane · NUEAC-398</title>
-<link rel="stylesheet" href="assets/ngn-v2.css?v=202610261631">
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610281526">
 <style>
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 280px; } }
@@ -157,179 +157,151 @@
   </div>
 </div>
 
-<script src="assets/settings-data.js?v=202610261631"></script>
+<script src="assets/settings-data.js?v=202610281526"></script>
 <script>
 (function () {
-  function base(o) {
-    return Object.assign({ windowDays: 14, searchTypes: [] }, o);
-  }
+  /* The query groups terms BY TAXONOMY. buildQueryParams emits one
+     { taxonomy, terms } clause per group, and clauses are ANDed, so a single
+     OR group can never span two taxonomies. The state mirrors that shape:
+
+       filters[taxSlug] = { groups: [ [term, term], [term] ], exclude: [term] }
+
+     groups[0] is the taxonomy's base include; the rest are its AND groups. */
+  function F(o) { return o; }
   var SHELVES = [
-    { n: 'Featured Stories', k: 'featured-stories', s: base({ count: 4, sort: 'Newest', types: ['newspost'], include: [[]], exclude: [], rotation: { on: true, interval: '1h', start: '00:00' } }) },
-    { n: 'Featured research', k: 'featured-research', s: base({ count: 3, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'category', term: 'Research' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'Most read health', k: 'most-read-health', s: base({ count: 5, sort: 'Most viewed', types: ['newspost'], include: [[{ tax: 'category', term: 'Health' }]], exclude: [], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'Latest world news', k: 'latest-world-news', s: base({ count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], include: [[{ tax: 'category', term: 'World & National News' }]], exclude: [{ tax: 'newsfeed', term: 'Research' }], rotation: { on: false, interval: '1h', start: '00:00' } }) },
-    { n: 'World Cup 2026 Stories', k: 'world-cup-2026-stories', s: base({ count: 12, sort: 'Newest', types: ['newspost'], include: [[{ tax: 'post_tag', term: 'climate resilience' }], [{ tax: 'audience', term: 'Students' }]], exclude: [{ tax: 'kicker', term: 'Final' }], rotation: { on: false, interval: '1h', start: '00:00' } }) }
+    { n: 'Featured Stories', k: 'featured-stories', s: { count: 4, sort: 'Newest', types: ['newspost'], windowDays: 14, searchTypes: [],
+      filters: {}, rotation: { on: true, interval: '1h', start: '00:00' } } },
+    { n: 'Featured research', k: 'featured-research', s: { count: 3, sort: 'Newest', types: ['newspost'], windowDays: 14, searchTypes: [],
+      filters: { category: { groups: [['Research']], exclude: [] } }, rotation: { on: false, interval: '1h', start: '00:00' } } },
+    { n: 'Most read health', k: 'most-read-health', s: { count: 5, sort: 'Most viewed', types: ['newspost'], windowDays: 14, searchTypes: [],
+      filters: { category: { groups: [['Health']], exclude: [] } }, rotation: { on: false, interval: '1h', start: '00:00' } } },
+    { n: 'Latest world news', k: 'latest-world-news', s: { count: 3, sort: 'Newest', types: ['post', 'newspost', 'magazine-article'], windowDays: 14, searchTypes: [],
+      filters: { category: { groups: [['World & National News']], exclude: [] }, newsfeed: { groups: [[]], exclude: ['Research'] } },
+      rotation: { on: false, interval: '1h', start: '00:00' } } },
+    { n: 'World Cup 2026 Stories', k: 'world-cup-2026-stories', s: { count: 12, sort: 'Newest', types: ['newspost'], windowDays: 14, searchTypes: [],
+      filters: { post_tag: { groups: [['climate resilience']], exclude: [] },
+                 audience: { groups: [['Students']], exclude: [] },
+                 kicker:   { groups: [[]], exclude: ['Final'] } },
+      rotation: { on: false, interval: '1h', start: '00:00' } } }
   ];
 
-  var sel = 0, draft = clone(SHELVES[0].s), dirty = {}, open = null, taxKey = null, termQ = {}, q = '';
+  var sel = 0, dirty = {}, draft, open = null, lastTok = null, taxKey = null, termQ = {}, q = '';
+  var $ = function (id) { return document.getElementById(id); };
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
+  var changed = function () { return JSON.stringify(draft) !== JSON.stringify(SHELVES[sel].s); };
+  var stories = function (n) { return n + (n === 1 ? ' story' : ' stories'); };
 
-  /* Everything wrong with the rule as it stands, in the order you would want
-     to hear it. An empty list means it is safe to save. */
-  function problems(d) {
+  var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
+  var pluralType = function (k, n) { var nm = typeName(k); return n === 1 || /s$/.test(nm) ? nm : nm + 's'; };
+  var INTERVALS = ['15m', '30m', '1h', '2h', '3h', '4h', '6h', '12h', '24h'];
+  var isCustom = function (v) { return INTERVALS.indexOf(v) < 0; };
+
+  /* The filter record for one taxonomy, created on first use. */
+  function fil(tax) {
+    if (!draft.filters[tax]) draft.filters[tax] = { groups: [[]], exclude: [] };
+    if (!draft.filters[tax].groups.length) draft.filters[tax].groups = [[]];
+    return draft.filters[tax];
+  }
+
+  /* Every include clause the query would emit: one per non-empty group, each
+     tagged with the taxonomy it belongs to. */
+  function clauses() {
     var out = [];
-    if (!d.types.length) out.push('Pick at least one post type.');
-    if (d.sort !== 'Most viewed' && d.rotation.on && !intervalMinutes(d.rotation.interval)) {
-      out.push('"' + (d.rotation.interval || 'blank') + '" is not an interval. Try 1h, 30m or a number of minutes.');
-    }
-    var inc = d.include.reduce(function (a, g) { return a.concat(g); }, []);
-    d.exclude.forEach(function (x) {
-      if (inc.some(function (i) { return i.term === x.term && i.tax === x.tax; })) {
-        out.push('\u201c' + x.term + '\u201d is both required and skipped, so nothing can match it.');
-      }
+    Object.keys(draft.filters).forEach(function (tax) {
+      draft.filters[tax].groups.forEach(function (g, gi) {
+        if (g.length) out.push({ tax: tax, gi: gi, terms: g });
+      });
     });
     return out;
   }
 
-  /* Whole numbers only, held inside the range, so the box and the sentence
-     can never show different values. */
+  function allExcluded() {
+    var out = [];
+    Object.keys(draft.filters).forEach(function (tax) {
+      draft.filters[tax].exclude.forEach(function (t) { out.push({ tax: tax, term: t }); });
+    });
+    return out;
+  }
+
   function clampWhole(raw, lo, hi) {
     var n = Math.round(parseFloat(raw));
     if (!isFinite(n)) return lo;
     return Math.min(hi, Math.max(lo, n));
   }
 
-  var stories = function (n) { return n + (n === 1 ? ' story' : ' stories'); };
-
-  /* The intervals editors actually pick. Anything else goes through Custom,
-     which the real duration-input accepts as "1h 24m" or "90". */
-  var INTERVALS = ['15m', '30m', '1h', '2h', '3h', '4h', '6h', '12h', '24h'];
-  var isCustom = function (v) { return INTERVALS.indexOf(v) < 0; };
-
-  /* "a", "a or b", "a, b or c" - repeating "or" reads like a machine. */
-  function listJoin(items, word) {
-    if (items.length < 3) return items.join(' ' + (word || 'or') + ' ');
-    return items.slice(0, -1).join(', ') + ' ' + (word || 'or') + ' ' + items[items.length - 1];
-  }
-  var $ = function (id) { return document.getElementById(id); };
-  var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
-  var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
-
-  /* "4 News Posts", but "1 News Post". */
-  var pluralType = function (k, n) {
-    var name = typeName(k);
-    return n === 1 || /s$/.test(name) ? name : name + 's';
-  };
-  var changed = function () { return JSON.stringify(draft) !== JSON.stringify(SHELVES[sel].s); };
-
-  /* Each AND group is its own token. Terms inside a group are "or"; the
-     groups themselves are "and also", which is how the query treats them. */
-  function groupTokens() {
-    var filled = draft.include.filter(function (g) { return g.length; });
-    if (!filled.length) return tok('include', 'anything', true);
-    return draft.include.map(function (g, i) {
-      return g.length ? tok('include', listJoin(g.map(function (f) { return f.term; })), false, i) : null;
-    }).filter(Boolean).join(' <span class="plain">and also in</span> ');
+  function listJoin(items) {
+    if (items.length < 3) return items.join(' or ');
+    return items.slice(0, -1).join(', ') + ' or ' + items[items.length - 1];
   }
 
-  /* One line. The live dialog lists the next five, but at a fixed interval
-     every one of them is just the interval field again. */
-  /* The next five runs, always. A list that comes and goes is harder to
-     trust than one that is always in the same place, and the line underneath
-     says which kind of schedule it is so the list is useful either way. */
-  function upcoming(rot) {
-    var times = nextRotations(rot.start, rot.interval, 5);
-    if (!times.length) return '<p class="t-body-sm muted" style="margin:0">Try 1h, 30m, 1h 30m, or a number of minutes.</p>';
-
-    var clock = function (d) {
-      return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric',
-                                           hour: 'numeric', minute: '2-digit' });
-    };
-    var mins = intervalMinutes(rot.interval);
-    var repeats = 1440 % mins === 0;
-
-    return '<p class="t-body-sm muted" style="margin:0 0 4px">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>' +
-      '<p class="upcoming-label">Upcoming rotations</p>' +
-      '<ol class="upcoming">' + times.map(function (t) { return '<li>' + esc(clock(t)) + '</li>'; }).join('') + '</ol>' +
-      (repeats ? '' :
-        '<p class="t-body-sm muted" style="margin:6px 0 0">The times move each day, because ' +
-        esc(rot.interval) + ' does not divide evenly into 24 hours.</p>');
+  function problems(d) {
+    var out = [];
+    if (!d.types.length) out.push('Pick at least one post type.');
+    if (d.sort !== 'Most viewed' && d.rotation.on && !intervalMinutes(d.rotation.interval)) {
+      out.push('"' + (d.rotation.interval || 'blank') + '" is not an interval. Try 1h, 30m or a number of minutes.');
+    }
+    Object.keys(d.filters).forEach(function (tax) {
+      var f = d.filters[tax];
+      var inc = f.groups.reduce(function (a, g) { return a.concat(g); }, []);
+      f.exclude.forEach(function (t) {
+        if (inc.indexOf(t) > -1) {
+          out.push('\u201c' + t + '\u201d is both required and skipped, so nothing can match it.');
+        }
+      });
+    });
+    return out;
   }
 
-  /* The stand-in count wants one flat list of include terms. */
-  function flat(d) {
-    return { types: d.types, include: d.include.reduce(function (a, g) { return a.concat(g); }, []), exclude: d.exclude };
-  }
-
-  /* Says what you are looking at: the whole list, a filtered one, or the first
-     slice of a taxonomy too big to send at once. */
-  function countLine(tax, showing, q) {
-    if (q) return showing === 0
-      ? 'Nothing matches \u201c' + esc(q) + '\u201d.'
-      : showing + ' of ' + tax.count.toLocaleString() + ' match \u201c' + esc(q) + '\u201d.';
-    if (showing >= tax.count) return tax.count.toLocaleString() + (tax.count === 1 ? ' term.' : ' terms.');
-    return 'Showing ' + showing + ' of ' + tax.count.toLocaleString() + '. Type to find the rest.';
-  }
-
-  /* One AND group: its own heading with a live count, its own search and term
-     list, and its own Remove. Every taxonomy gets the search box, whatever its
-     size today, so the editor keeps one shape and keeps working as they grow. */
-  function groupBox(tax, bucket, gi, isEx) {
-    var q = termQ[gi] || '';
-    var shown = searchTerms(taxKey, q, 40);
-    var title = isEx ? 'Has any of' : (gi === 0 ? 'Has any of' : 'AND has any of');
-
-    return '<div class="group">' +
-      '<div class="group-head">' +
-        '<b>' + title + ' <span class="muted">(' + bucket.length + ' selected)</span></b>' +
-        (!isEx && draft.include.length > 1
-          ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove</button>' : '') +
-      '</div>' +
-      '<div class="field"><label for="e-q-' + gi + '">Search ' + esc(tax.n) + '</label>' +
-        '<input type="search" id="e-q-' + gi + '" data-q="' + gi + '" value="' + esc(q) +
-        '" placeholder="Type a name or a slug\u2026"></div>' +
-      '<div class="chips">' + shown.map(function (t) {
-        var on = bucket.some(function (f) { return f.term === t.n; });
-        return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t.n) +
-          '" data-gi="' + gi + '"' + (t.p ? ' title="Inside ' + esc(t.p) + '"' : '') + '>' +
-          (t.p ? '<span class="muted">' + esc(t.p) + ' \u203a </span>' : '') + esc(t.n) +
-          ' <span class="muted">' + t.c.toLocaleString() + '</span></button>';
-      }).join('') + '</div>' +
-      '<p class="t-body-sm muted" style="margin:0">' + countLine(tax, shown.length, q) + '</p>' +
-      (bucket.length ? '<div class="chips picked">' + bucket.map(function (f) {
-        return '<span class="chip' + (isEx ? ' chip-exclude' : ' is-on') + '">' + esc(f.term) +
-          ' <button class="chip-remove" type="button" data-rm="' + esc(f.term) + '" data-gi="' + gi +
-          '" aria-label="Remove ' + esc(f.term) + '">&times;</button></span>';
-      }).join('') + '</div>' : '') +
-    '</div>';
-  }
-
-  function tok(key, text, empty, nth) {
+  function tok(key, text, empty, ref) {
     return '<button class="tok' + (open === key ? ' is-open' : '') + (empty ? ' is-empty' : '') +
-      '" type="button" data-tok="' + key + '"' + (nth === undefined ? '' : ' data-nth="' + nth + '"') +
+      '" type="button" data-tok="' + key + '"' + (ref ? ' data-ref="' + ref + '"' : '') +
       '>' + esc(text) + '</button>';
+  }
+
+  /* One token per clause, joined by "and also in", because separate clauses
+     are ANDed while the terms inside one are ORed. */
+  function groupTokens() {
+    var c = clauses();
+    if (!c.length) return tok('include', 'anything', true);
+    return c.map(function (x) {
+      return tok('include', listJoin(x.terms), false, x.tax + ':' + x.gi);
+    }).join(' <span class="plain">and also in</span> ');
+  }
+
+  function flat(d) {
+    var groups = [], exclude = [];
+    Object.keys(d.filters).forEach(function (tax) {
+      d.filters[tax].groups.forEach(function (g) { if (g.length) groups.push(g); });
+      d.filters[tax].exclude.forEach(function (t) { exclude.push(t); });
+    });
+    return { types: d.types, groups: groups, include: groups.reduce(function (a, g) { return a.concat(g); }, []),
+             exclude: exclude, sort: d.sort, windowDays: d.windowDays };
   }
 
   function rule() {
     var views = draft.sort === 'Most viewed';
-    var str = '<span class="plain">Show the</span> ' + tok('count', draft.count === 1 ? 'single' : draft.count) + ' ' +
+    var str = '<span class="plain">Show the</span> ' +
+      tok('count', draft.count === 1 ? 'single' : draft.count) + ' ' +
       tok('sort', views ? 'most viewed' : 'newest') + ' ' +
       tok('types', draft.types.length
         ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
         : 'pick a type', !draft.types.length);
 
-    if (views) str += ' <span class="plain">from the last</span> ' + tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
+    if (views) str += ' <span class="plain">from the last</span> ' +
+      tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
 
+    var ex = allExcluded();
     str += ' <span class="plain">in</span> ' + groupTokens() +
       '<span class="punc">,</span> <span class="plain">skipping</span> ' +
-      tok('exclude', draft.exclude.length ? listJoin(draft.exclude.map(function (f) { return f.term; })) : 'nothing', !draft.exclude.length) +
+      tok('exclude', ex.length ? listJoin(ex.map(function (f) { return f.term; })) : 'nothing', !ex.length) +
       '<span class="punc">.</span>';
 
     str += views
       ? '<br><span class="plain">Most viewed reshuffles itself, so there is no rotation.</span>'
-      : draft.rotation.on
+      : (draft.rotation.on
         ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="punc">.</span>'
-        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="punc">.</span>';
+        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="punc">.</span>');
 
     str += '<br><span class="plain">When you pin a story by hand, search</span> ' +
       tok('searchTypes', draft.searchTypes.length
@@ -338,6 +310,80 @@
       '<span class="punc">.</span>';
 
     return str;
+  }
+
+  function countLine(tax, showing, q) {
+    if (q) return showing === 0
+      ? 'Nothing matches \u201c' + esc(q) + '\u201d.'
+      : showing + ' of ' + tax.count.toLocaleString() + ' match \u201c' + esc(q) + '\u201d.';
+    if (showing >= tax.count) return tax.count.toLocaleString() + (tax.count === 1 ? ' term.' : ' terms.');
+    return 'Showing ' + showing + ' of ' + tax.count.toLocaleString() + '. Type to find the rest.';
+  }
+
+  /* One group within one taxonomy. gi -1 means the taxonomy's exclude list. */
+  function groupBox(tax, bucket, gi, isEx) {
+    var key = (isEx ? 'x' : gi);
+    var q = termQ[key] || '';
+    var shown = searchTerms(taxKey, q, 40);
+    var title = isEx ? 'Never tagged' : (gi === 0 ? 'Has any of' : 'AND has any of');
+    var groupCount = fil(taxKey).groups.length;
+
+    return '<div class="group">' +
+      '<div class="group-head"><b>' + title + ' <span class="muted">(' + bucket.length + ' selected)</span></b>' +
+        (!isEx && groupCount > 1
+          ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove</button>' : '') +
+      '</div>' +
+      '<div class="field"><label for="e-q-' + key + '">Search ' + esc(tax.n) + '</label>' +
+        '<input type="search" id="e-q-' + key + '" data-q="' + key + '" value="' + esc(q) +
+        '" placeholder="Type a name or a slug\u2026"></div>' +
+      '<div class="chips">' + shown.map(function (t) {
+        var on = bucket.indexOf(t.n) > -1;
+        return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t.n) +
+          '" data-gi="' + key + '"' + (t.p ? ' title="Inside ' + esc(t.p) + '"' : '') + '>' +
+          (t.p ? '<span class="muted">' + esc(t.p) + ' \u203a </span>' : '') + esc(t.n) +
+          ' <span class="muted">' + t.c.toLocaleString() + '</span></button>';
+      }).join('') + '</div>' +
+      '<p class="t-body-sm muted" style="margin:0">' + countLine(tax, shown.length, q) + '</p>' +
+      (bucket.length ? '<div class="chips" style="padding-top:var(--ngn-space-2);border-top:1px solid var(--ngn-outline-variant)">' +
+        bucket.map(function (t) {
+          return '<span class="chip' + (isEx ? ' chip-exclude' : ' is-on') + '">' + esc(t) +
+            ' <button class="chip-remove" type="button" data-rm="' + esc(t) + '" data-gi="' + key +
+            '" aria-label="Remove ' + esc(t) + '">&times;</button></span>';
+        }).join('') + '</div>' : '') +
+    '</div>';
+  }
+
+  /* Which other taxonomies already carry filters, so switching away does not
+     hide what is set. */
+  function elsewhere() {
+    var others = Object.keys(draft.filters).filter(function (t) {
+      if (t === taxKey) return false;
+      var f = draft.filters[t];
+      return f.groups.some(function (g) { return g.length; }) || f.exclude.length;
+    });
+    if (!others.length) return '';
+    return '<p class="t-body-sm muted" style="margin:0">Also filtered: ' +
+      others.map(function (t) {
+        var f = draft.filters[t];
+        var n = f.groups.reduce(function (a, g) { return a + g.length; }, 0) + f.exclude.length;
+        return esc(TAXONOMIES[t].n) + ' (' + n + ')';
+      }).join(', ') + '.</p>';
+  }
+
+  function upcoming(rot) {
+    var times = nextRotations(rot.start, rot.interval, 5);
+    if (!times.length) return '<p class="t-body-sm muted" style="margin:0">Try 1h, 30m, 1h 30m, or a number of minutes.</p>';
+    var clock = function (d) {
+      return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric',
+                                           hour: 'numeric', minute: '2-digit' });
+    };
+    var repeats = 1440 % intervalMinutes(rot.interval) === 0;
+    return '<p class="t-body-sm muted" style="margin:0 0 4px">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>' +
+      '<p class="upcoming-label">Upcoming rotations</p>' +
+      '<ol class="upcoming">' + times.map(function (t) { return '<li>' + esc(clock(t)) + '</li>'; }).join('') + '</ol>' +
+      (repeats ? '' :
+        '<p class="t-body-sm muted" style="margin:6px 0 0">The times move each day, because ' +
+        esc(rot.interval) + ' does not divide evenly into 24 hours.</p>');
   }
 
   function editor() {
@@ -349,34 +395,36 @@
       '<label class="screen-reader-text" for="e-count">How many stories</label>' +
       '<input type="number" id="e-count" min="1" max="50" step="1" value="' + draft.count + '" style="width:120px">' +
       '<p class="t-body-sm muted" style="margin:0" id="e-count-note">1 to 50.</p>' + done + '</div>';
+
     if (open === 'window') return '<div class="editor">' + head('How far back to look') +
       '<div style="display:flex;gap:8px;align-items:center">' +
       '<label class="screen-reader-text" for="e-window">How many days back</label>' +
       '<input type="number" id="e-window" min="1" step="1" value="' + draft.windowDays + '" style="width:110px">' +
       '<span class="t-body-sm muted">days</span></div>' + done + '</div>';
+
     if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
-      ['Newest', 'Most viewed'].map(function (o) { return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>'; }).join('') +
-      '</div>' + done + '</div>';
+      ['Newest', 'Most viewed'].map(function (o) {
+        return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>';
+      }).join('') + '</div>' + done + '</div>';
+
     if (open === 'types') return '<div class="editor">' + head('Where stories come from') + '<div class="chips">' +
       POST_TYPES.map(function (t) {
         return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '"' +
           (t.tax.length ? '' : ' title="No filterable taxonomies"') + '>' + esc(t.n) +
           (t.tax.length ? '' : ' <span class="muted">\u00b7 no filters</span>') + '</button>';
-      }).join('') +
-      '</div><p class="t-body-sm muted" style="margin:0">' + draft.types.length + ' selected \u00b7 ' +
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' + draft.types.length + ' selected \u00b7 ' +
       taxonomiesFor(draft.types).length + ' taxonomies available</p>' + done + '</div>';
-    if (open === 'searchTypes') {
-      return '<div class="editor">' + head('Types you can pin by hand') +
-        '<div class="chips">' + POST_TYPES.map(function (t) {
-          return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') +
-            '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
-        }).join('') + '</div>' +
-        '<p class="t-body-sm muted" style="margin:0">' +
-        (draft.searchTypes.length
-          ? draft.searchTypes.length + ' of ' + POST_TYPES.length + ' selected.'
-          : 'Nothing selected, so the search offers all ' + POST_TYPES.length + ' types.') +
-        '</p>' + done + '</div>';
-    }
+
+    if (open === 'searchTypes') return '<div class="editor">' + head('Types you can pin by hand') +
+      '<div class="chips">' + POST_TYPES.map(function (t) {
+        return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') +
+          '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' +
+      (draft.searchTypes.length
+        ? draft.searchTypes.length + ' of ' + POST_TYPES.length + ' selected.'
+        : 'Nothing selected, so the search offers all ' + POST_TYPES.length + ' types.') +
+      '</p>' + done + '</div>';
+
     if (open === 'include' || open === 'exclude') {
       var isEx = open === 'exclude';
       var available = taxonomiesFor(draft.types);
@@ -384,37 +432,53 @@
         '<p class="t-body-sm" style="margin:0">These post types have nothing to filter on.</p>' + done + '</div>';
       if (available.indexOf(taxKey) < 0) taxKey = available[0];
       var tax = TAXONOMIES[taxKey];
+      var f = fil(taxKey);
 
-      /* Groups are OR within, AND between, so each one gets its own box. */
-      var groups = isEx ? [draft.exclude] : draft.include;
-      return '<div class="editor">' + head(isEx ? 'Never show stories tagged' : 'Only stories tagged') +
+      return '<div class="editor">' +
+        head(isEx ? 'Never show stories tagged' : 'Only stories tagged') +
         '<label class="screen-reader-text" for="e-tax">Taxonomy</label>' +
         '<select id="e-tax">' + available.map(function (k) {
+          var ff = draft.filters[k];
+          var n = ff ? ff.groups.reduce(function (a, g) { return a + g.length; }, 0) + ff.exclude.length : 0;
           return '<option value="' + k + '"' + (k === taxKey ? ' selected' : '') + '>' + esc(TAXONOMIES[k].n) +
-            ' (' + TAXONOMIES[k].count.toLocaleString() + ')</option>';
+            ' (' + TAXONOMIES[k].count.toLocaleString() + ')' + (n ? ' \u2022 ' + n + ' set' : '') + '</option>';
         }).join('') + '</select>' +
-        groups.map(function (bucket, gi) { return groupBox(tax, bucket, gi, isEx); }).join('') +
-        (isEx ? '' : '<button class="btn btn-outlined btn-sm" type="button" data-addgroup style="align-self:flex-start">+ Add AND group</button>') +
+        (isEx
+          ? groupBox(tax, f.exclude, -1, true)
+          : f.groups.map(function (g, gi) { return groupBox(tax, g, gi, false); }).join('') +
+            '<button class="btn btn-outlined btn-sm" type="button" data-addgroup style="align-self:flex-start">' +
+            '+ Add AND group to ' + esc(tax.n) + '</button>') +
+        elsewhere() +
         done + '</div>';
     }
+
     if (open === 'rotation') return '<div class="editor">' + head('Rotation') +
-      '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' + (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
+      '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' +
+      (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
       (draft.rotation.on ? '' : '<p class="t-body-sm muted" style="margin:0">Turn this on to set an interval.</p>') +
       '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
         '<div class="field"><label for="e-every">Every</label>' +
-          '<select id="e-every"' + (draft.rotation.on ? '' : ' disabled') + '>' + INTERVALS.map(function (o) {
-            return '<option value="' + o + '"' + (o === draft.rotation.interval ? ' selected' : '') + '>' + o + '</option>';
-          }).join('') +
+          '<select id="e-every"' + (draft.rotation.on ? '' : ' disabled') + '>' +
+          INTERVALS.map(function (o) { return '<option value="' + o + '"' + (o === draft.rotation.interval ? ' selected' : '') + '>' + o + '</option>'; }).join('') +
           '<option value="custom"' + (isCustom(draft.rotation.interval) ? ' selected' : '') + '>Custom\u2026</option>' +
           '</select></div>' +
         (isCustom(draft.rotation.interval)
           ? '<div class="field" style="width:130px"><label for="e-int">How long</label>' +
-            '<input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '" placeholder="1h 30m"' + (draft.rotation.on ? '' : ' disabled') + '></div>'
-          : '') +
-        '<div class="field" style="width:150px"><label for="e-start">Starting at</label><input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"' + (draft.rotation.on ? '' : ' disabled') + '></div>' +
+            '<input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '" placeholder="1h 30m"' +
+            (draft.rotation.on ? '' : ' disabled') + '></div>' : '') +
+        '<div class="field" style="width:150px"><label for="e-start">Starting at</label>' +
+        '<input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"' + (draft.rotation.on ? '' : ' disabled') + '></div>' +
       '</div>' +
       '<div id="e-next">' + (draft.rotation.on ? upcoming(draft.rotation) : '') + '</div>' + done + '</div>';
     return '';
+  }
+
+  function refreshSave() {
+    $('savebar').hidden = !changed();
+    var bad = problems(draft);
+    $('dirty').textContent = bad.length ? '' : 'Unsaved changes to ' + SHELVES[sel].n;
+    $('problem').textContent = bad[0] || '';
+    $('save').disabled = bad.length > 0;
   }
 
   function renderList() {
@@ -422,20 +486,25 @@
       .filter(function (r) { return !q || (r.x.n + ' ' + r.x.k).toLowerCase().indexOf(q.toLowerCase()) > -1; });
     $('list').innerHTML = shown.map(function (r) {
       var d = r.i === sel ? draft : (dirty[r.i] || r.x.s);
-      return '<button class="shelf' + (r.i === sel ? ' is-sel' : '') + '" type="button" role="option" aria-selected="' + (r.i === sel) + '" data-sel="' + r.i + '">' +
-        '<span class="txt"><b>' + esc(r.x.n) + '</b><span>' + stories(d.count) + ' · ' + esc(d.types.map(typeName).join(', ') || 'no type') + '</span></span>' +
-        ((dirty[r.i] || (r.i === sel && changed())) ? '<span class="edited" title="Unsaved changes"></span>' : '') + '</button>';
+      return '<button class="shelf' + (r.i === sel ? ' is-sel' : '') + '" type="button" role="option" aria-selected="' +
+        (r.i === sel) + '" data-sel="' + r.i + '">' +
+        '<span class="txt"><b>' + esc(r.x.n) + '</b><span>' + stories(d.count) + ' \u00b7 ' +
+        esc(d.types.map(typeName).join(', ') || 'no type') + '</span></span>' +
+        ((dirty[r.i] || (r.i === sel && changed())) ? '<span class="edited" title="Unsaved changes"></span>' : '') +
+        '</button>';
     }).join('');
     $('foot').textContent = shown.length + ' of ' + SHELVES.length + ' shelves';
   }
 
-  /* Hidden, blocked with a reason, or ready to save. */
-  function refreshSave() {
-    $('savebar').hidden = !changed();
-    var bad = problems(draft);
-    $('dirty').textContent = bad.length ? '' : 'Unsaved changes to ' + SHELVES[sel].n;
-    $('problem').textContent = bad[0] || '';
-    $('save').disabled = bad.length > 0;
+  function select(i) {
+    if (changed()) dirty[sel] = clone(draft);
+    sel = i; draft = dirty[i] ? clone(dirty[i]) : clone(SHELVES[i].s);
+    open = null; termQ = {}; taxKey = null; render();
+  }
+
+  function bindTax() {
+    var t = $('e-tax');
+    if (t) t.addEventListener('change', function () { taxKey = this.value; termQ = {}; render(); });
   }
 
   function render() {
@@ -449,7 +518,6 @@
     bindTax();
   }
 
-  /* Redraw just the chips, so typing in the search box never loses focus. */
   function redrawTerms(boxId) {
     var ed = $('editor'), box = $(boxId);
     if (!ed || !box) return;
@@ -460,20 +528,8 @@
     bindTax();
   }
 
-  /* The select is rebuilt on every redraw, so rebind it each time. */
-  function bindTax() {
-    var t = $('e-tax');
-    if (t) t.addEventListener('change', function () { taxKey = this.value; termQ = {}; render(); });
-  }
-
-  /* Opening a word puts you in its editor and closing returns you to the
-     word, so the keyboard path is a loop rather than a trip through every
-     other token. */
-  var lastTok = null;
-
   function focusEditor() {
-    var ed = $('editor');
-    var first = ed && ed.querySelector('input, select, button');
+    var first = $('editor').querySelector('input, select, button');
     if (first) first.focus();
   }
 
@@ -485,53 +541,45 @@
     if (el) el.focus();
   }
 
-  function select(i) {
-    if (changed()) dirty[sel] = clone(draft);
-    sel = i; draft = dirty[i] ? clone(dirty[i]) : clone(SHELVES[i].s);
-    open = null; render();
+  /* The bucket a term click belongs to: a numbered group, or the exclude list. */
+  function bucketFor(gi) {
+    return gi === 'x' ? fil(taxKey).exclude : fil(taxKey).groups[+gi];
   }
 
   document.addEventListener('click', function (ev) {
-    var sh = ev.target.closest('[data-sel]'), t = ev.target.closest('[data-tok]'), c = ev.target.closest('[data-close]'),
-        ty = ev.target.closest('[data-type]'), so = ev.target.closest('[data-sort]'), tm = ev.target.closest('[data-term]'),
-        rm = ev.target.closest('[data-rm]'), st = ev.target.closest('[data-stype]');
+    var t = ev.target.closest('[data-tok]'), c = ev.target.closest('[data-close]'),
+        ty = ev.target.closest('[data-type]'), so = ev.target.closest('[data-sort]'),
+        tm = ev.target.closest('[data-term]'), rm = ev.target.closest('[data-rm]'),
+        st = ev.target.closest('[data-stype]'), dg = ev.target.closest('[data-dropgroup]');
 
+    var sh = ev.target.closest('[data-sel]');
     if (sh) return select(+sh.dataset.sel);
     if (c) { closeEditor(); return; }
     if (ty) { var i = draft.types.indexOf(ty.dataset.type); if (i > -1) draft.types.splice(i, 1); else draft.types.push(ty.dataset.type); return render(); }
     if (so) { draft.sort = so.dataset.sort; return render(); }
     if (st) { var j = draft.searchTypes.indexOf(st.dataset.stype); if (j > -1) draft.searchTypes.splice(j, 1); else draft.searchTypes.push(st.dataset.stype); return render(); }
-    if (rm) { var b = open === 'exclude' ? draft.exclude : draft.include[+rm.dataset.gi]; var k = b.findIndex(function (f) { return f.term === rm.dataset.rm; }); if (k > -1) b.splice(k, 1); return render(); }
+    if (rm) { var b = bucketFor(rm.dataset.gi); var k = b.indexOf(rm.dataset.rm); if (k > -1) b.splice(k, 1); return render(); }
     if (tm) {
-      var bucket = open === 'exclude' ? draft.exclude : draft.include[+tm.dataset.gi];
-      var at = bucket.findIndex(function (f) { return f.term === tm.dataset.term; });
+      var bucket = bucketFor(tm.dataset.gi), term = tm.dataset.term, at = bucket.indexOf(term);
       if (at > -1) { bucket.splice(at, 1); }
       else {
-        // A term cannot be required and skipped at once, so taking it on one
-        // side releases it from the other.
-        var other = open === 'exclude'
-          ? draft.include.reduce(function (a, g) { return a.concat(g); }, [])
-          : draft.exclude;
-        for (var oi = other.length - 1; oi >= 0; oi--) {
-          if (other[oi].term === tm.dataset.term && other[oi].tax === taxKey) {
-            if (open === 'exclude') {
-              draft.include.forEach(function (g) {
-                var k = g.findIndex(function (f) { return f.term === tm.dataset.term && f.tax === taxKey; });
-                if (k > -1) g.splice(k, 1);
-              });
-            } else { other.splice(oi, 1); }
-          }
+        // Within one taxonomy a term cannot be required and skipped at once.
+        var f = fil(taxKey);
+        if (tm.dataset.gi === 'x') {
+          f.groups.forEach(function (g) { var q = g.indexOf(term); if (q > -1) g.splice(q, 1); });
+        } else {
+          var e = f.exclude.indexOf(term); if (e > -1) f.exclude.splice(e, 1);
         }
-        bucket.push({ tax: taxKey, term: tm.dataset.term });
+        bucket.push(term);
       }
       return render();
     }
-    if (ev.target.closest('[data-addgroup]')) { draft.include.push([]); return render(); }
-    var dg = ev.target.closest('[data-dropgroup]');
-    if (dg) { draft.include.splice(+dg.dataset.dropgroup, 1); termQ = {}; return render(); }
+    if (ev.target.closest('[data-addgroup]')) { fil(taxKey).groups.push([]); return render(); }
+    if (dg) { fil(taxKey).groups.splice(+dg.dataset.dropgroup, 1); termQ = {}; return render(); }
     if (t) {
-      if (open === t.dataset.tok) { closeEditor(); return; }
+      if (open === t.dataset.tok && !t.dataset.ref) { closeEditor(); return; }
       open = t.dataset.tok; termQ = {}; lastTok = t.dataset.tok;
+      if (t.dataset.ref) taxKey = t.dataset.ref.split(':')[0];
       render(); focusEditor();
       return;
     }
@@ -542,16 +590,30 @@
       draft.count = clampWhole(ev.target.value, 1, 50);
       if (ev.target.value !== '' && +ev.target.value !== draft.count) ev.target.value = draft.count;
       var note = $('e-count-note');
-      if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.'; $('rule').innerHTML = rule(); $('count').textContent = matchCount(flat(draft)).toLocaleString(); refreshSave(); renderList(); }
+      if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.';
+      $('rule').innerHTML = rule();
+      $('count').textContent = matchCount(flat(draft)).toLocaleString();
+      refreshSave();
+    }
     if (ev.target.id === 'e-window') {
       draft.windowDays = clampWhole(ev.target.value, 1, 3650);
       if (ev.target.value !== '' && +ev.target.value !== draft.windowDays) ev.target.value = draft.windowDays;
-      $('rule').innerHTML = rule(); refreshSave();
+      $('rule').innerHTML = rule();
+      $('count').textContent = matchCount(flat(draft)).toLocaleString();
+      refreshSave();
     }
-    if (ev.target.id === 'e-int') { draft.rotation.interval = ev.target.value; $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); refreshSave(); }
-    if (ev.target.id === 'e-start') { draft.rotation.start = ev.target.value; $('e-next').innerHTML = upcoming(draft.rotation); refreshSave(); }
-    if (ev.target.id === 'q') { q = ev.target.value; renderList(); }
-    if (ev.target.dataset && ev.target.dataset.q !== undefined) { termQ[ev.target.dataset.q] = ev.target.value; redrawTerms(ev.target.id); }
+    if (ev.target.id === 'e-int') {
+      draft.rotation.interval = ev.target.value;
+      $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
+    }
+    if (ev.target.id === 'e-start') {
+      draft.rotation.start = ev.target.value;
+      $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
+    }
+    if (ev.target.dataset && ev.target.dataset.q !== undefined) {
+      termQ[ev.target.dataset.q] = ev.target.value;
+      redrawTerms(ev.target.id);
+    }
   });
 
   document.addEventListener('change', function (ev) {
@@ -559,23 +621,27 @@
     if (ev.target.id === 'e-every') {
       draft.rotation.interval = ev.target.value === 'custom' ? '' : ev.target.value;
       render();
-      var box = $('e-int');
-      if (box) box.focus();
+      var box = $('e-int'); if (box) box.focus();
     }
   });
 
   document.addEventListener('keydown', function (ev) {
     if (ev.key !== 'Escape' || !open) return;
-    var inEditor = $('editor').contains(document.activeElement);
-    if (inEditor || document.activeElement.dataset.tok) { ev.preventDefault(); closeEditor(); }
+    if ($('editor').contains(document.activeElement) || document.activeElement.dataset.tok) {
+      ev.preventDefault(); closeEditor();
+    }
   });
 
-  $('discard').addEventListener('click', function () { draft = clone(SHELVES[sel].s); delete dirty[sel]; open = null; render(); });
+  $('discard').addEventListener('click', function () {
+    draft = clone(SHELVES[sel].s); delete dirty[sel]; open = null; termQ = {}; render();
+  });
   $('save').addEventListener('click', function () {
     if (problems(draft).length) return;
     SHELVES[sel].s = clone(draft); delete dirty[sel]; render();
   });
+  $('q').addEventListener('input', function () { q = this.value; renderList(); });
 
+  draft = clone(SHELVES[0].s);
   render();
 })();
 </script>
