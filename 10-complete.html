@@ -459,6 +459,10 @@
       /* The export has no by-hand term filters, because the panel has never
          been able to set any. Empty is the truth, not a placeholder. */
       searchFilters: {},
+      /* /search takes its own count, sort and sort_window_days, so the
+         by-hand half has all three. The defaults are the route's own:
+         count 3 (MAX_SEARCH_RESULTS), Newest, 14 days. */
+      searchCount: 3, searchSort: 'Newest', searchWindowDays: 14,
       /* The export records that rotation is on and when it starts, but not
          how long the gap is, so 1h is this prototype's stand-in. */
       rotation: { on: d.rot !== 'Off', interval: '1h', start: toTime(d.rotStart) }
@@ -504,6 +508,7 @@
   var EMPTY_RULE = {
     count: 5, sort: 'Newest', types: ['newspost'], windowDays: 14,
     searchTypes: ['newspost'], filters: {}, searchFilters: {},
+    searchCount: 3, searchSort: 'Newest', searchWindowDays: 14,
     rotation: { on: false, interval: '1h', start: '00:00' }
   };
 
@@ -825,6 +830,9 @@
         row('Matches now', '<b>' + matchCount(flat(s)).toLocaleString() + '</b> <span class="muted">prototype figure</span>') +
       '</div></div>' +
       '<div class="sect"><h3>Pinning by hand</h3><div class="kv">' +
+        row('Results offered', s.searchCount === undefined ? 3 : s.searchCount) +
+        row('Sort', s.searchSort || 'Newest') +
+        ((s.searchSort === 'Most viewed') ? row('Looking back', (s.searchWindowDays || 14) + ' days') : '') +
         row('Post types', s.searchTypes.length ? esc(listJoin(s.searchTypes.map(function (k) { return pluralType(k, 2); }))) : 'any type', !s.searchTypes.length) +
         row('Include terms', sInc || 'none set', !sInc) +
         row('Exclude terms', sExc || 'none set', !sExc) +
@@ -1040,11 +1048,20 @@
         ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="punc">.</span>'
         : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="punc">.</span>');
 
-    str += '<br><span class="plain">When you pin a story by hand, search</span> ' +
+    /* Same shape as the first sentence, because it is the same kind of rule:
+       how many, in what order, of what, narrowed how. */
+    var sViews = draft.searchSort === 'Most viewed';
+    str += '<br><span class="plain">When you pin a story by hand, the search offers the</span> ' +
+      tok('searchCount', draft.searchCount === 1 ? 'single' : draft.searchCount) + ' ' +
+      tok('searchSort', sViews ? 'most viewed' : 'newest') + ' ' +
       tok('searchTypes', draft.searchTypes.length
-        ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, 2); }))
-        : 'any type', !draft.searchTypes.length) +
-      ' <span class="plain">in</span> ' + groupTokens('manual') +
+        ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, draft.searchCount); }))
+        : 'stories of any type', !draft.searchTypes.length);
+
+    if (sViews) str += ' <span class="plain">from the last</span> ' +
+      tok('searchWindow', draft.searchWindowDays + (draft.searchWindowDays === 1 ? ' day' : ' days'));
+
+    str += ' <span class="plain">in</span> ' + groupTokens('manual') +
       '<span class="punc">,</span> <span class="plain">skipping</span> ' +
       excludeTokens('manual') +
       '<span class="punc">.</span>';
@@ -1142,6 +1159,27 @@
       '<label class="screen-reader-text" for="e-window">How many days back</label>' +
       '<input type="number" id="e-window" min="1" step="1" value="' + draft.windowDays + '" style="width:110px">' +
       '<span class="t-body-sm muted">days</span></div>' + done + '</div>';
+
+    /* The route caps a typed search at MAX_SEARCH_RESULTS = 3 and only lets
+       the empty-box recent list run to MAX_RECENT_RESULTS = 50, so the field
+       takes the schema's range and says where the real ceiling is. */
+    if (open === 'searchCount') return '<div class="editor">' + head('How many results to offer') +
+      '<label class="screen-reader-text" for="e-scount">How many results</label>' +
+      '<input type="number" id="e-scount" min="1" max="50" step="1" value="' + draft.searchCount + '" style="width:120px">' +
+      '<p class="t-body-sm muted" style="margin:0" id="e-scount-note">1 to 50. Once you type a query the route returns at most 3; the rest applies to the recent list.</p>' +
+      done + '</div>';
+
+    if (open === 'searchWindow') return '<div class="editor">' + head('How far back the search looks') +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+      '<label class="screen-reader-text" for="e-swindow">How many days back</label>' +
+      '<input type="number" id="e-swindow" min="1" step="1" value="' + draft.searchWindowDays + '" style="width:110px">' +
+      '<span class="t-body-sm muted">days</span></div>' + done + '</div>';
+
+    if (open === 'searchSort') return '<div class="editor">' + head('Order the results come back in') + '<div class="chips">' +
+      ['Newest', 'Most viewed'].map(function (o) {
+        return '<button class="chip' + (draft.searchSort === o ? ' is-on' : '') + '" type="button" data-ssort="' + o + '">' + o + '</button>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">Only changes what the picker lists. It does not touch what fills the instance.</p>' +
+      done + '</div>';
 
     if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
       ['Newest', 'Most viewed'].map(function (o) {
@@ -1279,6 +1317,9 @@
     draft = clone(SAVED);
     open = null; lastTok = null; taxKey = null; termQ = {}; scope = 'auto';
     if (!draft.searchFilters) draft.searchFilters = {};
+    if (draft.searchCount === undefined) draft.searchCount = 3;
+    if (draft.searchSort === undefined) draft.searchSort = 'Newest';
+    if (draft.searchWindowDays === undefined) draft.searchWindowDays = 14;
     $('who').textContent = d.n;
     $('scrim').hidden = false;
     document.body.style.overflow = 'hidden';
@@ -1334,6 +1375,8 @@
       if (c) { closeEditor(); return; }
       if (ty) { var i = draft.types.indexOf(ty.dataset.type); if (i > -1) draft.types.splice(i, 1); else draft.types.push(ty.dataset.type); return renderSheet(); }
       if (so) { draft.sort = so.dataset.sort; return renderSheet(); }
+      var sso = ev.target.closest('[data-ssort]');
+      if (sso) { draft.searchSort = sso.dataset.ssort; return renderSheet(); }
       if (st) { var j = draft.searchTypes.indexOf(st.dataset.stype); if (j > -1) draft.searchTypes.splice(j, 1); else draft.searchTypes.push(st.dataset.stype); return renderSheet(); }
       if (rm) { var b = bucketFor(rm.dataset.gi); var k = b.indexOf(rm.dataset.rm); if (k > -1) b.splice(k, 1); return renderSheet(); }
       if (tm) {
@@ -1406,6 +1449,18 @@
       if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.';
       $('rule').innerHTML = rule();
       $('count').textContent = matchCount(flat(draft)).toLocaleString();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-scount') {
+      draft.searchCount = clampWhole(ev.target.value, 1, 50);
+      if (ev.target.value !== '' && +ev.target.value !== draft.searchCount) ev.target.value = draft.searchCount;
+      $('rule').innerHTML = rule();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-swindow') {
+      draft.searchWindowDays = clampWhole(ev.target.value, 1, 3650);
+      if (ev.target.value !== '' && +ev.target.value !== draft.searchWindowDays) ev.target.value = draft.searchWindowDays;
+      $('rule').innerHTML = rule();
       refreshSave();
     }
     if (ev.target.id === 'e-window') {

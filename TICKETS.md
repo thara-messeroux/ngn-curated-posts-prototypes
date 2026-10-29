@@ -1403,3 +1403,48 @@ Checked: a term on each side independently, an AND group on the by-hand side, sw
 scopes with neither leaking into the other, the mutual exclusion firing inside the manual
 set only, save writing both sets through to the pane. axe-core clean on both new editors
 and the pane. No console errors.
+
+## The by-hand sentence has everything the first one has
+
+Adding the term filters fixed half of it. The by-hand line still had three of the first
+sentence's words missing, and `/search` takes all three as its own parameters:
+
+| Parameter | Range in the route | Default |
+| --- | --- | --- |
+| `count` | 1 to `MAX_RECENT_RESULTS` (50) | `MAX_SEARCH_RESULTS` (3) |
+| `sort` | `Post_Selector_Search::SORTS` | Newest |
+| `sort_window_days` | 1 and up | 14 |
+
+So the two halves now read the same shape:
+
+> Show the **4** **newest** **News Posts** in …, skipping … .
+> When you pin a story by hand, the search offers the **3** **newest** **News Posts** in …,
+> skipping … .
+
+"the search offers the" rather than "search", because once there is a number the verb needs
+an object. Picking **Most viewed** reveals a **from the last 14 days** word on this half too,
+exactly as it does on the first.
+
+**Rotation is still absent, and correctly so.** There is nothing to rotate in a picker; the
+route has no rotation parameter. Absent because it does not exist, not because it was
+forgotten.
+
+### A defect the count field surfaced
+
+`search()` sets `$max = $is_recent ? MAX_RECENT_RESULTS : MAX_SEARCH_RESULTS` and then
+`limit: min( absint( $count ), $max )`. The schema accepts a `count` up to 50, but the
+moment the box holds two or more characters the ceiling drops to **3**. So a count of 20 is
+valid, saved, and silently becomes 3 as soon as anyone actually searches. 20 applies only
+to the empty-box recent list.
+
+The field takes the schema's range and says where the real ceiling is, rather than pretending
+the number always holds. Worth a ticket: either the cap is deliberate and the schema maximum
+is wrong, or the cap is a leftover. **Candidate for the six unfiled defects, making seven.**
+
+The detail pane's Pinning by hand section gained Results offered, Sort, and Looking back when
+the sort is Most viewed.
+
+Checked: count to 12, sort to Most viewed revealing the window word, window to 30, save
+writing all of it to the pane, reopening showing it back with no phantom change, the
+automatic half and the match count untouched throughout. axe-core clean on all three new
+editors. No console errors.
