@@ -872,3 +872,50 @@ Checked at 1440, 1280 and 375: axe-core finds nothing in nine states, index and 
 and each of the seven editors. No page overflow at any width, the sheet scrolls itself
 rather than the page, Tab stays inside the dialog, Escape closes the editor before the
 dialog, and focus returns to the button that opened it.
+
+---
+
+## Add new, Rename and Duplicate were decoration
+
+Three buttons sat on the screen doing nothing. Rather than invent what they should do,
+`class-curated-posts-instance-controller.php` and `class-curated-posts-store.php` say it
+outright:
+
+- **`create_instance`** takes a **key** and a label. The key is sanitised, must be unique,
+  and comes back as a **409** if it is taken. Nothing afterwards changes it.
+- **`duplicate_instance`** does not ask for anything. The store picks the key, as
+  `<key>-copy`, then `-copy-2`, and labels the copy `<label> (Copy)`.
+- **Renaming** writes the label. The key never moves.
+- **`empty_query`** is what a new shelf starts as: 5 stories, News Post, search News Post,
+  no terms, rotation off, Newest, 14 days.
+
+So the design follows the API rather than the other way round:
+
+**Add new** opens a naming field at the top of the list, where the shelf is about to
+appear, not in a dialog over the page. The field shows the key it is about to take, live,
+because the key cannot be changed later. Type a name whose key is taken and Create goes
+grey with "A shelf already uses the key `featured-stories`. Try another name." That is the
+409, caught before it is sent rather than after.
+
+Create makes the shelf with the backend's defaults, selects it, and opens Query settings,
+because a new shelf has defaults and no terms, so the rule is the only sensible next step.
+
+**Duplicate** asks nothing and takes one click, since the store names and keys the copy
+itself. **Rename** reuses the same field, prefilled, and says "The key stays
+`featured-stories`. Only the name changes."
+
+**A shelf with no terms now says so.** The detail pane shows "No terms set, so this shelf
+takes the newest News Posts on the site", with a Narrow it button. A shelf matching
+everything looks identical to a finished one otherwise.
+
+Two things the backend does that are worth a ticket, not a redesign:
+
+- `next_copy_key` appends to whatever key it is given, so duplicating a copy gives
+  `empty-test-copy-copy` and the label stacks to "(Copy) (Copy)". Faithful here because
+  it is faithful there.
+- Creating refuses a clashing key with a 409 while duplicating silently numbers around
+  one. Two ways to answer the same question.
+
+Checked again with axe-core in four more states: the naming field empty, the naming field
+showing the key clash error, a fresh shelf with the no-terms notice, and the rename field.
+Nothing found, no overflow. Escape closes the field and returns focus to Add new.

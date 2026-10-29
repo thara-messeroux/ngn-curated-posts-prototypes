@@ -61,6 +61,24 @@
 
 .empty { padding: var(--ngn-space-6) var(--ngn-space-5); color: var(--ngn-on-surface-variant); font-size: 13.5px; }
 
+/* Naming a shelf happens where the shelf will appear, at the top of the list,
+   rather than in a dialog over the page. */
+.namer { display: flex; flex-direction: column; gap: var(--ngn-space-2); margin-bottom: var(--ngn-space-3); }
+.namer[hidden] { display: none; }
+.namer .btns { display: flex; gap: var(--ngn-space-2); }
+.namer .hint.is-bad { color: var(--ngn-error); }
+.namer code { font-family: var(--ngn-mono); font-size: 12px; }
+
+/* A shelf with no terms matches everything, which is worth saying before
+   someone walks away thinking it is finished. */
+.notice {
+  margin: var(--ngn-space-4) var(--ngn-space-5) 0;
+  border: 1px solid var(--ngn-outline-variant); border-left: 3px solid var(--ngn-tertiary);
+  border-radius: var(--ngn-radius-sm); padding: var(--ngn-space-3) var(--ngn-space-4);
+  display: flex; align-items: center; gap: var(--ngn-space-3); flex-wrap: wrap; font-size: 13.5px;
+}
+.notice .btn { margin-left: auto; }
+
 .saved-note { font-size: 12px; color: var(--ngn-success); }
 
 .confirm {
@@ -183,7 +201,7 @@
 <div class="wrap">
   <div style="display:flex;align-items:flex-start;gap:var(--ngn-space-3);flex-wrap:wrap;margin:0 0 4px">
     <h1 class="t-headline" style="margin:0">Curated Posts</h1>
-    <button class="btn btn-outlined btn-sm" type="button" style="align-self:center">Add new</button>
+    <button class="btn btn-outlined btn-sm" type="button" id="addnew" style="align-self:center">Add new</button>
   </div>
   <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:76ch">
     Direction D and Settings C on one screen, the way the real one works. Pick a shelf,
@@ -195,6 +213,17 @@
 
     <div class="card index">
       <div class="tools">
+        <form class="namer" id="namer" hidden>
+          <div class="field">
+            <label for="name" id="namelab">Name this shelf</label>
+            <input type="text" id="name" autocomplete="off">
+            <p class="hint" id="namehint"></p>
+          </div>
+          <div class="btns">
+            <button class="btn btn-filled btn-sm" type="submit" id="namego">Create</button>
+            <button class="btn btn-text btn-sm" type="button" id="namecancel">Cancel</button>
+          </div>
+        </form>
         <label class="screen-reader-text" for="q">Search shelves</label>
         <input type="search" id="q" placeholder="Search name or slug">
       </div>
@@ -336,7 +365,80 @@
      The index
      ==================================================================== */
 
-  var sel = CURATED[0].s, confirming = null, deleted = {}, justSaved = null;
+  var sel = CURATED[0].s, confirming = null, deleted = {}, justSaved = null, naming = null;
+
+  /* Curated_Posts_Store::empty_query: what the backend gives a brand new
+     shelf. Not a guess, and not blank. */
+  var EMPTY_RULE = {
+    count: 5, sort: 'Newest', types: ['newspost'], windowDays: 14,
+    searchTypes: ['newspost'], filters: {},
+    rotation: { on: false, interval: '1h', start: '00:00' }
+  };
+
+  /* The key is the shelf's identity. create_instance sanitises it, refuses a
+     duplicate with a 409, and nothing afterwards can change it, so the name
+     field shows the key it is about to take. */
+  function keyFrom(name) {
+    return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  function keyTaken(k) { return CURATED.some(function (d) { return d.s === k; }); }
+
+  /* Curated_Posts_Store::next_copy_key: <key>-copy, then -copy-2, -copy-3. */
+  function copyKey(k) {
+    if (!keyTaken(k + '-copy')) return k + '-copy';
+    var i = 2;
+    while (keyTaken(k + '-copy-' + i)) i++;
+    return k + '-copy-' + i;
+  }
+
+  function shelf(k) { return CURATED.filter(function (d) { return d.s === k; })[0]; }
+
+  function addShelf(key, label, rule) {
+    CURATED.push({ n: label, s: key, g: 'Other', stories: 0, types: '', inc: [], exc: [],
+                   search: '', rot: 'Off', rotStart: 'N/A', upcoming: 0, state: 'check' });
+    SETTINGS[key] = JSON.parse(JSON.stringify(rule));
+    sel = key; confirming = null; justSaved = null;
+    $('q').value = '';
+  }
+
+  function openNamer(mode, from) {
+    naming = { mode: mode, from: from || null };
+    var d = from ? shelf(from) : null;
+    $('namelab').textContent = mode === 'rename' ? 'Rename this shelf' : 'Name this shelf';
+    $('namego').textContent  = mode === 'rename' ? 'Save name' : 'Create';
+    $('name').value = mode === 'rename' ? d.n : '';
+    $('namer').hidden = false;
+    nameHint();
+    $('name').focus();
+    $('name').select();
+  }
+
+  function closeNamer() {
+    naming = null;
+    $('namer').hidden = true;
+    $('name').value = '';
+    $('namehint').className = 'hint';
+  }
+
+  function nameHint() {
+    var h = $('namehint'), v = $('name').value.trim();
+
+    if (naming.mode === 'rename') {
+      h.className = 'hint';
+      h.innerHTML = 'The key stays <code>' + esc(naming.from) + '</code>. Only the name changes.';
+      $('namego').disabled = !v || v === shelf(naming.from).n;
+      return;
+    }
+
+    var k = keyFrom(v);
+    if (!v)        { h.className = 'hint'; h.textContent = 'The key comes from the name and cannot be changed later.'; }
+    else if (!k)   { h.className = 'hint is-bad'; h.textContent = 'That leaves no key. Use some letters or numbers.'; }
+    else if (keyTaken(k)) { h.className = 'hint is-bad'; h.innerHTML = 'A shelf already uses the key <code>' + esc(k) + '</code>. Try another name.'; }
+    else           { h.className = 'hint'; h.innerHTML = 'Key: <code>' + esc(k) + '</code>. This cannot be changed later.'; }
+    $('namego').disabled = !k || keyTaken(k);
+  }
+
+
 
   function liveShelves() { return CURATED.filter(function (d) { return !deleted[d.s]; }); }
   function visible() {
@@ -444,8 +546,8 @@
         (justSaved === d.s ? 'Settings saved.' : '') + '</p></div>' +
       '<div class="acts">' +
         '<button class="btn btn-filled btn-sm" type="button" data-settings="' + esc(d.s) + '">Query settings</button>' +
-        '<button class="btn btn-outlined btn-sm" type="button">Rename</button>' +
-        '<button class="btn btn-outlined btn-sm" type="button">Duplicate</button>' +
+        '<button class="btn btn-outlined btn-sm" type="button" data-act="rename" data-on="' + esc(d.s) + '">Rename</button>' +
+        '<button class="btn btn-outlined btn-sm" type="button" data-act="duplicate" data-on="' + esc(d.s) + '">Duplicate</button>' +
         '<span class="menu-wrap">' +
           '<button class="btn btn-outlined btn-sm kebab" type="button" aria-haspopup="menu" ' +
             'aria-expanded="false" aria-label="More actions for ' + esc(d.n) + '" data-menu="' + esc(d.s) + '">⋯</button>' +
@@ -462,6 +564,15 @@
 
     var inc = includeView(s), exc = excludeView(s);
     var rot = s.rotation;
+
+    /* No terms either way means the shelf takes whatever is newest, which is
+       almost never what a new shelf is for. */
+    if (!inc && !exc) {
+      html += '<div class="notice"><span>No terms set, so this shelf takes the newest ' +
+        (s.types.length ? esc(listJoin(s.types.map(function (k) { return pluralType(k, 2); }))) : 'stories of any type') +
+        ' on the site.</span>' +
+        '<button class="btn btn-outlined btn-sm" type="button" data-settings="' + esc(d.s) + '">Narrow it</button></div>';
+    }
 
     html += '<div class="sections">' +
       '<div class="sect"><h3>Rules</h3><div class="kv">' +
@@ -503,8 +614,8 @@
     m.className = 'menu';
     m.setAttribute('role', 'menu');
     m.innerHTML = '<button type="button" role="menuitem" data-settings="' + esc(btn.dataset.menu) + '">Query settings…</button>' +
-      '<button type="button" role="menuitem">Rename</button>' +
-      '<button type="button" role="menuitem">Duplicate</button>' +
+      '<button type="button" role="menuitem" data-act="rename" data-on="' + esc(btn.dataset.menu) + '">Rename</button>' +
+      '<button type="button" role="menuitem" data-act="duplicate" data-on="' + esc(btn.dataset.menu) + '">Duplicate</button>' +
       '<div class="menu-sep"></div>' +
       '<button type="button" role="menuitem" class="is-delete" data-del="' + esc(btn.dataset.menu) + '">Delete…</button>';
     btn.parentElement.appendChild(m);
@@ -946,17 +1057,32 @@
       return;
     }
 
-    var set = ev.target.closest('[data-settings]');
+    var set = ev.target.closest('[data-settings]'), act = ev.target.closest('[data-act]');
     var s = ev.target.closest('[data-sel]'), del = ev.target.closest('[data-del]'),
         menu = ev.target.closest('[data-menu]'),
         y = ev.target.closest('[data-yes]'), n = ev.target.closest('[data-no]');
 
-    if (set)  { var at = set.dataset.settings; closeMenu(); sel = at; justSaved = null; renderIndex(); return openDialog(at, at); }
+    if (set)  { var at = set.dataset.settings; closeMenu(); closeNamer(); sel = at; justSaved = null; renderIndex(); return openDialog(at, at); }
+    if (act) {
+      var on = act.dataset.on;
+      closeMenu();
+      if (act.dataset.act === 'duplicate') {
+        /* The store names and keys the copy itself, so there is nothing to
+           ask: one click, and the copy is selected and ready to edit. */
+        var src = shelf(on);
+        addShelf(copyKey(on), src.n + ' (Copy)', SETTINGS[on]);
+        closeNamer();
+        return renderIndex();
+      }
+      sel = on; justSaved = null;
+      renderIndex();
+      return openNamer(act.dataset.act, on);
+    }
     if (y)    { deleted[y.dataset.yes] = true; confirming = null; sel = (liveShelves()[0] || {}).s; closeMenu(); return renderIndex(); }
     if (n)    { confirming = null; return renderIndex(); }
     if (del)  { confirming = del.dataset.del; closeMenu(); return renderIndex(); }
     if (menu) { return openMenu(menu); }
-    if (s)    { sel = s.dataset.sel; confirming = null; justSaved = null; closeMenu(); return renderIndex(); }
+    if (s)    { sel = s.dataset.sel; confirming = null; justSaved = null; closeMenu(); closeNamer(); return renderIndex(); }
     closeMenu();
   });
 
@@ -1014,7 +1140,9 @@
       ev.preventDefault(); closeDialog();
       return;
     }
-    if (ev.key === 'Escape') closeMenu();
+    if (ev.key !== 'Escape') return;
+    closeMenu();
+    if (naming) { var b = $('addnew'); closeNamer(); b.focus(); }
   });
 
   $('x').addEventListener('click', closeDialog);
@@ -1027,6 +1155,36 @@
        back to is the one now on the page rather than the one just replaced. */
     renderIndex();
     closeDialog();
+  });
+
+  $('addnew').addEventListener('click', function () { closeMenu(); openNamer('new'); });
+  $('namecancel').addEventListener('click', function () { var b = $('addnew'); closeNamer(); b.focus(); });
+  $('name').addEventListener('input', function () { if (naming) nameHint(); });
+
+  $('namer').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (!naming) return;
+    var label = $('name').value.trim(), mode = naming.mode, from = naming.from;
+    if (!label) { $('name').focus(); return; }
+
+    if (mode === 'rename') {
+      /* The key is the identity; save_instance only ever changes the label. */
+      if (label === shelf(from).n) return;
+      shelf(from).n = label;
+      closeNamer();
+      renderIndex();
+      var r = document.querySelector('[data-act="rename"]');
+      if (r) r.focus();
+      return;
+    }
+
+    var key = keyFrom(label);
+    if (!key || keyTaken(key)) { nameHint(); $('name').focus(); return; }
+    addShelf(key, label, EMPTY_RULE);
+    closeNamer();
+    renderIndex();
+    /* A new shelf has defaults and no terms, so the rule is the next step. */
+    openDialog(key, key);
   });
 
   $('q').addEventListener('input', function () {
