@@ -1,0 +1,1661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The same dialog on the curation interface · NUEAC-398</title>
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610291208">
+<style>
+/* ---- The index, from Direction D ------------------------------------- */
+.panes { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
+@media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 320px; position: static; } }
+
+.index { overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 48px); position: sticky; top: var(--ngn-space-4); }
+.index .tools { padding: var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); }
+.index .tools input { width: 100%; }
+.index .scroll { overflow-y: auto; flex: 1 1 auto; }
+.index .foot { border-top: 1px solid var(--ngn-outline-variant); padding: var(--ngn-space-2) var(--ngn-space-3); font-size: 12px; color: var(--ngn-on-surface-variant); margin: 0; }
+
+.shelf {
+  display: flex; align-items: center; gap: var(--ngn-space-3); width: 100%; text-align: left;
+  border: 0; border-bottom: 1px solid var(--ngn-outline-variant); border-left: 3px solid transparent;
+  background: none; font: inherit; cursor: pointer; padding: var(--ngn-space-3); color: inherit;
+}
+.shelf:hover { background: var(--ngn-surface-container-low); }
+.shelf.is-sel { background: var(--ngn-surface-container); border-left-color: var(--ngn-primary); }
+.shelf .txt { min-width: 0; flex: 1 1 auto; }
+.shelf b { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shelf span { display: block; font-size: 12px; color: var(--ngn-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+
+/* The right column holds the naming form and the detail card, one at a time.
+   min-width guards the grid track against a long term chip. */
+.right { min-width: 0; }
+.detail { display: flex; flex-direction: column; }
+.detail-head { padding: var(--ngn-space-4) var(--ngn-space-5) var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); display: flex; gap: var(--ngn-space-3); align-items: flex-start; flex-wrap: wrap; }
+.detail-head .acts { margin-left: auto; display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; }
+
+/* The design system's cog, inlined rather than linked so it inherits the
+   button's colour through currentColor. It is the 16px micro size, which sits
+   with a 13px label without shouting over it. */
+.title-line { display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap; }
+
+/* Renaming happens on the title itself, so the fields take the shape of the
+   text they replace rather than dropping a form on top of it. */
+.rename-inline { display: flex; flex-direction: column; gap: var(--ngn-space-3); width: 100%; max-width: 460px; }
+.rename-inline .btns { display: flex; gap: var(--ngn-space-2); }
+.rename-inline .hint.is-bad { color: var(--ngn-error); }
+.rename-inline .hint.is-warn { color: var(--ngn-warning); }
+.rename-inline code { font-family: var(--ngn-mono); font-size: 12px; }
+#r-name { font-size: 16px; font-weight: 500; }
+#r-key, #nkey { font-family: var(--ngn-mono); font-size: 13px; }
+
+.sections { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-5); }
+.sect h3 { margin: 0 0 var(--ngn-space-3); font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
+.kv { margin: 0; display: grid; grid-template-columns: minmax(130px, 170px) minmax(0, 1fr); gap: var(--ngn-space-2) var(--ngn-space-4); }
+.kv .k { font-size: 13px; color: var(--ngn-on-surface-variant); }
+.kv .v { font-size: 13.5px; min-width: 0; }
+.kv .unset { font-style: italic; color: var(--ngn-on-surface-variant); }
+.chips { display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; }
+/* Clauses are ANDed, so they are stacked with the word between them rather
+   than run together into one bag of chips. */
+.clause { display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap; }
+.clause + .clause { margin-top: var(--ngn-space-2); }
+.clause .join { font-size: 12px; color: var(--ngn-on-surface-variant); }
+
+.empty { padding: var(--ngn-space-6) var(--ngn-space-5); color: var(--ngn-on-surface-variant); font-size: 13.5px; }
+
+/* The merged list: one ordered list of manual placements and organic fill,
+   which is what MergedList renders on the real screen. */
+.stories { list-style: none; margin: 0; padding: 0; }
+.stories li {
+  display: flex; align-items: center; gap: var(--ngn-space-3);
+  padding: var(--ngn-space-3) var(--ngn-space-5);
+  border-bottom: 1px solid var(--ngn-outline-variant);
+}
+.stories .pos { flex: none; width: 20px; font-size: 13px; color: var(--ngn-on-surface-variant); font-variant-numeric: tabular-nums; }
+.stories .who { flex: 1 1 auto; min-width: 0; }
+.stories .who b { display: block; font-size: 13.5px; font-weight: 400; font-style: italic; color: var(--ngn-on-surface-variant); }
+.stories .who span { display: block; font-size: 12px; color: var(--ngn-on-surface-variant); }
+.stories .pin {
+  flex: none; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ngn-on-surface); background: var(--ngn-surface-container);
+  border-radius: 999px; padding: 2px 9px;
+}
+.stories .pin.is-auto { color: var(--ngn-on-surface-variant); background: none; }
+
+/* Naming happens in the right pane, where an instance's own details are read,
+   rather than on top of the list of names. The detail card steps aside while
+   it is open, so the pane holds one thing at a time. */
+.namer { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-4); }
+.namer[hidden] { display: none; }
+.namer input { max-width: 420px; }
+.namer .btns { display: flex; gap: var(--ngn-space-2); }
+.namer .hint.is-bad { color: var(--ngn-error); }
+.namer code { font-family: var(--ngn-mono); font-size: 12px; }
+.detail[hidden] { display: none; }
+
+.saved-note { font-size: 12px; color: var(--ngn-success); }
+
+/* Deleting cannot be undone, so it gets a dialog of its own rather than a
+   strip that can be clicked past. Narrower than the settings sheet, because a
+   question with two answers should not look like a workspace. */
+/* .sheet is declared further down, so this needs the pair to win on
+   specificity rather than on source order. */
+.sheet.sheet-sm { max-width: 460px; }
+.sheet-sm .sheet-head { border-bottom: 0; padding-bottom: 0; }
+.dbody { padding: var(--ngn-space-3) var(--ngn-space-5) var(--ngn-space-5); }
+.dbody p { margin: 0; font-size: 13.5px; line-height: 1.6; }
+.dbody p + p { margin-top: var(--ngn-space-3); }
+
+/* The consequences are the point of the dialog, so they are a panel rather
+   than a muted line under the question. #bf0229 on #ffdad8 is 5.00:1. */
+.danger-note {
+  margin-top: var(--ngn-space-4);
+  background: var(--ngn-error-container);
+  border-left: 3px solid var(--ngn-error);
+  border-radius: var(--ngn-radius-sm);
+  padding: var(--ngn-space-3) var(--ngn-space-4);
+  display: flex; gap: var(--ngn-space-3); align-items: flex-start;
+}
+.danger-note svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--ngn-error); }
+.danger-note .lines { min-width: 0; }
+.danger-note p { color: var(--ngn-error); font-weight: 500; }
+.danger-note p + p { margin-top: var(--ngn-space-2); font-weight: 400; }
+/* The brand fill is already red, so the destructive button takes the error
+   red instead and the two do not read as the same button. */
+.btn-danger { background: var(--ngn-error); color: #fff; border-color: var(--ngn-error); }
+.btn-danger:hover { filter: brightness(1.08); }
+
+.menu-wrap { position: relative; display: inline-flex; }
+.kebab { min-width: 36px; padding-left: 0; padding-right: 0; }
+.menu {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 10; min-width: 190px;
+  background: var(--ngn-surface); border: 1px solid var(--ngn-outline-variant);
+  border-radius: var(--ngn-radius-sm); box-shadow: 0 6px 20px rgba(0,0,0,.12);
+  padding: var(--ngn-space-1) 0; display: flex; flex-direction: column;
+}
+.menu button {
+  border: 0; background: none; font: inherit; font-size: 13.5px; text-align: left;
+  padding: var(--ngn-space-2) var(--ngn-space-4); cursor: pointer; color: inherit;
+}
+.menu button:hover { background: var(--ngn-surface-container-low); }
+.menu .is-delete { color: var(--ngn-error); }
+.menu-sep { height: 1px; background: var(--ngn-outline-variant); margin: var(--ngn-space-1) 0; }
+
+/* ---- The dialog, from Settings C ------------------------------------- */
+/* On its own page the scrim was part of the flow. Here it has to cover the
+   index, so it is fixed and scrolls itself.
+
+   Placement, in order of what it costs to get wrong:
+
+   1. `margin: auto` on the sheet rather than `align-items: center` on the
+      scrim. Centring a flex child taller than its scrollable parent puts the
+      top of it above the scroll origin, where it cannot be reached. Auto
+      margins centre it while it fits and let it sit at the top and scroll
+      once it does not.
+   2. More room underneath than above, so the sheet lands a little over the
+      middle. The optical centre is above the geometric one, a dialog at a
+      true 50% reads as low, and the trigger it came from is usually in the
+      upper half of the page.
+   3. A gutter at both ends, so some scrim always shows above and below and
+      the sheet reads as a layer over the page rather than a new page. */
+.scrim.is-modal {
+  position: fixed; inset: 0; z-index: 50; min-height: 0;
+  overflow-y: auto;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 4vh var(--ngn-space-4) 9vh;
+}
+.scrim[hidden] { display: none; }
+
+.sheet {
+  width: 100%; max-width: 720px; display: flex; flex-direction: column;
+  margin: auto;
+  /* 100% of the scrim's content box, which already excludes the gutters. The
+     sheet therefore never outgrows the viewport, so the title and the Save
+     and Cancel buttons stay put and only the middle scrolls. Letting it grow
+     instead pushed the footer off screen on a short window, which takes Save
+     with it. */
+  max-height: 100%;
+}
+
+/* A layer that appears with no transition reads as a page change. Short
+   enough not to delay anything, and off entirely for anyone who asked. */
+@media (prefers-reduced-motion: no-preference) {
+  .scrim.is-modal:not([hidden]) .sheet { animation: sheet-in 140ms ease-out; }
+  @keyframes sheet-in {
+    from { opacity: 0; transform: translateY(-8px) scale(.99); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+
+/* WCAG 1.4.10: at 320px, and at 400% zoom, the gutters give way to the
+   content. The height cap does not, for the reason above. */
+@media (max-height: 640px), (max-width: 400px) {
+  .scrim.is-modal { padding: var(--ngn-space-3) var(--ngn-space-3) var(--ngn-space-4); }
+}
+.sheet-scroll { overflow-y: auto; flex: 1 1 auto; }
+.sheet-head {
+  padding: var(--ngn-space-4) var(--ngn-space-5);
+  border-bottom: 1px solid var(--ngn-outline-variant);
+  display: flex; align-items: flex-start;
+}
+.sheet-head .x { margin-left: auto; border: 0; background: none; cursor: pointer; font-size: 20px; color: var(--ngn-on-surface-variant); padding: 4px 8px; border-radius: var(--ngn-radius-full); }
+.sheet-head .x:hover { background: var(--ngn-surface-container); }
+
+.rule { padding: var(--ngn-space-6) var(--ngn-space-5); font-size: 22px; line-height: 1.9; }
+/* At 22px the sentence breaks after two or three words on a phone, which
+   loses the thing that makes it a sentence. */
+@media (max-width: 560px) {
+  .rule { font-size: 18px; line-height: 1.8; padding: var(--ngn-space-5) var(--ngn-space-4); }
+  /* Wrapping on its own dropped Save below Cancel and put it on the left, so
+     the two buttons read in the wrong order. The status line takes the first
+     row instead and the buttons share the second, Save still last. */
+  .sheet-foot { flex-wrap: wrap; }
+  .sheet-foot #dirty, .sheet-foot .problem:not(:empty) { flex: 1 0 100%; }
+  .sheet-foot .spacer { display: none; }
+  .sheet-foot .btn { flex: 1 1 auto; justify-content: center; }
+}
+
+.tok {
+  border: 0; background: none; font: inherit; color: var(--ngn-on-surface);
+  cursor: pointer; padding: 2px 6px; border-radius: var(--ngn-radius-xs);
+  border-bottom: 2px solid var(--ngn-outline-variant);
+}
+.tok:hover { background: var(--ngn-surface-container); border-bottom-color: var(--ngn-on-surface-variant); }
+.tok.is-open { background: var(--ngn-secondary-container); border-bottom-color: var(--ngn-on-surface); }
+.tok.is-empty { color: var(--ngn-on-surface-variant); font-style: italic; }
+
+.rule .plain { color: var(--ngn-on-surface-variant); }
+/* The taxonomy sits inside the token but reads as a label on the term rather
+   than as one of the terms. */
+.tok .tax { color: var(--ngn-on-surface-variant); font-size: .82em; }
+.rule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
+
+.result {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
+  padding: var(--ngn-space-3) var(--ngn-space-4);
+  background: var(--ngn-surface-container-low);
+  border-radius: var(--ngn-radius-sm);
+  display: flex; align-items: center; gap: var(--ngn-space-3); flex-wrap: wrap;
+}
+.result b { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.result .note { font-size: 12px; color: var(--ngn-on-surface-variant); margin-left: auto; }
+
+.editor {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
+  border: 1px solid var(--ngn-tertiary); border-radius: var(--ngn-radius-md);
+  padding: var(--ngn-space-4); display: flex; flex-direction: column; gap: var(--ngn-space-3);
+}
+.editor h3 { margin: 0; font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
+.editor .done { align-self: flex-start; }
+.upcoming-label { margin: var(--ngn-space-3) 0 6px; font-size: 13px; font-weight: 500; }
+.upcoming {
+  margin: 0; padding: 0; list-style: none;
+  font-size: 13px; color: var(--ngn-on-surface-variant);
+  display: grid; gap: 2px; font-variant-numeric: tabular-nums;
+}
+
+.group {
+  border: 1px solid var(--ngn-outline-variant); border-radius: var(--ngn-radius-sm);
+  padding: var(--ngn-space-3); display: flex; flex-direction: column; gap: var(--ngn-space-2);
+}
+.group + .group { margin-top: calc(var(--ngn-space-2) * -1); }
+.group-head { display: flex; align-items: center; gap: var(--ngn-space-2); }
+.group-head b { font-size: 13px; font-weight: 500; }
+.group-head .btn { margin-left: auto; }
+
+.sheet-foot {
+  border-top: 1px solid var(--ngn-outline-variant);
+  padding: var(--ngn-space-3) var(--ngn-space-5);
+  display: flex; gap: var(--ngn-space-3); align-items: center;
+}
+.sheet-foot .spacer { flex: 1 1 auto; }
+.sheet-foot .problem { color: var(--ngn-error); font-size: 13px; }
+.sheet-foot .btn[disabled] { opacity: .45; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · The dialog's second home</strong>
+  <span class="sep">|</span>
+  <a href="index.html">All designs</a>
+  <span class="sep">|</span>
+  <a href="10-complete.html">The instance index</a>
+</div>
+
+<div class="wrap">
+  <p class="t-label-sm muted" style="margin:0 0 4px"><a href="10-complete.html">Curated Posts</a> &rsaquo; Featured stories</p>
+  <h1 class="t-headline" style="margin:0 0 var(--ngn-space-2)">Featured stories</h1>
+  <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:76ch">
+    The post curation interface, where the stories themselves are set. The same Query
+    settings dialog opens from here, over a single column instead of two panes, to show it
+    does not depend on the screen around it. The story rows are indicative; their titles
+    come from the REST API and the list itself is not designed in this round.
+  </p>
+
+  <div class="right">
+    <div class="card detail" id="detail"></div>
+
+    <div class="card" style="margin-top:var(--ngn-space-4);padding:var(--ngn-space-5)">
+      <h2 class="t-title" style="margin:0 0 var(--ngn-space-2)">Two things this page is here to answer</h2>
+      <p class="t-body-sm" style="margin:0 0 var(--ngn-space-3);max-width:72ch">
+        <b>Is the dialog flexible enough for this screen?</b> It is the same dialog, opened
+        from a single column with no index behind it. It takes an instance and a rule and
+        knows nothing about the page around it, which is how
+        <code style="font-family:var(--ngn-mono);font-size:12px">SettingsTrigger</code> is
+        already written: any component in the tree can render it without owning the panel.
+      </p>
+      <p class="t-body-sm" style="margin:0;max-width:72ch">
+        <b>Is it expandable?</b> The sentence here carries one clause that does not exist
+        yet, <span class="muted">scoring at least 70</span>. It is a stand-in for whatever
+        the usefulness metric turns out to be. Adding it cost one word in the sentence, one
+        editor and one number; nothing was restructured. Set it to 0 to take it back out.
+        If the metric belongs next to the results instead, it becomes a column in the list
+        above rather than a clause, and neither choice disturbs the other.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="scrim is-modal" id="scrim" hidden>
+  <div class="card sheet" role="dialog" aria-modal="true" aria-labelledby="t">
+
+    <div class="sheet-head">
+      <div>
+        <h2 class="t-headline" id="t" style="margin:0">Query settings</h2>
+        <p class="t-body-sm muted" style="margin:2px 0 0" id="who"></p>
+      </div>
+      <button class="x" type="button" aria-label="Close" id="x">&times;</button>
+    </div>
+
+    <div class="sheet-scroll">
+      <p class="rule" id="rule"></p>
+
+      <div class="result">
+        <b id="count">&ndash;</b>
+        <span class="t-body-sm muted">stories match this rule right now</span>
+        <span class="note">prototype figure</span>
+      </div>
+
+      <div id="editor"></div>
+    </div>
+
+    <div class="sheet-foot">
+      <span class="t-body-sm muted" id="dirty">No changes yet</span>
+      <span class="problem" id="problem" role="status"></span>
+      <span class="spacer"></span>
+      <button class="btn btn-text" type="button" id="cancel">Cancel</button>
+      <button class="btn btn-filled" type="button" id="save">Save</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="scrim is-modal" id="dscrim" hidden>
+  <div class="card sheet sheet-sm" role="alertdialog" aria-modal="true"
+       aria-labelledby="d-title" aria-describedby="d-body">
+    <div class="sheet-head">
+      <h2 class="t-title" id="d-title" style="margin:0">Delete this instance?</h2>
+    </div>
+    <div class="dbody" id="d-body">
+      <p id="d-what"></p>
+      <div class="danger-note">
+        <span id="d-icon"></span>
+        <span class="lines">
+          <p id="d-undo">This cannot be undone. There is no trash to restore it from.</p>
+          <p id="d-wired" hidden></p>
+        </span>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <span class="spacer"></span>
+      <button class="btn btn-text" type="button" id="d-no">Keep it</button>
+      <button class="btn btn-filled btn-danger" type="button" id="d-yes">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/terms.js?v=202610291208"></script>
+<script src="assets/settings-data.js?v=202610291208"></script>
+<script src="assets/data.js?v=202610291208"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  var esc = function (t) { return String(t).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+  /* ====================================================================
+     Seeding one instance's rule from the taxonomy export.
+
+     The export is a spreadsheet, so its columns carry labels rather than
+     slugs. Everything that can be mapped to a real post type or taxonomy is;
+     what cannot is left out rather than guessed at.
+     ==================================================================== */
+
+  /* The export excludes "Hide Post", which belongs to a taxonomy the term
+     export did not cover. Registered here, on this page only, so the term
+     still shows and can be removed. */
+  if (!TAXONOMIES['display-options']) {
+    TAXONOMIES['display-options'] = { n: 'Display Options', count: 1, terms: [ { n: 'Hide Post', s: 'hide-post', c: 0 } ] };
+  }
+
+  var TAX_ALIAS = { 'tag': 'post_tag', 'article format': 'article-format' };
+
+  function taxFor(label) {
+    var l = String(label).trim();
+    if (TAX_ALIAS[l]) return TAX_ALIAS[l];
+    if (TAXONOMIES[l]) return l;
+    var hit = Object.keys(TAXONOMIES).filter(function (k) {
+      return TAXONOMIES[k].n.toLowerCase() === l.toLowerCase();
+    })[0];
+    return hit || null;
+  }
+
+  function typesFrom(str) {
+    var keys = {};
+    POST_TYPES.forEach(function (p) { keys[p.k] = p.k; keys[p.n.toLowerCase()] = p.k; });
+    return String(str || '').split(',').map(function (t) { return keys[t.trim()] || keys[t.trim().toLowerCase()]; })
+      .filter(function (k, i, a) { return k && a.indexOf(k) === i; });
+  }
+
+  /* "11:00 AM" out of the export, "11:00" into <input type="time">. */
+  function toTime(s) {
+    var m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(s).trim());
+    if (!m) return '00:00';
+    var h = (+m[1]) % 12;
+    if (/pm/i.test(m[3])) h += 12;
+    return (h < 10 ? '0' : '') + h + ':' + m[2];
+  }
+
+  /* The input stores 24-hour time; the page shows it the way the export did. */
+  function clockLabel(t) {
+    var m = /^(\d{2}):(\d{2})$/.exec(String(t));
+    if (!m) return t;
+    var h = +m[1], ampm = h < 12 ? 'AM' : 'PM';
+    return ((h % 12) || 12) + ':' + m[2] + ' ' + ampm;
+  }
+
+  function seed(d) {
+    var filters = {};
+    function put(list, into) {
+      list.forEach(function (f) {
+        var tax = taxFor(f.t);
+        if (!tax) return;
+        if (!filters[tax]) filters[tax] = { groups: [[]], exclude: [] };
+        var bucket = into === 'exclude' ? filters[tax].exclude : filters[tax].groups[0];
+        if (bucket.indexOf(f.v) < 0) bucket.push(f.v);
+      });
+    }
+    put(d.inc, 'include');
+    put(d.exc, 'exclude');
+
+    return {
+      count: Math.min(50, Math.max(1, d.stories || 1)),
+      sort: 'Newest',
+      types: typesFrom(d.types),
+      windowDays: 14,
+      searchTypes: typesFrom(d.search),
+      filters: filters,
+      /* The export has no by-hand term filters, because the panel has never
+         been able to set any. Empty is the truth, not a placeholder. */
+      searchFilters: {},
+      /* /search takes its own count, sort and sort_window_days, so the
+         manual half has all three. The defaults are the route's own:
+         count 3 (MAX_SEARCH_RESULTS), Newest, 14 days. */
+      searchCount: 3, searchSort: 'Newest', searchWindowDays: 14,
+      /* A worked example of a parameter that does not exist yet, so the
+         question "is this expandable" has an answer you can click. The number
+         is a placeholder for whatever the usefulness metric turns out to be;
+         what it demonstrates is that one more clause costs one token, one
+         editor branch and one row, with nothing restructured. */
+      useful: 70,
+      /* Follows the automatic query until someone customises it. 44 of the 47
+         exported instances already search exactly the post types they fill
+         from, so following is both the sensible default and the true one. */
+      searchSame: typesFrom(d.search).join() === typesFrom(d.types).join(),
+      /* The export records that rotation is on and when it starts, but not
+         how long the gap is, so 1h is this prototype's stand-in. */
+      rotation: { on: d.rot !== 'Off', interval: '1h', start: toTime(d.rotStart) }
+    };
+  }
+
+  var SETTINGS = {};
+  CURATED.forEach(function (d) { SETTINGS[d.s] = seed(d); });
+
+  /* ====================================================================
+     The index
+     ==================================================================== */
+
+  var sel = CURATED[0].s, confirming = null, deleted = {}, justSaved = null, naming = null;
+  /* editing holds the key of the instance whose title is being edited in place.
+     keyTouched stops the key following the name once it has been typed in. */
+  var editing = null, keyTouched = false;
+
+  /* PATCH .../{key}/key renames an instance and Store::rename moves the entry
+     and its purge log. What it does not move is the theme's own code: two
+     keys are written into template files, so renaming or deleting either
+     leaves that code looking for an instance that is no longer there.
+
+     Written out per case rather than assembled from parts, because the
+     grammar changes with the number of places and a sentence built from a
+     template reads like one. The files, for whoever needs them:
+       editors-picks     sidebar-editors-picks.php
+       featured-stories  class-feed-featured.php,
+                         overlay-fullscreen-menu-news.php */
+  var WIRED_IN = {
+    'editors-picks': {
+      gone:  'The Editor\u2019s Picks sidebar pulls from this. It will go empty.',
+      moved: 'The Editor\u2019s Picks sidebar looks for this slug. Change it and the sidebar goes empty.'
+    },
+    'featured-stories': {
+      gone:  'The featured stories feed and the fullscreen menu pull from this. Both will go empty.',
+      moved: 'The featured stories feed and the fullscreen menu look for this slug. Change it and both go empty.'
+    }
+  };
+
+  /* Curated_Posts_Store::empty_query: what the backend gives a brand new
+     instance. Not a guess, and not blank. */
+  var EMPTY_RULE = {
+    count: 5, sort: 'Newest', types: ['newspost'], windowDays: 14,
+    searchTypes: ['newspost'], filters: {}, searchFilters: {},
+    searchCount: 3, searchSort: 'Newest', searchWindowDays: 14, searchSame: true, useful: 70,
+    rotation: { on: false, interval: '1h', start: '00:00' }
+  };
+
+  /* sanitize_title(), which is what WordPress itself would give this name:
+     accents folded to ASCII rather than dropped, so "Café" becomes "cafe" and
+     not "caf", then lowercase, non-alphanumerics to hyphens, hyphens
+     collapsed and trimmed. */
+  function keyFrom(name) {
+    return String(name)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+  function keyTaken(k) { return CURATED.some(function (d) { return d.s === k; }); }
+
+  /* Curated_Posts_Store::next_copy_key: <key>-copy, then -copy-2, -copy-3. */
+  function copyKey(k) {
+    if (!keyTaken(k + '-copy')) return k + '-copy';
+    var i = 2;
+    while (keyTaken(k + '-copy-' + i)) i++;
+    return k + '-copy-' + i;
+  }
+
+  function shelf(k) { return CURATED.filter(function (d) { return d.s === k; })[0]; }
+
+  function addInstance(key, label, rule) {
+    CURATED.push({ n: label, s: key, g: 'Other', stories: 0, types: '', inc: [], exc: [],
+                   search: '', rot: 'Off', rotStart: 'N/A', upcoming: 0 });
+    SETTINGS[key] = JSON.parse(JSON.stringify(rule));
+    sel = key; confirming = null; justSaved = null;
+    $('q').value = '';
+  }
+
+  /* ---- Deleting ------------------------------------------------------
+     Store::delete unsets the entry and drops its purge log. There is no
+     trash, no restore and no undo anywhere in the module, so the dialog says
+     so and the safe answer takes focus. */
+
+  /* assets/images/icons/exclamation-triangle-micro.svg, from the theme. */
+  var WARN_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-slot="icon"><path fill-rule="evenodd" d="M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 4a.75.75 0 0 1 .75.75v3a.75.75 0 1 1-1.5 0v-3A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/></svg>';
+
+  function openDelete(which) {
+    var d = shelf(which);
+    if (!d) return;
+    confirming = which;
+    closeMenu();
+    $('d-title').textContent = 'Are you sure you want to delete \u201c' + d.n + '\u201d?';
+    $('d-what').textContent = 'It fills ' + stories(d.stories) + ' on the site right now.';
+
+    var wired = WIRED_IN[which];
+    $('d-wired').hidden = !wired;
+    if (wired) $('d-wired').textContent = wired.gone;
+
+    $('d-icon').innerHTML = WARN_ICON;
+    $('dscrim').hidden = false;
+    document.body.style.overflow = 'hidden';
+    /* Focus the answer that changes nothing, so Enter or a stray space cannot
+       delete anything. */
+    $('d-no').focus();
+  }
+
+  function closeDelete() {
+    confirming = null;
+    $('dscrim').hidden = true;
+    if ($('scrim').hidden) document.body.style.overflow = '';
+    var k = document.querySelector('[data-menu]');
+    if (k) k.focus();
+  }
+
+  function doDelete() {
+    var which = confirming;
+    if (!which) return;
+    deleted[which] = true;
+    confirming = null;
+    $('dscrim').hidden = true;
+    document.body.style.overflow = '';
+    if (sel === which) sel = (liveShelves()[0] || {}).s;
+    editing = null;
+    renderIndex();
+    var k = document.querySelector('[data-menu]');
+    if (k) k.focus();
+  }
+
+  /* ---- Renaming in place ------------------------------------------- */
+
+  function openEditor(which) {
+    closeMenu(); closeNamer();
+    editing = which; sel = which; confirming = null; justSaved = null;
+    renderIndex();
+    editHint();
+    var f = $('r-name');
+    if (f) { f.focus(); f.select(); }
+  }
+
+  function closeEditor_() {
+    var was = editing;
+    editing = null;
+    renderIndex();
+    var k = document.querySelector('[data-menu]');
+    if (k) k.focus();
+    return was;
+  }
+
+  /* The name is a label and changes nothing else. The key is the identity the
+     site asks for, which is why it carries the warnings. */
+  function editHint() {
+    if (!editing) return;
+    var h = $('r-hint'), name = $('r-name').value.trim(), k = keyFrom($('r-key').value);
+    var moved = k !== editing;
+    var bad = '', warn = '';
+
+    if (!k) bad = 'The slug needs some letters or numbers.';
+    else if (moved && keyTaken(k)) bad = 'An instance already uses ' + k + '. Pick another.';
+    else if (moved && WIRED_IN[editing]) warn = WIRED_IN[editing].moved;
+    else if (moved) warn = 'Only an administrator can change a slug, and anything still using the old one stops working.';
+    else if (!name) warn = 'Leave it empty and the name comes from the slug instead.';
+
+    h.className = 'hint' + (bad ? ' is-bad' : (warn ? ' is-warn' : ''));
+    h.textContent = bad || warn || 'The site asks for this instance by this slug.';
+    $('r-save').disabled = !!bad || (name === shelf(editing).n && !moved);
+  }
+
+  function saveEditor() {
+    if (!editing) return;
+    var name = $('r-name').value.trim(), k = keyFrom($('r-key').value);
+    var old = editing;
+    if (!k || (k !== old && keyTaken(k))) { editHint(); return; }
+
+    var d = shelf(old);
+    /* set_label with an empty string drops the custom label and the list falls
+       back to a name derived from the key, so that is what empty does here. */
+    d.n = name || k.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+
+    if (k !== old) {
+      /* Store::rename moves the entry under the new key; the settings move
+         with it, and so does the selection. */
+      d.s = k;
+      SETTINGS[k] = SETTINGS[old];
+      delete SETTINGS[old];
+      if (sel === old) sel = k;
+      editing = k;
+    }
+    closeEditor_();
+  }
+
+  function openNamer(mode, from) {
+    if (!$('namer')) return;
+    naming = { mode: mode, from: from || null };
+    var d = from ? shelf(from) : null;
+    $('namelab').textContent = mode === 'rename' ? 'Rename this instance' : 'Name this instance';
+    $('namesub').textContent = mode === 'rename' ? d.n : 'It will join the list on the left, in order.';
+    $('namego').textContent  = mode === 'rename' ? 'Save name' : 'Create';
+    $('name').value = mode === 'rename' ? d.n : '';
+    $('nkey').value = '';
+    keyTouched = false;
+    /* One thing at a time in the right pane. */
+    $('namer').hidden = false;
+    $('detail').hidden = true;
+    nameHint();
+    $('name').focus();
+    $('name').select();
+  }
+
+  function closeNamer() {
+    if (!$('namer')) { naming = null; return; }
+    naming = null;
+    $('namer').hidden = true;
+    $('detail').hidden = false;
+    $('name').value = '';
+    $('namehint').className = 'hint';
+  }
+
+  /* The key follows the name until someone edits the key, which is how a slug
+     field is expected to behave. */
+  function nameHint() {
+    var h = $('namehint'), v = $('name').value.trim();
+    if (!keyTouched) $('nkey').value = keyFrom(v);
+    var k = keyFrom($('nkey').value);
+
+    if (!v && !k)         { h.className = 'hint'; h.textContent = 'The slug follows the name. Edit it here if you want a different one.'; }
+    else if (!k)          { h.className = 'hint is-bad'; h.textContent = 'The slug needs some letters or numbers.'; }
+    else if (keyTaken(k)) { h.className = 'hint is-bad'; h.innerHTML = 'An instance already uses <code>' + esc(k) + '</code>. Pick another.'; }
+    else                  { h.className = 'hint'; h.innerHTML = 'The site will ask for this instance by <code>' + esc(k) + '</code>.'; }
+
+    $('namego').disabled = !v || !k || keyTaken(k);
+  }
+
+
+
+  function liveShelves() { return CURATED.filter(function (d) { return !deleted[d.s]; }); }
+  function visible() {
+    var t = $('q') ? $('q').value.trim().toLowerCase() : '';
+    return liveShelves().filter(function (d) { return !t || (d.n + ' ' + d.s).toLowerCase().indexOf(t) > -1; });
+  }
+  var stories = function (n) { return n + (n === 1 ? ' story' : ' stories'); };
+
+  var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
+  var pluralType = function (k, n) { var nm = typeName(k); return n === 1 || /s$/.test(nm) ? nm : nm + 's'; };
+
+  function listJoin(items) {
+    if (items.length < 3) return items.join(' or ');
+    return items.slice(0, -1).join(', ') + ' or ' + items[items.length - 1];
+  }
+
+  /* matchCount wants the rule flattened: every include clause, every excluded
+     term, with the taxonomy they came from dropped. */
+  function flat(d) {
+    var groups = [], exclude = [];
+    Object.keys(d.filters).forEach(function (tax) {
+      d.filters[tax].groups.forEach(function (g) { if (g.length) groups.push(g); });
+      d.filters[tax].exclude.forEach(function (t) { exclude.push(t); });
+    });
+    return { types: d.types, groups: groups,
+             include: groups.reduce(function (a, g) { return a.concat(g); }, []),
+             exclude: exclude, sort: d.sort, windowDays: d.windowDays };
+  }
+
+  function typeSummary(s) {
+    return s.types.length ? s.types.map(typeName).join(', ') : 'All types';
+  }
+
+  function renderList() {
+    if (!$('list')) return;
+    var list = visible();
+    $('num').textContent = list.length + ' of ' + liveShelves().length + ' instances';
+
+    if (!list.length) { $('list').innerHTML = '<p class="empty">Nothing matches that.</p>'; return; }
+
+    $('list').innerHTML = list.slice().sort(function (a, b) { return a.n.localeCompare(b.n); })
+      .map(function (d) {
+        var s = SETTINGS[d.s];
+        return '<button type="button" class="shelf' + (sel === d.s ? ' is-sel' : '') + '" role="option" ' +
+          'aria-selected="' + (sel === d.s) + '" data-sel="' + esc(d.s) + '">' +
+          '<span class="txt"><b>' + esc(d.n) + '</b>' +
+          '<span>' + stories(s.count) + ' · ' + esc(typeSummary(s)) + '</span></span></button>';
+      }).join('');
+  }
+
+  function row(k, v, unset) {
+    return '<span class="k">' + k + '</span><span class="v">' +
+      (unset ? '<span class="unset">' + v + '</span>' : v) + '</span>';
+  }
+
+  function chipSet(terms, kind, tax) {
+    return '<span class="chips">' + terms.map(function (t) {
+      return '<span class="chip' + (kind === 'exc' ? ' chip-exclude' : '') + '">' +
+        esc(tax) + ': ' + esc(t) + '</span>';
+    }).join('') + '</span>';
+  }
+
+  /* One clause per non-empty group, in the order the query would emit them. */
+  function includeView(s, which) {
+    var bag = s[which || 'filters'] || {}, out = [];
+    Object.keys(bag).forEach(function (tax) {
+      bag[tax].groups.forEach(function (g) {
+        if (g.length) out.push({ tax: tax, terms: g });
+      });
+    });
+    if (!out.length) return null;
+    return out.map(function (c, i) {
+      return '<span class="clause">' +
+        (i ? '<span class="join">and also in</span>' : '') +
+        chipSet(c.terms, 'inc', TAXONOMIES[c.tax] ? TAXONOMIES[c.tax].n : c.tax) + '</span>';
+    }).join('');
+  }
+
+  function excludeView(s, which) {
+    var bag = s[which || 'filters'] || {}, out = [];
+    Object.keys(bag).forEach(function (tax) {
+      bag[tax].exclude.forEach(function (t) {
+        out.push({ tax: TAXONOMIES[tax] ? TAXONOMIES[tax].n : tax, term: t });
+      });
+    });
+    if (!out.length) return null;
+    return '<span class="chips">' + out.map(function (f) {
+      return '<span class="chip chip-exclude">' + esc(f.tax) + ': ' + esc(f.term) + '</span>';
+    }).join('') + '</span>';
+  }
+
+  /* The merged list the real screen shows: manual placements and organic fill
+     in one ordered list, from MergedPost in types.ts, which carries manual,
+     expiresAt and retain alongside the post's own title, type and date. */
+  var STORIES = [
+    { manual: true,  retain: true,  expires: null,           type: 'newspost' },
+    { manual: true,  retain: false, expires: '14 Nov',       type: 'newspost' },
+    { manual: false, retain: false, expires: null,           type: 'newspost' },
+    { manual: false, retain: false, expires: null,           type: 'newspost' }
+  ];
+
+  function renderDetail() {
+    var d = liveShelves().filter(function (x) { return x.s === sel; })[0];
+    if (!d) { $('detail').innerHTML = '<p class="empty">Nothing selected.</p>'; return; }
+    var st = SETTINGS[d.s];
+
+    var html = '<div class="detail-head">' +
+      '<div><span class="title-line"><h2 class="t-title" style="margin:0">Stories in this instance</h2></span>' +
+      '<p class="t-body-sm muted" style="margin:2px 0 0">' +
+        STORIES.filter(function (x) { return x.manual; }).length + ' placed by hand, ' +
+        STORIES.filter(function (x) { return !x.manual; }).length + ' filled by the rule</p></div>' +
+      '<div class="acts"><span class="menu-wrap">' +
+        '<button class="btn btn-outlined btn-sm kebab" type="button" aria-haspopup="menu" ' +
+          'aria-expanded="false" aria-label="More actions" data-menu="' + esc(d.s) + '">\u22ef</button>' +
+      '</span></div></div>';
+
+    html += '<ol class="stories">' + STORIES.map(function (x, i) {
+      return '<li>' +
+        '<span class="pos">' + (i + 1) + '</span>' +
+        '<span class="who"><b>Story title from the live site</b>' +
+          '<span>' + esc(typeName(x.type)) + ' \u00b7 28 Oct</span></span>' +
+        (x.manual
+          ? '<span class="pin">' + (x.retain ? 'Pinned, kept' : 'Pinned to ' + esc(x.expires)) + '</span>'
+          : '<span class="pin is-auto">From the rule</span>') +
+      '</li>';
+    }).join('') + '</ol>';
+
+    html += '<div class="sections"><div class="sect"><h3>What the rule says</h3>' +
+      '<p class="t-body-sm" style="margin:0 0 var(--ngn-space-3);max-width:70ch">' +
+      esc(ruleText(st)) + '</p>' +
+      '<button class="btn btn-outlined btn-sm" type="button" data-settings="' + esc(d.s) + '">Query settings</button>' +
+      '</div></div>';
+
+    $('detail').innerHTML = html;
+  }
+
+  /* The sentence as plain text, for the summary above the button. The line
+     breaks have to become spaces before the tags go, or the sentences run
+     together, and the entities esc() put in have to come back out or they are
+     escaped twice on the way into the summary. */
+  function ruleText(st) {
+    var was = draft; draft = st;
+    var t = rule()
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ')
+      .trim();
+    draft = was;
+    return t;
+  }
+
+  function renderIndex() { renderList(); renderDetail(); }
+
+  function closeMenu() {
+    var m = document.querySelector('.menu');
+    if (m) {
+      var btn = m.parentElement.querySelector('[data-menu]');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+      m.remove();
+    }
+  }
+
+  function openMenu(btn) {
+    var already = btn.parentElement.querySelector('.menu');
+    closeMenu();
+    if (already) return;
+    var m = document.createElement('div');
+    m.className = 'menu';
+    m.setAttribute('role', 'menu');
+    m.innerHTML = '<button type="button" role="menuitem" data-settings="' + esc(btn.dataset.menu) + '">Settings</button>' +
+      '<button type="button" role="menuitem" data-act="rename" data-on="' + esc(btn.dataset.menu) + '">Rename</button>' +
+      '<button type="button" role="menuitem" data-act="duplicate" data-on="' + esc(btn.dataset.menu) + '">Duplicate</button>' +
+      '<div class="menu-sep"></div>' +
+      '<button type="button" role="menuitem" class="is-delete" data-del="' + esc(btn.dataset.menu) + '">Delete…</button>';
+    btn.parentElement.appendChild(m);
+    btn.setAttribute('aria-expanded', 'true');
+    m.querySelector('button').focus();
+  }
+
+  /* ====================================================================
+     The dialog
+
+     The query groups terms BY TAXONOMY. buildQueryParams emits one
+     { taxonomy, terms } clause per group, and clauses are ANDed, so a single
+     OR group can never span two taxonomies. The state mirrors that shape:
+
+       filters[taxSlug] = { groups: [ [term, term], [term] ], exclude: [term] }
+
+     groups[0] is the taxonomy's base include; the rest are its AND groups.
+     ==================================================================== */
+
+  /* Opening a taxonomy's editor creates its filter record, so a plain look
+     round used to count as an edit. Comparing normalised copies, with the
+     empty records and empty groups dropped, keeps Save honest. */
+  function norm(d) {
+    var c = JSON.parse(JSON.stringify(d));
+    ['filters', 'searchFilters'].forEach(function (bag) {
+      if (!c[bag]) return;
+      Object.keys(c[bag]).forEach(function (tax) {
+        var f = c[bag][tax];
+        f.groups = f.groups.filter(function (g) { return g.length; });
+        if (!f.groups.length && !f.exclude.length) delete c[bag][tax];
+      });
+    });
+    return JSON.stringify(c);
+  }
+
+  var slug = null, SAVED = null, draft = null, open = null, lastTok = null, taxKey = null, termQ = {};
+
+  /* The /search route takes its own terms_include and terms_exclude, so the
+     manual search can filter by term independently of the automatic fill.
+     Today the panel sends the automatic query's terms to both, which is why
+     the by-hand line only ever offered post types. scope says which of the
+     two sets a token or editor is working on. */
+  var scope = 'auto';
+  var SCOPES = {
+    auto:   { bag: 'filters',       types: 'types',       inc: 'include',       exc: 'exclude' },
+    manual: { bag: 'searchFilters', types: 'searchTypes', inc: 'searchInclude', exc: 'searchExclude' }
+  };
+  var scopeOf = function (tokKey) {
+    return (tokKey === 'searchInclude' || tokKey === 'searchExclude') ? 'manual' : 'auto';
+  };
+  var bagFor  = function (sc) { return draft[SCOPES[sc].bag]; };
+  var typesFor = function (sc) { return draft[SCOPES[sc].types]; };
+
+  var changed = function () { return norm(draft) !== norm(SAVED); };
+  var INTERVALS = ['15m', '30m', '1h', '2h', '3h', '4h', '6h', '12h', '24h'];
+  var isCustom = function (v) { return INTERVALS.indexOf(v) < 0; };
+
+  function fil(tax, sc) {
+    var bag = bagFor(sc || scope);
+    if (!bag[tax]) bag[tax] = { groups: [[]], exclude: [] };
+    if (!bag[tax].groups.length) bag[tax].groups = [[]];
+    return bag[tax];
+  }
+
+  function clauses(sc) {
+    var bag = bagFor(sc || scope), out = [];
+    Object.keys(bag).forEach(function (tax) {
+      bag[tax].groups.forEach(function (g, gi) {
+        if (g.length) out.push({ tax: tax, gi: gi, terms: g });
+      });
+    });
+    return out;
+  }
+
+  /* One token per taxonomy that has exclusions, each opening the editor for
+     that taxonomy, so "skipping Preview or Final" can no longer hide which
+     taxonomy those two came from. */
+  function excludeTokens(sc) {
+    sc = sc || 'auto';
+    var bag = bagFor(sc), key = SCOPES[sc].exc, byTax = [];
+    Object.keys(bag).forEach(function (tax) {
+      var ex = bag[tax].exclude;
+      if (ex.length) byTax.push({ tax: tax, terms: ex });
+    });
+    if (!byTax.length) return tok(key, 'nothing', true);
+    return byTax.map(function (x) {
+      return tok(key, taxLabel(x.tax, x.terms), false, x.tax + ':x', true);
+    }).join(' <span class="plain">and</span> ');
+  }
+
+  /* The taxonomies the chosen post types offer, plus any that already carry a
+     filter, so a term set on an instance is never stranded out of reach. */
+  function availableTax() {
+    var types = typesFor(scope), bag = bagFor(scope);
+    /* An empty post type list means every type, and the by-hand search is
+       usually left empty, so fall back to every taxonomy rather than none. */
+    var a = (types.length ? taxonomiesFor(types) : Object.keys(TAXONOMIES)).slice();
+    Object.keys(bag).forEach(function (t) {
+      if (!TAXONOMIES[t] || a.indexOf(t) > -1) return;
+      var f = bag[t];
+      if (f.groups.some(function (g) { return g.length; }) || f.exclude.length) a.push(t);
+    });
+    return a;
+  }
+
+  function clampWhole(raw, lo, hi) {
+    var n = Math.round(parseFloat(raw));
+    if (!isFinite(n)) return lo;
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  function problems(d) {
+    var out = [];
+    if (d.sort !== 'Most viewed' && d.rotation.on && !intervalMinutes(d.rotation.interval)) {
+      out.push('"' + (d.rotation.interval || 'blank') + '" is not an interval. Try 1h, 30m or a number of minutes.');
+    }
+    /* Both sets, because a contradiction in the by-hand filters is just as
+       unsaveable as one in the automatic query. */
+    ['filters', 'searchFilters'].forEach(function (bag) {
+      Object.keys(d[bag] || {}).forEach(function (tax) {
+        var f = d[bag][tax];
+        var inc = f.groups.reduce(function (a, g) { return a.concat(g); }, []);
+        f.exclude.forEach(function (t) {
+          if (inc.indexOf(t) > -1) {
+            out.push('“' + t + '” is both required and skipped, so nothing can match it.');
+          }
+        });
+      });
+    });
+    return out;
+  }
+
+  function tok(key, text, empty, ref, isHtml) {
+    return '<button class="tok' + (open === key ? ' is-open' : '') + (empty ? ' is-empty' : '') +
+      '" type="button" data-tok="' + key + '"' + (ref ? ' data-ref="' + ref + '"' : '') +
+      '>' + (isHtml ? text : esc(text)) + '</button>';
+  }
+
+  /* Terms alone do not say what they are. "Health" is a Category, a Department
+     and a Kicker Category, and the sentence used to name the term and drop the
+     taxonomy, so two clauses from two taxonomies read as one list. The
+     taxonomy goes in the token, muted, in the same shape the chips below the
+     sentence already use. */
+  function taxLabel(tax, terms) {
+    var name = TAXONOMIES[tax] ? TAXONOMIES[tax].n : tax;
+    /* "with category Business", not "Category: Business". The taxonomy is part
+       of the sentence rather than a label stuck in front of the term, so it
+       reads lowercase like the rest of the words around it. */
+    return '<span class="tax">' + esc(name.toLowerCase()) + '</span> ' + esc(listJoin(terms));
+  }
+
+  /* Each clause carries its own "with", because the joins read
+     "with category Business and also with tag 2016 election". */
+  function groupTokens(sc) {
+    sc = sc || 'auto';
+    var key = SCOPES[sc].inc, c = clauses(sc);
+    if (!c.length) return '<span class="plain">in</span> ' + tok(key, 'anything', true);
+    return c.map(function (x, i) {
+      return '<span class="plain">' + (i ? 'and also with' : 'with') + '</span> ' +
+        tok(key, taxLabel(x.tax, x.terms), false, x.tax + ':' + x.gi, true);
+    }).join(' ');
+  }
+
+  function rule() {
+    var views = draft.sort === 'Most viewed';
+    var str = '<span class="plain">Show the</span> ' +
+      tok('count', draft.count === 1 ? 'single' : draft.count) + ' ' +
+      tok('sort', views ? 'most viewed' : 'newest') + ' ' +
+      tok('types', draft.types.length
+        ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
+        : 'stories of any type', !draft.types.length);
+
+    if (views) str += ' <span class="plain">from the last</span> ' +
+      tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
+
+    str += ' ' + groupTokens('auto') +
+      '<span class="punc">,</span> <span class="plain">skipping</span> ' +
+      excludeTokens('auto') +
+      (draft.useful
+        ? '<span class="punc">,</span> <span class="plain">scoring at least</span> ' +
+          tok('useful', draft.useful)
+        : '') +
+      '<span class="punc">.</span>';
+
+    str += views
+      ? '<br><span class="plain">Most viewed reshuffles itself, so there is no rotation.</span>'
+      : (draft.rotation.on
+        ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="punc">.</span>'
+        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="punc">.</span>');
+
+    /* While it follows the automatic query there is nothing to spell out, so
+       the whole half collapses to the one word that can change it. */
+    if (draft.searchSame) {
+      str += '<br><span class="plain">When you choose a story manually,</span> ' +
+        tok('searchSame', 'search the same stories') + '<span class="punc">.</span>';
+      return str;
+    }
+
+    /* Same shape as the first sentence, because it is the same kind of rule:
+       how many, in what order, of what, narrowed how. */
+    var sViews = draft.searchSort === 'Most viewed';
+    str += '<br><span class="plain">When you choose a story manually, the search offers the</span> ' +
+      tok('searchCount', draft.searchCount === 1 ? 'single' : draft.searchCount) + ' ' +
+      tok('searchSort', sViews ? 'most viewed' : 'newest') + ' ' +
+      tok('searchTypes', draft.searchTypes.length
+        ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, draft.searchCount); }))
+        : 'stories of any type', !draft.searchTypes.length);
+
+    if (sViews) str += ' <span class="plain">from the last</span> ' +
+      tok('searchWindow', draft.searchWindowDays + (draft.searchWindowDays === 1 ? ' day' : ' days'));
+
+    str += ' ' + groupTokens('manual') +
+      '<span class="punc">,</span> <span class="plain">skipping</span> ' +
+      excludeTokens('manual') +
+      '<span class="punc">.</span>';
+
+    return str;
+  }
+
+  function countLine(tax, showing, q) {
+    if (q) {
+      var hits = countMatches(taxKey, q);
+      if (!hits) return 'Nothing matches “' + esc(q) + '”.';
+      return hits.toLocaleString() + (hits === 1 ? ' term matches “' : ' terms match “') +
+        esc(q) + '”' + (hits > showing ? ', showing the closest ' + showing : '') + '.';
+    }
+    if (showing >= tax.count) return tax.count.toLocaleString() + (tax.count === 1 ? ' term.' : ' terms.');
+    return 'Showing ' + showing + ' of ' + tax.count.toLocaleString() + '. Type to find the rest.';
+  }
+
+  function groupBox(tax, bucket, gi, isEx) {
+    var key = (isEx ? 'x' : gi);
+    var q = termQ[key] || '';
+    var shown = searchTerms(taxKey, q, 40);
+    var title = isEx ? 'Never tagged' : (gi === 0 ? 'Has any of' : 'AND has any of');
+    var groupCount = fil(taxKey).groups.length;
+
+    return '<div class="group">' +
+      '<div class="group-head"><b>' + title + ' <span class="muted">(' + bucket.length + ' selected)</span></b>' +
+        (!isEx && groupCount > 1
+          ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove</button>' : '') +
+      '</div>' +
+      '<div class="field"><label for="e-q-' + key + '">Search ' + esc(tax.n) + '</label>' +
+        '<input type="search" id="e-q-' + key + '" data-q="' + key + '" value="' + esc(q) +
+        '" placeholder="Type a name or a slug…"></div>' +
+      '<div class="chips">' + shown.map(function (t) {
+        var on = bucket.indexOf(t.n) > -1;
+        return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t.n) +
+          '" data-gi="' + key + '"' + (t.p ? ' title="Inside ' + esc(t.p) + '"' : '') + '>' +
+          (t.p ? '<span class="muted">' + esc(t.p) + ' › </span>' : '') + esc(t.n) +
+          ' <span class="muted">' + t.c.toLocaleString() + '</span></button>';
+      }).join('') + '</div>' +
+      '<p class="t-body-sm muted" style="margin:0">' + countLine(tax, shown.length, q) + '</p>' +
+      (bucket.length ? '<div class="chips" style="padding-top:var(--ngn-space-2);border-top:1px solid var(--ngn-outline-variant)">' +
+        bucket.map(function (t) {
+          return '<span class="chip' + (isEx ? ' chip-exclude' : ' is-on') + '">' + esc(t) +
+            ' <button class="chip-remove" type="button" data-rm="' + esc(t) + '" data-gi="' + key +
+            '" aria-label="Remove ' + esc(t) + '">&times;</button></span>';
+        }).join('') + '</div>' : '') +
+    '</div>';
+  }
+
+  function elsewhere() {
+    var bag = bagFor(scope);
+    var others = Object.keys(bag).filter(function (t) {
+      if (t === taxKey) return false;
+      var f = bag[t];
+      return f.groups.some(function (g) { return g.length; }) || f.exclude.length;
+    });
+    if (!others.length) return '';
+    return '<p class="t-body-sm muted" style="margin:0">Also filtered: ' +
+      others.map(function (t) {
+        var f = bag[t];
+        var n = f.groups.reduce(function (a, g) { return a + g.length; }, 0) + f.exclude.length;
+        return esc(TAXONOMIES[t].n) + ' (' + n + ')';
+      }).join(', ') + '.</p>';
+  }
+
+  function upcoming(rot) {
+    var times = nextRotations(rot.start, rot.interval, 5);
+    if (!times.length) return '<p class="t-body-sm muted" style="margin:0">Try 1h, 30m, 1h 30m, or a number of minutes.</p>';
+    var clock = function (d) {
+      return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric',
+                                           hour: 'numeric', minute: '2-digit' });
+    };
+    var repeats = 1440 % intervalMinutes(rot.interval) === 0;
+    return '<p class="t-body-sm muted" style="margin:0 0 4px">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>' +
+      '<p class="upcoming-label">Upcoming rotations</p>' +
+      '<ol class="upcoming">' + times.map(function (t) { return '<li>' + esc(clock(t)) + '</li>'; }).join('') + '</ol>' +
+      (repeats ? '' :
+        '<p class="t-body-sm muted" style="margin:6px 0 0">The times move each day, because ' +
+        esc(rot.interval) + ' does not divide evenly into 24 hours.</p>');
+  }
+
+  function editor() {
+    if (!open) return '';
+    var head = function (t) { return '<h3>' + t + '</h3>'; };
+    var done = '<button class="btn btn-outlined btn-sm done" type="button" data-close>Done</button>';
+
+    if (open === 'count') return '<div class="editor">' + head('How many stories') +
+      '<label class="screen-reader-text" for="e-count">How many stories</label>' +
+      '<input type="number" id="e-count" min="1" max="50" step="1" value="' + draft.count + '" style="width:120px">' +
+      '<p class="t-body-sm muted" style="margin:0" id="e-count-note">1 to 50.</p>' + done + '</div>';
+
+    if (open === 'window') return '<div class="editor">' + head('How far back to look') +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+      '<label class="screen-reader-text" for="e-window">How many days back</label>' +
+      '<input type="number" id="e-window" min="1" step="1" value="' + draft.windowDays + '" style="width:110px">' +
+      '<span class="t-body-sm muted">days</span></div>' + done + '</div>';
+
+    /* The route caps a typed search at MAX_SEARCH_RESULTS = 3 and only lets
+       the empty-box recent list run to MAX_RECENT_RESULTS = 50, so the field
+       takes the schema's range and says where the real ceiling is. */
+    if (open === 'useful') return '<div class="editor">' + head('Usefulness score') +
+      '<label class="screen-reader-text" for="e-useful">Minimum usefulness score</label>' +
+      '<input type="number" id="e-useful" min="0" max="100" step="5" value="' + draft.useful + '" style="width:120px">' +
+      '<p class="t-body-sm muted" style="margin:0">0 turns it off. This parameter does not exist yet; it is here to show what adding one costs.</p>' +
+      done + '</div>';
+
+    if (open === 'searchSame') return '<div class="editor">' + head('What the manual search offers') +
+      '<div class="chips">' +
+        '<button class="chip' + (draft.searchSame ? ' is-on' : '') + '" type="button" data-same="1">The same stories</button>' +
+        '<button class="chip' + (draft.searchSame ? '' : ' is-on') + '" type="button" data-same="0">Something different</button>' +
+      '</div>' +
+      '<p class="t-body-sm muted" style="margin:0">' +
+        (draft.searchSame
+          ? 'It follows everything above, so changing the rule changes both. Pick the other one to start from a copy of it and edit from there.'
+          : 'It has its own rule now, started as a copy of the one above.') +
+      '</p>' + done + '</div>';
+
+    if (open === 'searchCount') return '<div class="editor">' + head('How many results to offer') +
+      '<label class="screen-reader-text" for="e-scount">How many results</label>' +
+      '<input type="number" id="e-scount" min="1" max="50" step="1" value="' + draft.searchCount + '" style="width:120px">' +
+      '<p class="t-body-sm muted" style="margin:0" id="e-scount-note">1 to 50. Once you type a query the route returns at most 3; the rest applies to the recent list.</p>' +
+      done + '</div>';
+
+    if (open === 'searchWindow') return '<div class="editor">' + head('How far back the search looks') +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+      '<label class="screen-reader-text" for="e-swindow">How many days back</label>' +
+      '<input type="number" id="e-swindow" min="1" step="1" value="' + draft.searchWindowDays + '" style="width:110px">' +
+      '<span class="t-body-sm muted">days</span></div>' + done + '</div>';
+
+    if (open === 'searchSort') return '<div class="editor">' + head('Order the results come back in') + '<div class="chips">' +
+      ['Newest', 'Most viewed'].map(function (o) {
+        return '<button class="chip' + (draft.searchSort === o ? ' is-on' : '') + '" type="button" data-ssort="' + o + '">' + o + '</button>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">Only changes what the picker lists. It does not touch what fills the instance.</p>' +
+      done + '</div>';
+
+    if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
+      ['Newest', 'Most viewed'].map(function (o) {
+        return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>';
+      }).join('') + '</div>' + done + '</div>';
+
+    if (open === 'types') return '<div class="editor">' + head('Where stories come from') + '<div class="chips">' +
+      POST_TYPES.map(function (t) {
+        return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '"' +
+          (t.tax.length ? '' : ' title="No filterable taxonomies"') + '>' + esc(t.n) +
+          (t.tax.length ? '' : ' <span class="muted">· no filters</span>') + '</button>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' +
+      (draft.types.length
+        ? draft.types.length + ' selected · ' + taxonomiesFor(draft.types).length + ' taxonomies available'
+        : 'Nothing selected, so every type is included. Pick some to narrow it, and to filter by term.') +
+      '</p>' + done + '</div>';
+
+    if (open === 'searchTypes') return '<div class="editor">' + head('Types you can pin by hand') +
+      '<div class="chips">' + POST_TYPES.map(function (t) {
+        return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') +
+          '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' +
+      (draft.searchTypes.length
+        ? draft.searchTypes.length + ' of ' + POST_TYPES.length + ' selected.'
+        : 'Nothing selected, so the search offers all ' + POST_TYPES.length + ' types.') +
+      '</p>' + done + '</div>';
+
+    if (open === 'include' || open === 'exclude' ||
+        open === 'searchInclude' || open === 'searchExclude') {
+      var isEx = (open === 'exclude' || open === 'searchExclude');
+      var manual = scope === 'manual';
+      var available = availableTax();
+      if (!available.length) return '<div class="editor">' + head('No filters available') +
+        '<p class="t-body-sm" style="margin:0">These post types have nothing to filter on.</p>' +
+        done + '</div>';
+      if (available.indexOf(taxKey) < 0) taxKey = available[0];
+      var tax = TAXONOMIES[taxKey];
+      var f = fil(taxKey);
+
+      return '<div class="editor">' +
+        head(manual
+          ? (isEx ? 'Keep these out of the by-hand search' : 'The by-hand search only offers stories tagged')
+          : (isEx ? 'Never show stories tagged' : 'Only stories tagged')) +
+        '<label class="screen-reader-text" for="e-tax">Taxonomy</label>' +
+        '<select id="e-tax">' + available.map(function (k) {
+          var ff = bagFor(scope)[k];
+          var n = ff ? ff.groups.reduce(function (a, g) { return a + g.length; }, 0) + ff.exclude.length : 0;
+          return '<option value="' + k + '"' + (k === taxKey ? ' selected' : '') + '>' + esc(TAXONOMIES[k].n) +
+            ' (' + TAXONOMIES[k].count.toLocaleString() + ')' + (n ? ' • ' + n + ' set' : '') + '</option>';
+        }).join('') + '</select>' +
+        (isEx
+          ? groupBox(tax, f.exclude, -1, true)
+          : f.groups.map(function (g, gi) { return groupBox(tax, g, gi, false); }).join('') +
+            '<button class="btn btn-outlined btn-sm" type="button" data-addgroup style="align-self:flex-start">' +
+            '+ Add AND group to ' + esc(tax.n) + '</button>') +
+        elsewhere() +
+        done + '</div>';
+    }
+
+    if (open === 'rotation') return '<div class="editor">' + head('Rotation') +
+      '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' +
+      (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
+      (draft.rotation.on ? '' : '<p class="t-body-sm muted" style="margin:0">Turn this on to set an interval.</p>') +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
+        '<div class="field"><label for="e-every">Every</label>' +
+          '<select id="e-every"' + (draft.rotation.on ? '' : ' disabled') + '>' +
+          INTERVALS.map(function (o) { return '<option value="' + o + '"' + (o === draft.rotation.interval ? ' selected' : '') + '>' + o + '</option>'; }).join('') +
+          '<option value="custom"' + (isCustom(draft.rotation.interval) ? ' selected' : '') + '>Custom…</option>' +
+          '</select></div>' +
+        (isCustom(draft.rotation.interval)
+          ? '<div class="field" style="width:130px"><label for="e-int">How long</label>' +
+            '<input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '" placeholder="1h 30m"' +
+            (draft.rotation.on ? '' : ' disabled') + '></div>' : '') +
+        '<div class="field" style="width:150px"><label for="e-start">Starting at</label>' +
+        '<input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"' + (draft.rotation.on ? '' : ' disabled') + '></div>' +
+      '</div>' +
+      '<div id="e-next">' + (draft.rotation.on ? upcoming(draft.rotation) : '') + '</div>' + done + '</div>';
+    return '';
+  }
+
+  function refreshSave() {
+    var bad = problems(draft);
+    $('dirty').textContent = bad.length ? '' : (changed() ? 'Unsaved changes' : 'No changes yet');
+    $('problem').textContent = bad[0] || '';
+    $('save').disabled = bad.length > 0 || !changed();
+  }
+
+  function bindTax() {
+    var t = $('e-tax');
+    if (t) t.addEventListener('change', function () { taxKey = this.value; termQ = {}; renderSheet(); });
+  }
+
+  function renderSheet() {
+    $('rule').innerHTML = rule();
+    $('editor').innerHTML = editor();
+    $('count').textContent = matchCount(flat(draft)).toLocaleString();
+    refreshSave();
+    bindTax();
+  }
+
+  function redrawTerms(boxId) {
+    var ed = $('editor'), box = $(boxId);
+    if (!ed || !box) return;
+    var at = box.selectionStart;
+    ed.innerHTML = editor();
+    var again = $(boxId);
+    if (again) { again.focus(); again.setSelectionRange(at, at); }
+    bindTax();
+  }
+
+  function focusEditor() {
+    var first = $('editor').querySelector('input, select, button');
+    if (first) first.focus();
+  }
+
+  function closeEditor() {
+    var back = lastTok;
+    open = null; termQ = {};
+    renderSheet();
+    var el = back && document.querySelector('[data-tok="' + back + '"]');
+    if (el) el.focus();
+  }
+
+  function bucketFor(gi) {
+    return gi === 'x' ? fil(taxKey).exclude : fil(taxKey).groups[+gi];
+  }
+
+  /* The dialog is seeded from whatever the instance has saved, so it opens on
+     that instance's real rule rather than on a blank one. */
+  function openDialog(which) {
+    var d = liveShelves().filter(function (x) { return x.s === which; })[0];
+    if (!d) return;
+    slug = which;
+    SAVED = clone(SETTINGS[which]);
+    draft = clone(SAVED);
+    open = null; lastTok = null; taxKey = null; termQ = {}; scope = 'auto';
+    if (!draft.searchFilters) draft.searchFilters = {};
+    if (draft.searchCount === undefined) draft.searchCount = 3;
+    if (draft.searchSort === undefined) draft.searchSort = 'Newest';
+    if (draft.searchWindowDays === undefined) draft.searchWindowDays = 14;
+    if (draft.searchSame === undefined) draft.searchSame = false;
+    if (draft.useful === undefined) draft.useful = 0;
+    $('who').textContent = d.n;
+    $('scrim').hidden = false;
+    document.body.style.overflow = 'hidden';
+    renderSheet();
+    $('x').focus();
+  }
+
+  function closeDialog() {
+    $('scrim').hidden = true;
+    document.body.style.overflow = '';
+    open = null; slug = null;
+    /* The menu item that opened this has closed behind it, so focus goes
+       back to the kebab it came from. */
+    var back = document.querySelector('[data-menu]');
+    if (back) back.focus();
+  }
+
+  /* Tab must not walk out of the dialog into the list behind it. */
+  function trap(ev, which) {
+    var id = which || 'scrim';
+    if (ev.key !== 'Tab' || $(id).hidden) return;
+    var all = [].slice.call($(id).querySelectorAll(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href]'))
+      .filter(function (el) { return el.offsetParent !== null; });
+    if (!all.length) return;
+    var first = all[0], last = all[all.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  }
+
+  /* ====================================================================
+     Events
+     ==================================================================== */
+
+  document.addEventListener('click', function (ev) {
+    /* The delete question is modal over everything, including the settings
+       dialog, so it is answered first. */
+    if (!$('dscrim').hidden) {
+      if (ev.target === $('dscrim') || ev.target.closest('#d-no')) { closeDelete(); return; }
+      if (ev.target.closest('#d-yes')) { doDelete(); return; }
+      return;
+    }
+
+    /* Dialog next: while it is up, nothing behind it should react. */
+    if (!$('scrim').hidden) {
+      if (ev.target === $('scrim')) { closeDialog(); return; }
+
+      var t = ev.target.closest('[data-tok]'), c = ev.target.closest('[data-close]'),
+          ty = ev.target.closest('[data-type]'), so = ev.target.closest('[data-sort]'),
+          tm = ev.target.closest('[data-term]'), rm = ev.target.closest('[data-rm]'),
+          st = ev.target.closest('[data-stype]'), dg = ev.target.closest('[data-dropgroup]');
+
+      if (c) { closeEditor(); return; }
+      if (ty) { var i = draft.types.indexOf(ty.dataset.type); if (i > -1) draft.types.splice(i, 1); else draft.types.push(ty.dataset.type); return renderSheet(); }
+      if (so) { draft.sort = so.dataset.sort; return renderSheet(); }
+      var sso = ev.target.closest('[data-ssort]');
+      if (sso) { draft.searchSort = sso.dataset.ssort; return renderSheet(); }
+      var sm = ev.target.closest('[data-same]');
+      if (sm) {
+        draft.searchSame = sm.dataset.same === '1';
+        /* Customising starts from a copy of the automatic query, so everything
+           is already selected and the work is removing rather than finding. */
+        if (!draft.searchSame) {
+          draft.searchTypes      = draft.types.slice();
+          draft.searchCount      = draft.count;
+          draft.searchSort       = draft.sort;
+          draft.searchWindowDays = draft.windowDays;
+          draft.searchFilters    = JSON.parse(JSON.stringify(draft.filters));
+        }
+        return renderSheet();
+      }
+      if (st) { var j = draft.searchTypes.indexOf(st.dataset.stype); if (j > -1) draft.searchTypes.splice(j, 1); else draft.searchTypes.push(st.dataset.stype); return renderSheet(); }
+      if (rm) { var b = bucketFor(rm.dataset.gi); var k = b.indexOf(rm.dataset.rm); if (k > -1) b.splice(k, 1); return renderSheet(); }
+      if (tm) {
+        var bucket = bucketFor(tm.dataset.gi), term = tm.dataset.term, pos = bucket.indexOf(term);
+        if (pos > -1) { bucket.splice(pos, 1); }
+        else {
+          // Within one taxonomy a term cannot be required and skipped at once.
+          var f = fil(taxKey);
+          if (tm.dataset.gi === 'x') {
+            f.groups.forEach(function (g) { var q = g.indexOf(term); if (q > -1) g.splice(q, 1); });
+          } else {
+            var e = f.exclude.indexOf(term); if (e > -1) f.exclude.splice(e, 1);
+          }
+          bucket.push(term);
+        }
+        return renderSheet();
+      }
+      if (ev.target.closest('[data-addgroup]')) { fil(taxKey).groups.push([]); return renderSheet(); }
+      if (dg) { fil(taxKey).groups.splice(+dg.dataset.dropgroup, 1); termQ = {}; return renderSheet(); }
+      if (t) {
+        if (open === t.dataset.tok && !t.dataset.ref) { closeEditor(); return; }
+        open = t.dataset.tok; termQ = {}; lastTok = t.dataset.tok;
+        scope = scopeOf(open);
+        if (t.dataset.ref) taxKey = t.dataset.ref.split(':')[0];
+        renderSheet(); focusEditor();
+        return;
+      }
+      return;
+    }
+
+    var set = ev.target.closest('[data-settings]'), act = ev.target.closest('[data-act]');
+    var s = ev.target.closest('[data-sel]'), del = ev.target.closest('[data-del]'),
+        menu = ev.target.closest('[data-menu]');
+
+    if (set) {
+      var at = set.dataset.settings;
+      closeMenu(); closeNamer();
+      sel = at; justSaved = null; editing = null;
+      renderIndex();
+      return openDialog(at);
+    }
+    if (act) {
+      var on = act.dataset.on;
+      closeMenu();
+      if (act.dataset.act === 'duplicate') {
+        /* The store names and keys the copy itself, so there is nothing to
+           ask: one click, and the copy is selected and ready to edit. */
+        var src = shelf(on);
+        addInstance(copyKey(on), src.n + ' (Copy)', SETTINGS[on]);
+        closeNamer();
+        return renderIndex();
+      }
+      if (act.dataset.act === 'rename') return openEditor(on);
+      sel = on; justSaved = null;
+      renderIndex();
+      return openNamer(act.dataset.act, on);
+    }
+    if (del)  { return openDelete(del.dataset.del); }
+    if (menu) { return openMenu(menu); }
+    if (s)    { sel = s.dataset.sel; confirming = null; justSaved = null; editing = null; closeMenu(); closeNamer(); return renderIndex(); }
+    closeMenu();
+  });
+
+  document.addEventListener('input', function (ev) {
+    if ($('scrim').hidden) return;
+    if (ev.target.id === 'e-count') {
+      draft.count = clampWhole(ev.target.value, 1, 50);
+      if (ev.target.value !== '' && +ev.target.value !== draft.count) ev.target.value = draft.count;
+      var note = $('e-count-note');
+      if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.';
+      $('rule').innerHTML = rule();
+      $('count').textContent = matchCount(flat(draft)).toLocaleString();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-useful') {
+      draft.useful = clampWhole(ev.target.value, 0, 100);
+      if (ev.target.value !== '' && +ev.target.value !== draft.useful) ev.target.value = draft.useful;
+      $('rule').innerHTML = rule();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-scount') {
+      draft.searchCount = clampWhole(ev.target.value, 1, 50);
+      if (ev.target.value !== '' && +ev.target.value !== draft.searchCount) ev.target.value = draft.searchCount;
+      $('rule').innerHTML = rule();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-swindow') {
+      draft.searchWindowDays = clampWhole(ev.target.value, 1, 3650);
+      if (ev.target.value !== '' && +ev.target.value !== draft.searchWindowDays) ev.target.value = draft.searchWindowDays;
+      $('rule').innerHTML = rule();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-window') {
+      draft.windowDays = clampWhole(ev.target.value, 1, 3650);
+      if (ev.target.value !== '' && +ev.target.value !== draft.windowDays) ev.target.value = draft.windowDays;
+      $('rule').innerHTML = rule();
+      $('count').textContent = matchCount(flat(draft)).toLocaleString();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-int') {
+      draft.rotation.interval = ev.target.value;
+      $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
+    }
+    if (ev.target.id === 'e-start') {
+      draft.rotation.start = ev.target.value;
+      $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
+    }
+    if (ev.target.dataset && ev.target.dataset.q !== undefined) {
+      termQ[ev.target.dataset.q] = ev.target.value;
+      redrawTerms(ev.target.id);
+    }
+  });
+
+  document.addEventListener('change', function (ev) {
+    if (!$('scrim').hidden) {
+      if (ev.target.id === 'e-rot') { draft.rotation.on = ev.target.checked; renderSheet(); }
+      if (ev.target.id === 'e-every') {
+        draft.rotation.interval = ev.target.value === 'custom' ? '' : ev.target.value;
+        renderSheet();
+        var box = $('e-int'); if (box) box.focus();
+      }
+    }
+  });
+
+  document.addEventListener('keydown', function (ev) {
+    if (!$('dscrim').hidden) {
+      trap(ev, 'dscrim');
+      if (ev.key === 'Escape') { ev.preventDefault(); closeDelete(); }
+      return;
+    }
+    if (!$('scrim').hidden) {
+      trap(ev);
+      if (ev.key !== 'Escape') return;
+      /* Escape closes the editor it is in first, then the dialog. */
+      if (open && ($('editor').contains(document.activeElement) || (document.activeElement.dataset || {}).tok)) {
+        ev.preventDefault(); closeEditor(); return;
+      }
+      ev.preventDefault(); closeDialog();
+      return;
+    }
+    if (ev.key !== 'Escape') return;
+    closeMenu();
+    if (editing) { ev.preventDefault(); closeEditor_(); return; }
+    if (naming) { var b = $('addnew'); closeNamer(); b.focus(); }
+  });
+
+  $('d-no').addEventListener('click', closeDelete);
+  $('d-yes').addEventListener('click', doDelete);
+
+  $('x').addEventListener('click', closeDialog);
+  $('cancel').addEventListener('click', closeDialog);
+  $('save').addEventListener('click', function () {
+    if (problems(draft).length || !changed()) return;
+    SETTINGS[slug] = clone(draft);
+    justSaved = slug;
+    /* The index is redrawn before the dialog closes, so the button focus goes
+       back to is the one now on the page rather than the one just replaced. */
+    renderIndex();
+    closeDialog();
+  });
+
+  document.addEventListener('click', function (ev) {
+    if (!$('scrim').hidden) return;
+    if (ev.target.closest('#r-save'))   return saveEditor();
+    if (ev.target.closest('#r-cancel')) { closeEditor_(); return; }
+  });
+
+  document.addEventListener('input', function (ev) {
+    if (!editing) return;
+    if (ev.target.id === 'r-name' || ev.target.id === 'r-key') editHint();
+  });
+
+  /* Enter saves from either field, Escape is handled with the page's keys. */
+  document.addEventListener('keydown', function (ev) {
+    if (!editing || ev.key !== 'Enter') return;
+    if (ev.target.id === 'r-name' || ev.target.id === 'r-key') { ev.preventDefault(); saveEditor(); }
+  });
+
+  /* This screen has no index, so there is nothing to add, name or search. */
+
+  if ($('namer')) $('namer').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (!naming) return;
+    var label = $('name').value.trim(), mode = naming.mode, from = naming.from;
+    if (!label) { $('name').focus(); return; }
+
+    if (mode === 'rename') {
+      /* The key is the identity; save_instance only ever changes the label. */
+      if (label === shelf(from).n) return;
+      shelf(from).n = label;
+      closeNamer();
+      renderIndex();
+      /* Rename now lives in the kebab, so focus goes back to the kebab that
+         opened it rather than to a button that is no longer on the page. */
+      var k = document.querySelector('[data-menu]');
+      if (k) k.focus();
+      return;
+    }
+
+    var key = keyFrom($('nkey').value);
+    if (!key || keyTaken(key)) { nameHint(); $('nkey').focus(); return; }
+    addInstance(key, label, EMPTY_RULE);
+    closeNamer();
+    renderIndex();
+    /* A new instance has defaults and no terms, so the rule is the next step. */
+    openDialog(key);
+  });
+
+
+
+  renderIndex();
+})();
+</script>
+</body>
+</html>

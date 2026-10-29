@@ -1505,3 +1505,49 @@ eleven pages are now stamped together, and the stamp has to move whenever an ass
 
 Checked: all fifteen items confirmed on the page, the three other pages that share
 `settings-data.js` still correct, axe-core clean throughout, no console errors.
+
+## The two open requirements, answered by demonstration
+
+`11-curation.html`. Both of Xris's original email requirements were still open. Neither
+needed a question; both needed evidence.
+
+### "The settings dialog is also used on the post curation interface, so it must be flexible"
+
+The code already says this is how it works. `settings-trigger.tsx` is documented as a
+"reusable button that opens the shared settings panel via context. **Any component in the
+tree can render this** to give the user access to query settings without owning the panel
+itself." The panel belongs to the provider, not to a screen.
+
+So the proof is to open it from a second screen. This page is the curation interface, the
+one where the stories themselves are set: a single column, no index behind it, the merged
+list of manual placements and organic fill that `MergedList` renders, with `manual`,
+`expiresAt` and `retain` from `MergedPost` showing as "Pinned, kept", "Pinned to 14 Nov"
+and "From the rule".
+
+**It is the same dialog, from the same file, not a copy of its look.** The page was made by
+copying `10-complete.html` and replacing the index, so the dialog and its whole engine are
+byte-for-byte the ones Xris signed off. Opening it, editing a clause and saving all work
+here, and the plain-text summary above the button updates.
+
+The story rows are indicative and say so on the page. Their titles come from the REST API
+and the list is not designed in this round; they are there so the dialog has its real
+second home rather than a blank page.
+
+### "Easily expandable, such as the usefulness metrics"
+
+The sentence on this page carries one clause that does not exist yet: **scoring at least
+70**. Adding it cost one token in `rule()`, one branch in `editor()`, one input handler and
+one field in the seed. Nothing was restructured, and setting it to 0 takes it back out in
+front of you.
+
+The number is a stand-in. I do not know what the metric is, so the page says so rather than
+inventing semantics for it, which is the same mistake the Check chip was.
+
+**It also answers the third question instead of asking it.** `ASK-XRIS.md` asks whether the
+metric is a query parameter or something shown beside the results. Both fit: as a parameter
+it is the clause above; as a display it is a column in the list on the same page. The page
+says so, so Xris can choose rather than being asked.
+
+Checked: axe-core clean on the curation screen and in the usefulness editor, the dialog
+opens and saves from this screen, 0 removes the clause, no console errors. All twelve pages
+restamped so nothing serves a cached asset.
