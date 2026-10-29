@@ -1102,3 +1102,50 @@ holds while typing, the key clash still blocks Create, Cancel and Escape both re
 detail card and return focus to Add new, Rename returns focus to the kebab, and creating
 still opens the dialog on the new shelf. axe-core clean in all four form states. No
 overflow.
+
+---
+
+## Renaming in place, and the key is editable after all
+
+**I had this wrong.** Two entries ago this log said the key cannot be changed and the
+prototype printed "This cannot be changed later" under the field. There is a route for it:
+
+- `PATCH .../instances/{key}/key` calls `Curated_Posts_Store::rename()`, which moves the
+  entry and its purge log, 409s on a collision, and needs `check_admin`.
+- `PATCH .../instances/{key}/label` sets the label and needs only `check_editor`.
+
+So a key is renameable, by an administrator, and the name is renameable by an editor. The
+earlier claim came from reading `create_instance` and stopping there.
+
+Renaming now happens on the title itself. The kebab's Rename turns the title and the key
+into the two fields that replace them, with Save and Cancel underneath, and the kebab steps
+out while they are open. Enter saves from either field, Escape leaves without saving, and
+focus returns to the kebab.
+
+**The key does not follow the name on an existing shelf.** On Add new it does, until the
+key field is typed in, which is how a slug field is expected to behave. On a rename it
+holds still, because a shelf that is already live is being asked for by that key and
+retitling it should not quietly move it. This is what WordPress does with a published
+post's slug, for the same reason.
+
+**What the key field says depends on which key it is.** Two keys are written into theme
+files:
+
+| Key | Asked for in |
+| --- | --- |
+| `editors-picks` | `sidebar-editors-picks.php` |
+| `featured-stories` | `class-feed-featured.php`, `overlay-fullscreen-menu-news.php` |
+
+Changing either leaves those templates asking for a shelf that is not there, and the field
+says so by name. Any other key gets the milder note that this is an administrator action
+and anything asking for the old key stops finding it. Neither is blocked, because the
+backend does not block it. A collision is blocked, because the backend returns a 409.
+
+**An empty name is allowed.** `set_label` with an empty string drops the custom label and
+`get_label` derives one from the key, so clearing the field gives "Editors Picks" from
+`editors-picks`, and the hint says that before you do it.
+
+Checked: name only, key only, a key the theme hardcodes, a colliding key, an empty name,
+the key following and then not following on Add new, Enter, Escape, and focus return.
+axe-core clean on the add form, the inline editor and the inline editor showing a warning.
+No overflow.

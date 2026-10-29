@@ -40,6 +40,16 @@
    with a 13px label without shouting over it. */
 .title-line { display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap; }
 
+/* Renaming happens on the title itself, so the fields take the shape of the
+   text they replace rather than dropping a form on top of it. */
+.rename-inline { display: flex; flex-direction: column; gap: var(--ngn-space-3); width: 100%; max-width: 460px; }
+.rename-inline .btns { display: flex; gap: var(--ngn-space-2); }
+.rename-inline .hint.is-bad { color: var(--ngn-error); }
+.rename-inline .hint.is-warn { color: var(--ngn-warning); }
+.rename-inline code { font-family: var(--ngn-mono); font-size: 12px; }
+#r-name { font-size: 16px; font-weight: 500; }
+#r-key, #nkey { font-family: var(--ngn-mono); font-size: 13px; }
+
 .sections { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-5); }
 .sect h3 { margin: 0 0 var(--ngn-space-3); font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
 .kv { margin: 0; display: grid; grid-template-columns: minmax(130px, 170px) minmax(0, 1fr); gap: var(--ngn-space-2) var(--ngn-space-4); }
@@ -273,6 +283,10 @@
         <div class="field">
           <label for="name">Shelf name</label>
           <input type="text" id="name" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="nkey">Key</label>
+          <input type="text" id="nkey" autocomplete="off" spellcheck="false">
           <p class="hint" id="namehint"></p>
         </div>
         <div class="btns">
@@ -417,6 +431,18 @@
      ==================================================================== */
 
   var sel = CURATED[0].s, confirming = null, deleted = {}, justSaved = null, naming = null;
+  /* editing holds the key of the shelf whose title is being edited in place.
+     keyTouched stops the key following the name once it has been typed in. */
+  var editing = null, keyTouched = false;
+
+  /* PATCH .../{key}/key renames an instance and Store::rename moves the entry
+     and its purge log. What it does not move is the theme's own code: these
+     two keys are written into template files, so renaming either of them
+     leaves those templates asking for a shelf that is no longer there. */
+  var WIRED_IN = {
+    'editors-picks':   'sidebar-editors-picks.php',
+    'featured-stories': 'class-feed-featured.php and overlay-fullscreen-menu-news.php'
+  };
 
   /* Curated_Posts_Store::empty_query: what the backend gives a brand new
      shelf. Not a guess, and not blank. */
@@ -452,6 +478,73 @@
     $('q').value = '';
   }
 
+  /* ---- Renaming in place ------------------------------------------- */
+
+  function openEditor(which) {
+    closeMenu(); closeNamer();
+    editing = which; sel = which; confirming = null; justSaved = null;
+    renderIndex();
+    editHint();
+    var f = $('r-name');
+    if (f) { f.focus(); f.select(); }
+  }
+
+  function closeEditor_() {
+    var was = editing;
+    editing = null;
+    renderIndex();
+    var k = document.querySelector('[data-menu]');
+    if (k) k.focus();
+    return was;
+  }
+
+  /* The name is a label and changes nothing else. The key is the identity the
+     site asks for, which is why it carries the warnings. */
+  function editHint() {
+    if (!editing) return;
+    var h = $('r-hint'), name = $('r-name').value.trim(), k = keyFrom($('r-key').value);
+    var moved = k !== editing;
+    var bad = '', warn = '';
+
+    if (!k) bad = 'The key needs some letters or numbers.';
+    else if (moved && keyTaken(k)) bad = 'A shelf already uses ' + k + '. Pick another.';
+    else if (moved && WIRED_IN[editing]) {
+      warn = 'The theme asks for this shelf by ' + editing + ' in ' + WIRED_IN[editing] +
+             '. Changing the key empties whatever those render until they are updated too.';
+    } else if (moved) {
+      warn = 'Changing the key is an administrator action. Anything asking for ' + editing + ' stops finding it.';
+    } else if (!name) {
+      warn = 'With no name, the list falls back to one built from the key.';
+    }
+
+    h.className = 'hint' + (bad ? ' is-bad' : (warn ? ' is-warn' : ''));
+    h.textContent = bad || warn || 'The site asks for this shelf by this key.';
+    $('r-save').disabled = !!bad || (name === shelf(editing).n && !moved);
+  }
+
+  function saveEditor() {
+    if (!editing) return;
+    var name = $('r-name').value.trim(), k = keyFrom($('r-key').value);
+    var old = editing;
+    if (!k || (k !== old && keyTaken(k))) { editHint(); return; }
+
+    var d = shelf(old);
+    /* set_label with an empty string drops the custom label and the list falls
+       back to a name derived from the key, so that is what empty does here. */
+    d.n = name || k.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+
+    if (k !== old) {
+      /* Store::rename moves the entry under the new key; the settings move
+         with it, and so does the selection. */
+      d.s = k;
+      SETTINGS[k] = SETTINGS[old];
+      delete SETTINGS[old];
+      if (sel === old) sel = k;
+      editing = k;
+    }
+    closeEditor_();
+  }
+
   function openNamer(mode, from) {
     naming = { mode: mode, from: from || null };
     var d = from ? shelf(from) : null;
@@ -459,6 +552,8 @@
     $('namesub').textContent = mode === 'rename' ? d.n : 'It will join the list on the left, in order.';
     $('namego').textContent  = mode === 'rename' ? 'Save name' : 'Create';
     $('name').value = mode === 'rename' ? d.n : '';
+    $('nkey').value = '';
+    keyTouched = false;
     /* One thing at a time in the right pane. */
     $('namer').hidden = false;
     $('detail').hidden = true;
@@ -475,22 +570,19 @@
     $('namehint').className = 'hint';
   }
 
+  /* The key follows the name until someone edits the key, which is how a slug
+     field is expected to behave. */
   function nameHint() {
     var h = $('namehint'), v = $('name').value.trim();
+    if (!keyTouched) $('nkey').value = keyFrom(v);
+    var k = keyFrom($('nkey').value);
 
-    if (naming.mode === 'rename') {
-      h.className = 'hint';
-      h.innerHTML = 'The key stays <code>' + esc(naming.from) + '</code>. Only the name changes.';
-      $('namego').disabled = !v || v === shelf(naming.from).n;
-      return;
-    }
+    if (!v && !k)         { h.className = 'hint'; h.textContent = 'The key follows the name. Edit it here if you want a different one.'; }
+    else if (!k)          { h.className = 'hint is-bad'; h.textContent = 'The key needs some letters or numbers.'; }
+    else if (keyTaken(k)) { h.className = 'hint is-bad'; h.innerHTML = 'A shelf already uses <code>' + esc(k) + '</code>. Pick another.'; }
+    else                  { h.className = 'hint'; h.innerHTML = 'The site will ask for this shelf by <code>' + esc(k) + '</code>.'; }
 
-    var k = keyFrom(v);
-    if (!v)        { h.className = 'hint'; h.textContent = 'The key comes from the name and cannot be changed later.'; }
-    else if (!k)   { h.className = 'hint is-bad'; h.textContent = 'That leaves no key. Use some letters or numbers.'; }
-    else if (keyTaken(k)) { h.className = 'hint is-bad'; h.innerHTML = 'A shelf already uses the key <code>' + esc(k) + '</code>. Try another name.'; }
-    else           { h.className = 'hint'; h.innerHTML = 'Key: <code>' + esc(k) + '</code>. This cannot be changed later.'; }
-    $('namego').disabled = !k || keyTaken(k);
+    $('namego').disabled = !v || !k || keyTaken(k);
   }
 
 
@@ -590,16 +682,33 @@
     var s = SETTINGS[d.s];
 
     var html = '<div class="detail-head">' +
-      '<div><span class="title-line"><h2 class="t-title" style="margin:0">' + esc(d.n) + '</h2></span>' +
-      '<p class="t-label-sm muted" style="margin:2px 0 0;font-family:var(--ngn-mono)">' + esc(d.s) + '</p>' +
-      '<p class="saved-note" role="status" style="margin:4px 0 0">' +
-        (justSaved === d.s ? 'Settings saved.' : '') + '</p></div>' +
-      '<div class="acts">' +
-        '<span class="menu-wrap">' +
-          '<button class="btn btn-outlined btn-sm kebab" type="button" aria-haspopup="menu" ' +
-            'aria-expanded="false" aria-label="More actions for ' + esc(d.n) + '" data-menu="' + esc(d.s) + '">⋯</button>' +
-        '</span>' +
-      '</div></div>';
+      (editing === d.s
+        /* The title and the key become the fields that replace them, so the
+           rename happens where the name is read. */
+        ? '<div class="rename-inline">' +
+            '<div class="field"><label for="r-name">Name</label>' +
+              '<input type="text" id="r-name" autocomplete="off" value="' + esc(d.n) + '"></div>' +
+            '<div class="field"><label for="r-key">Key</label>' +
+              '<input type="text" id="r-key" autocomplete="off" spellcheck="false" value="' + esc(d.s) + '">' +
+              '<p class="hint" id="r-hint"></p></div>' +
+            '<div class="btns">' +
+              '<button class="btn btn-filled btn-sm" type="button" id="r-save">Save</button>' +
+              '<button class="btn btn-text btn-sm" type="button" id="r-cancel">Cancel</button>' +
+            '</div>' +
+          '</div>'
+        : '<div><span class="title-line"><h2 class="t-title" style="margin:0">' + esc(d.n) + '</h2></span>' +
+          '<p class="t-label-sm muted" style="margin:2px 0 0;font-family:var(--ngn-mono)">' + esc(d.s) + '</p>' +
+          '<p class="saved-note" role="status" style="margin:4px 0 0">' +
+            (justSaved === d.s ? 'Settings saved.' : '') + '</p></div>') +
+      /* The kebab steps out while the title is an editor, so the two cannot
+         be driven at once. */
+      (editing === d.s ? '' :
+        '<div class="acts">' +
+          '<span class="menu-wrap">' +
+            '<button class="btn btn-outlined btn-sm kebab" type="button" aria-haspopup="menu" ' +
+              'aria-expanded="false" aria-label="More actions for ' + esc(d.n) + '" data-menu="' + esc(d.s) + '">⋯</button>' +
+          '</span>' +
+        '</div>') + '</div>';
 
     if (confirming === d.s) {
       html += '<div class="confirm"><span>Delete <b>' + esc(d.n) + '</b>? It fills ' +
@@ -1131,6 +1240,7 @@
         closeNamer();
         return renderIndex();
       }
+      if (act.dataset.act === 'rename') return openEditor(on);
       sel = on; justSaved = null;
       renderIndex();
       return openNamer(act.dataset.act, on);
@@ -1139,7 +1249,7 @@
     if (n)    { confirming = null; return renderIndex(); }
     if (del)  { confirming = del.dataset.del; closeMenu(); return renderIndex(); }
     if (menu) { return openMenu(menu); }
-    if (s)    { sel = s.dataset.sel; confirming = null; justSaved = null; closeMenu(); closeNamer(); return renderIndex(); }
+    if (s)    { sel = s.dataset.sel; confirming = null; justSaved = null; editing = null; closeMenu(); closeNamer(); return renderIndex(); }
     closeMenu();
   });
 
@@ -1199,6 +1309,7 @@
     }
     if (ev.key !== 'Escape') return;
     closeMenu();
+    if (editing) { ev.preventDefault(); closeEditor_(); return; }
     if (naming) { var b = $('addnew'); closeNamer(); b.focus(); }
   });
 
@@ -1214,9 +1325,27 @@
     closeDialog();
   });
 
+  document.addEventListener('click', function (ev) {
+    if (!$('scrim').hidden) return;
+    if (ev.target.closest('#r-save'))   return saveEditor();
+    if (ev.target.closest('#r-cancel')) { closeEditor_(); return; }
+  });
+
+  document.addEventListener('input', function (ev) {
+    if (!editing) return;
+    if (ev.target.id === 'r-name' || ev.target.id === 'r-key') editHint();
+  });
+
+  /* Enter saves from either field, Escape is handled with the page's keys. */
+  document.addEventListener('keydown', function (ev) {
+    if (!editing || ev.key !== 'Enter') return;
+    if (ev.target.id === 'r-name' || ev.target.id === 'r-key') { ev.preventDefault(); saveEditor(); }
+  });
+
   $('addnew').addEventListener('click', function () { closeMenu(); openNamer('new'); });
   $('namecancel').addEventListener('click', function () { var b = $('addnew'); closeNamer(); b.focus(); });
   $('name').addEventListener('input', function () { if (naming) nameHint(); });
+  $('nkey').addEventListener('input', function () { keyTouched = true; if (naming) nameHint(); });
 
   $('namer').addEventListener('submit', function (ev) {
     ev.preventDefault();
@@ -1237,8 +1366,8 @@
       return;
     }
 
-    var key = keyFrom(label);
-    if (!key || keyTaken(key)) { nameHint(); $('name').focus(); return; }
+    var key = keyFrom($('nkey').value);
+    if (!key || keyTaken(key)) { nameHint(); $('nkey').focus(); return; }
     addShelf(key, label, EMPTY_RULE);
     closeNamer();
     renderIndex();
