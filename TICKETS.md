@@ -1045,3 +1045,29 @@ drafted and published separately. So a badge could one day mean "this shelf has 
 story picks". That is a thing the store actually tracks. "Needs check" was not.
 
 axe-core clean on the index, the delete confirmation and the dialog. No overflow.
+
+---
+
+## All four actions in the kebab
+
+Corrected. The previous entry kept Query settings as a visible button on the argument that
+the primary action should be one click, which was not what was asked for. The header is now
+the kebab alone, and the menu reads Query settings, Rename, Duplicate, Delete, in that
+order, with the separator above Delete.
+
+The cog went with the button. There is nowhere in this layout for it now, since the menu is
+a plain text list and an icon on one of four items pushes that label out of line with the
+rest.
+
+**The focus return had to be rebuilt.** Two different controls open the dialog, the kebab's
+first item and the notice's Narrow it, and both answer to `[data-settings]`, so looking the
+element up by shelf meant the first match won and closing from the kebab landed focus on
+Narrow it. `returnTo` now carries a selector for whichever control was clicked, falling back
+to the kebab, because the menu item itself has closed by the time the dialog does.
+
+Four routes checked: kebab to close returns to the kebab, Narrow it to close returns to
+Narrow it, the kebab on a shelf with no notice returns to the kebab, and Escape does the
+same as Cancel.
+
+The whole run end to end after the change: rename, duplicate, add new, pick a term, save,
+list and detail both update, notice clears. axe-core clean at every step. No overflow.

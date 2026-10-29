@@ -35,10 +35,6 @@
 /* The design system's cog, inlined rather than linked so it inherits the
    button's colour through currentColor. It is the 16px micro size, which sits
    with a 13px label without shouting over it. */
-.btn svg { width: 16px; height: 16px; flex: none; }
-/* A leading icon reads tighter on its own side than the label does on hers. */
-.btn.has-icon { padding-left: var(--ngn-space-3); }
-
 .title-line { display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap; }
 
 .sections { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-5); }
@@ -407,9 +403,6 @@
      The index
      ==================================================================== */
 
-  /* assets/images/icons/cog-8-tooth-micro.svg, copied from the theme as it is. */
-  var COG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-slot="icon"><path fill-rule="evenodd" d="M6.955 1.45A.5.5 0 0 1 7.452 1h1.096a.5.5 0 0 1 .497.45l.17 1.699c.484.12.94.312 1.356.562l1.321-1.081a.5.5 0 0 1 .67.033l.774.775a.5.5 0 0 1 .034.67l-1.08 1.32c.25.417.44.873.561 1.357l1.699.17a.5.5 0 0 1 .45.497v1.096a.5.5 0 0 1-.45.497l-1.699.17c-.12.484-.312.94-.562 1.356l1.082 1.322a.5.5 0 0 1-.034.67l-.774.774a.5.5 0 0 1-.67.033l-1.322-1.08c-.416.25-.872.44-1.356.561l-.17 1.699a.5.5 0 0 1-.497.45H7.452a.5.5 0 0 1-.497-.45l-.17-1.699a4.973 4.973 0 0 1-1.356-.562L4.108 13.37a.5.5 0 0 1-.67-.033l-.774-.775a.5.5 0 0 1-.034-.67l1.08-1.32a4.971 4.971 0 0 1-.561-1.357l-1.699-.17A.5.5 0 0 1 1 8.548V7.452a.5.5 0 0 1 .45-.497l1.699-.17c.12-.484.312-.94.562-1.356L2.629 4.107a.5.5 0 0 1 .034-.67l.774-.774a.5.5 0 0 1 .67-.033L5.43 3.71a4.97 4.97 0 0 1 1.356-.561l.17-1.699ZM6 8c0 .538.212 1.026.558 1.385l.057.057a2 2 0 0 0 2.828-2.828l-.058-.056A2 2 0 0 0 6 8Z" clip-rule="evenodd"/></svg>';
-
   var sel = CURATED[0].s, confirming = null, deleted = {}, justSaved = null, naming = null;
 
   /* Curated_Posts_Store::empty_query: what the backend gives a brand new
@@ -585,8 +578,6 @@
       '<p class="saved-note" role="status" style="margin:4px 0 0">' +
         (justSaved === d.s ? 'Settings saved.' : '') + '</p></div>' +
       '<div class="acts">' +
-        '<button class="btn btn-filled btn-sm has-icon" type="button" data-settings="' + esc(d.s) + '">' +
-          COG + 'Query settings</button>' +
         '<span class="menu-wrap">' +
           '<button class="btn btn-outlined btn-sm kebab" type="button" aria-haspopup="menu" ' +
             'aria-expanded="false" aria-label="More actions for ' + esc(d.n) + '" data-menu="' + esc(d.s) + '">⋯</button>' +
@@ -652,7 +643,8 @@
     var m = document.createElement('div');
     m.className = 'menu';
     m.setAttribute('role', 'menu');
-    m.innerHTML = '<button type="button" role="menuitem" data-act="rename" data-on="' + esc(btn.dataset.menu) + '">Rename</button>' +
+    m.innerHTML = '<button type="button" role="menuitem" data-settings="' + esc(btn.dataset.menu) + '">Query settings…</button>' +
+      '<button type="button" role="menuitem" data-act="rename" data-on="' + esc(btn.dataset.menu) + '">Rename</button>' +
       '<button type="button" role="menuitem" data-act="duplicate" data-on="' + esc(btn.dataset.menu) + '">Duplicate</button>' +
       '<div class="menu-sep"></div>' +
       '<button type="button" role="menuitem" class="is-delete" data-del="' + esc(btn.dataset.menu) + '">Delete…</button>';
@@ -1017,7 +1009,7 @@
   function openDialog(which, from) {
     var d = liveShelves().filter(function (x) { return x.s === which; })[0];
     if (!d) return;
-    slug = which; returnTo = from || null;
+    slug = which; returnTo = from || '[data-menu]';
     SAVED = clone(SETTINGS[which]);
     draft = clone(SAVED);
     open = null; lastTok = null; taxKey = null; termQ = {};
@@ -1032,7 +1024,10 @@
     $('scrim').hidden = true;
     document.body.style.overflow = '';
     open = null; slug = null;
-    var back = returnTo && document.querySelector('[data-settings="' + returnTo + '"]');
+    /* The kebab item and the notice's button both open this, so focus goes
+       back to whichever was clicked rather than to the first match. The kebab
+       is the fallback, since the menu item itself has closed by now. */
+    var back = (returnTo && document.querySelector(returnTo)) || document.querySelector('[data-menu]');
     if (back) back.focus();
     returnTo = null;
   }
@@ -1100,7 +1095,14 @@
         menu = ev.target.closest('[data-menu]'),
         y = ev.target.closest('[data-yes]'), n = ev.target.closest('[data-no]');
 
-    if (set)  { var at = set.dataset.settings; closeMenu(); closeNamer(); sel = at; justSaved = null; renderIndex(); return openDialog(at, at); }
+    if (set) {
+      var at = set.dataset.settings;
+      var from = set.closest('.notice') ? '.notice [data-settings]' : '[data-menu]';
+      closeMenu(); closeNamer();
+      sel = at; justSaved = null;
+      renderIndex();
+      return openDialog(at, from);
+    }
     if (act) {
       var on = act.dataset.on;
       closeMenu();
@@ -1224,7 +1226,7 @@
     closeNamer();
     renderIndex();
     /* A new shelf has defaults and no terms, so the rule is the next step. */
-    openDialog(key, key);
+    openDialog(key, '.notice [data-settings]');
   });
 
   $('q').addEventListener('input', function () {
