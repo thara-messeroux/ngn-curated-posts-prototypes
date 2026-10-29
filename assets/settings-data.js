@@ -424,6 +424,8 @@ window.nextRunLine = function (start, every, now) {
 
   var sameDay = t.toDateString() === now.toDateString();
 
-  return "It's " + clock(now) + '. Next run ' + clock(t) +
+  /* The current time was scaffolding for working out whether the maths was
+     right. It is on the reader's own clock, so it never needed saying. */
+  return 'Next run ' + clock(t) +
     (sameDay ? '' : ' tomorrow') + ', in ' + inWords + '.';
 };

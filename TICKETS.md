@@ -1448,3 +1448,60 @@ Checked: count to 12, sort to Most viewed revealing the window word, window to 3
 writing all of it to the pane, reopening showing it back with no phantom change, the
 automatic half and the match count untouched throughout. axe-core clean on all three new
 editors. No console errors.
+
+## Xris's recap, all fifteen
+
+### Wording
+
+"Query settings…" in the kebab is now **Settings**, and the dialog it opens is titled
+**Query settings** rather than "What this instance shows". "When you pin a story by hand"
+is **"When you choose a story manually"**.
+
+**The taxonomy reads as a phrase, not a field label.** It said "in Category: Business and
+also in Tag: 2016 election"; his words were "with category Business and also with tag 2016
+election", so each clause carries its own "with", the joins read "and also with", and the
+taxonomy is lowercase because it is part of the sentence now. "anything" keeps "in", since
+there is no taxonomy to name.
+
+**"Next runs" lost the clock.** `nextRunLine` was returning "It's 11:31 AM. Next run 12:00
+PM, in 29 min." The current time was scaffolding from proving the arithmetic, and it is on
+the reader's own clock. The row label said "Next runs" above a value beginning "Next run",
+so the label is now "Next run" and the value drops the repeat.
+
+### Key became slug
+
+He wrote "slug" twice and named `sanitize_title()`. I had argued the opposite in this log,
+on the grounds that an instance has no URL and the API says `sanitize_key`, and shipped it
+as "Key". He decided; it is **Slug** in every label, hint and placeholder.
+
+`keyFrom` now matches `sanitize_title()` rather than approximating it: NFD normalise and
+strip combining marks before lowercasing, so "Café Résumé Test" gives `cafe-resume-test`
+where it used to give `caf-r-sum-test`.
+
+### The manual half follows the automatic one
+
+Two of his items are one behaviour. The default now reads:
+
+> When you choose a story manually, **search the same stories**.
+
+One word, because while it follows there is nothing to spell out. Clicking it offers "The
+same stories" or "Something different", and choosing the second **copies the automatic
+query into the manual one** — post types, count, sort, window and every term filter — so
+everything is preselected and the work is removing rather than finding, which is what he
+asked for. The pane says "The search offers: the same stories as above" instead of
+repeating six rows.
+
+Seeded from the export by comparing the mapped post types, which makes all 47 follow. Three
+instances list different search types in the spreadsheet, but the extra tokens are
+`fcc_promo`, `web` and `homepage`, none of which is a real post type, so after mapping the
+lists match. Following is the honest reading of the data we have.
+
+### A cache bug caught on the way through
+
+The `?v=` stamps on the asset URLs were fixed at the date the files were created and never
+moved when `settings-data.js` changed. The detail pane was still showing the old "It's
+11:31 AM" line from a cached copy while a freshly loaded page showed the new one. All
+eleven pages are now stamped together, and the stamp has to move whenever an asset does.
+
+Checked: all fifteen items confirmed on the page, the three other pages that share
+`settings-data.js` still correct, axe-core clean throughout, no console errors.

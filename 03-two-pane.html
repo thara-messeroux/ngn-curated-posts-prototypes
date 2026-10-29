@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Direction C — Two-pane workbench · Curated Posts prototypes</title>
-<link rel="stylesheet" href="assets/wp-admin.css?v=202610281615">
+<link rel="stylesheet" href="assets/wp-admin.css?v=202610291131">
 <style>
 .panes {
   display: grid;
@@ -147,7 +147,7 @@
     <div class="pane pane-list">
       <div class="list-tools">
         <label class="screen-reader-text" for="q">Search curated posts</label>
-        <input type="search" id="q" placeholder="Search name or key">
+        <input type="search" id="q" placeholder="Search name or slug">
       </div>
       <div class="list-scroll" id="list" role="listbox" aria-label="Curated post instances"></div>
       <div class="list-foot" id="num"></div>
@@ -159,7 +159,7 @@
 
 </div>
 
-<script src="assets/data.js?v=202610281615"></script>
+<script src="assets/data.js?v=202610291131"></script>
 <script>
 (function () {
   var sel = CURATED[0].s, confirming = null, deleted = {};
