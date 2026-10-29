@@ -475,12 +475,25 @@
   var editing = null, keyTouched = false;
 
   /* PATCH .../{key}/key renames an instance and Store::rename moves the entry
-     and its purge log. What it does not move is the theme's own code: these
-     two keys are written into template files, so renaming either of them
-     leaves those templates asking for an instance that is no longer there. */
+     and its purge log. What it does not move is the theme's own code: two
+     keys are written into template files, so renaming or deleting either
+     leaves that code looking for an instance that is no longer there.
+
+     Written out per case rather than assembled from parts, because the
+     grammar changes with the number of places and a sentence built from a
+     template reads like one. The files, for whoever needs them:
+       editors-picks     sidebar-editors-picks.php
+       featured-stories  class-feed-featured.php,
+                         overlay-fullscreen-menu-news.php */
   var WIRED_IN = {
-    'editors-picks':   'sidebar-editors-picks.php',
-    'featured-stories': 'class-feed-featured.php and overlay-fullscreen-menu-news.php'
+    'editors-picks': {
+      gone:  'The Editor\u2019s Picks sidebar pulls from this. It will go empty.',
+      moved: 'The Editor\u2019s Picks sidebar looks for this key. Change it and the sidebar goes empty.'
+    },
+    'featured-stories': {
+      gone:  'The featured stories feed and the fullscreen menu pull from this. Both will go empty.',
+      moved: 'The featured stories feed and the fullscreen menu look for this key. Change it and both go empty.'
+    }
   };
 
   /* Curated_Posts_Store::empty_query: what the backend gives a brand new
@@ -535,10 +548,7 @@
 
     var wired = WIRED_IN[which];
     $('d-wired').hidden = !wired;
-    if (wired) {
-      $('d-wired').textContent = 'The theme asks for this instance by ' + which + ' in ' +
-        wired + '. Those will render nothing once it is gone.';
-    }
+    if (wired) $('d-wired').textContent = wired.gone;
 
     $('d-icon').innerHTML = WARN_ICON;
     $('dscrim').hidden = false;
@@ -600,14 +610,9 @@
 
     if (!k) bad = 'The key needs some letters or numbers.';
     else if (moved && keyTaken(k)) bad = 'An instance already uses ' + k + '. Pick another.';
-    else if (moved && WIRED_IN[editing]) {
-      warn = 'The theme asks for this instance by ' + editing + ' in ' + WIRED_IN[editing] +
-             '. Changing the key empties whatever those render until they are updated too.';
-    } else if (moved) {
-      warn = 'Changing the key is an administrator action. Anything asking for ' + editing + ' stops finding it.';
-    } else if (!name) {
-      warn = 'With no name, the list falls back to one built from the key.';
-    }
+    else if (moved && WIRED_IN[editing]) warn = WIRED_IN[editing].moved;
+    else if (moved) warn = 'Only an administrator can change a key, and anything still using the old one stops working.';
+    else if (!name) warn = 'Leave it empty and the name comes from the key instead.';
 
     h.className = 'hint' + (bad ? ' is-bad' : (warn ? ' is-warn' : ''));
     h.textContent = bad || warn || 'The site asks for this instance by this key.';

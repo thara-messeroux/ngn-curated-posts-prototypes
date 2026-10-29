@@ -1316,3 +1316,42 @@ Checked at 1440 and 320: axe-core clean with and without the template warning, n
 horizontal scroll, the title wraps to two lines on a phone with the panel and both buttons
 still in view, Keep it still to the left of Delete. All four routes re-run after the
 change, including a real delete that took the list to 46. No console errors.
+
+## The wired-in warning in plain words
+
+It read:
+
+> The theme asks for this instance by featured-stories in class-feed-featured.php and
+> overlay-fullscreen-menu-news.php. Those will render nothing once it is gone.
+
+160 characters, two sentences doing one job, a construction nobody says out loud, and two
+PHP paths in front of someone who is deleting from wp-admin. It named the file instead of
+the consequence.
+
+So I read what those files actually are. `class-feed-featured.php` is the
+**Featured Stories feed**, the `ngn/featured` REST endpoint. `overlay-fullscreen-menu-news.php`
+is the **fullscreen menu**. `sidebar-editors-picks.php` is the **Editor's Picks sidebar**.
+Those are things a person recognises; a filename is not.
+
+> The featured stories feed and the fullscreen menu pull from this. Both will go empty.
+
+85 characters. The Editor's Picks one is 61. The paths moved into a code comment, which is
+where a developer would look for them anyway.
+
+The two strings are written out per case rather than assembled from a template, because the
+grammar changes with the number of places, "pulls" against "pull" and "it" against "both",
+and a sentence stitched together from parts reads like one.
+
+**Three siblings had the same voice and went with it:**
+
+| Was | Is |
+| --- | --- |
+| "Changing the key is an administrator action. Anything asking for X stops finding it." | "Only an administrator can change a key, and anything still using the old one stops working." |
+| "The theme asks for this instance by X in Y. Changing the key empties whatever those render until they are updated too." | "The featured stories feed and the fullscreen menu look for this key. Change it and both go empty." |
+| "With no name, the list falls back to one built from the key." | "Leave it empty and the name comes from the key instead." |
+
+Also caught in passing: the rename collision read "A instance already uses…" after the
+shelf-to-instance pass. Now "An instance".
+
+Checked both delete cases, a plain delete with no warning, both rename cases and the empty
+name. axe-core clean, no console errors.
