@@ -309,11 +309,12 @@
       </p>
       <p class="t-body-sm" style="margin:0;max-width:72ch">
         <b>Is it expandable?</b> The sentence here carries one clause that does not exist
-        yet, <span class="muted">scoring at least 70</span>. It is a stand-in for whatever
-        the usefulness metric turns out to be. Adding it cost one word in the sentence, one
-        editor and one number; nothing was restructured. Set it to 0 to take it back out.
-        If the metric belongs next to the results instead, it becomes a column in the list
-        above rather than a clause, and neither choice disturbs the other.
+        yet, <span class="muted">spread across at least 3 categories</span>. Adding it cost
+        one phrase in the sentence, one editor and one number; nothing was restructured.
+        Set it to 0 to take it back out. The shape comes from the paper: diversity,
+        dynamism, coverage and serendipity are all measured over a list, never scored on a
+        single story, so a usefulness parameter here has to constrain the set. Dynamism is
+        already covered, since it is inter-list change and this screen calls that rotation.
       </p>
     </div>
   </div>
@@ -467,11 +468,15 @@
          count 3 (MAX_SEARCH_RESULTS), Newest, 14 days. */
       searchCount: 3, searchSort: 'Newest', searchWindowDays: 14,
       /* A worked example of a parameter that does not exist yet, so the
-         question "is this expandable" has an answer you can click. The number
-         is a placeholder for whatever the usefulness metric turns out to be;
-         what it demonstrates is that one more clause costs one token, one
-         editor branch and one row, with nothing restructured. */
-      useful: 70,
+         question "is this expandable" has an answer you can click.
+
+         Shaped from the paper Xris cited (Lu, Dumitrache and Graus, UMAP 2020).
+         Its four usefulness metrics are all properties of the list, not scores
+         on one story: diversity is intra-list, dynamism is inter-list, coverage
+         is across a day's publishing, and serendipity is measured against one
+         reader's history. So the clause constrains the set, which is the shape
+         a Curated Posts instance can actually carry. */
+      spread: 3,
       /* Follows the automatic query until someone customises it. 44 of the 47
          exported instances already search exactly the post types they fill
          from, so following is both the sensible default and the true one. */
@@ -521,7 +526,7 @@
   var EMPTY_RULE = {
     count: 5, sort: 'Newest', types: ['newspost'], windowDays: 14,
     searchTypes: ['newspost'], filters: {}, searchFilters: {},
-    searchCount: 3, searchSort: 'Newest', searchWindowDays: 14, searchSame: true, useful: 70,
+    searchCount: 3, searchSort: 'Newest', searchWindowDays: 14, searchSame: true, spread: 3,
     rotation: { on: false, interval: '1h', start: '00:00' }
   };
 
@@ -1062,9 +1067,9 @@
     str += ' ' + groupTokens('auto') +
       '<span class="punc">,</span> <span class="plain">excluding</span> ' +
       excludeTokens('auto') +
-      (draft.useful
-        ? '<span class="punc">,</span> <span class="plain">scoring at least</span> ' +
-          tok('useful', draft.useful)
+      (draft.spread
+        ? '<span class="punc">,</span> <span class="plain">spread across at least</span> ' +
+          tok('spread', draft.spread + (draft.spread === 1 ? ' category' : ' categories'))
         : '') +
       '<span class="punc">.</span>';
 
@@ -1197,9 +1202,9 @@
     /* The route caps a typed search at MAX_SEARCH_RESULTS = 3 and only lets
        the empty-box recent list run to MAX_RECENT_RESULTS = 50, so the field
        takes the schema's range and says where the real ceiling is. */
-    if (open === 'useful') return '<div class="editor">' + head('Usefulness score') +
-      '<label class="screen-reader-text" for="e-useful">Minimum usefulness score</label>' +
-      '<input type="number" id="e-useful" min="0" max="100" step="5" value="' + draft.useful + '" style="width:120px">' +
+    if (open === 'spread') return '<div class="editor">' + head('Spread across categories') +
+      '<label class="screen-reader-text" for="e-spread">Fewest categories the stories should span</label>' +
+      '<input type="number" id="e-spread" min="0" max="10" step="1" value="' + draft.spread + '" style="width:120px">' +
       '<p class="t-body-sm muted" style="margin:0">0 turns it off. This parameter does not exist yet; it is here to show what adding one costs.</p>' +
       done + '</div>';
 
@@ -1372,7 +1377,7 @@
     if (draft.searchSort === undefined) draft.searchSort = 'Newest';
     if (draft.searchWindowDays === undefined) draft.searchWindowDays = 14;
     if (draft.searchSame === undefined) draft.searchSame = false;
-    if (draft.useful === undefined) draft.useful = 0;
+    if (draft.spread === undefined) draft.spread = 0;
     $('who').textContent = d.n;
     $('scrim').hidden = false;
     document.body.style.overflow = 'hidden';
@@ -1518,9 +1523,9 @@
       $('count').textContent = matchCount(flat(draft)).toLocaleString();
       refreshSave();
     }
-    if (ev.target.id === 'e-useful') {
-      draft.useful = clampWhole(ev.target.value, 0, 100);
-      if (ev.target.value !== '' && +ev.target.value !== draft.useful) ev.target.value = draft.useful;
+    if (ev.target.id === 'e-spread') {
+      draft.spread = clampWhole(ev.target.value, 0, 10);
+      if (ev.target.value !== '' && +ev.target.value !== draft.spread) ev.target.value = draft.spread;
       $('rule').innerHTML = rule();
       refreshSave();
     }

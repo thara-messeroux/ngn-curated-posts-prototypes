@@ -1579,3 +1579,24 @@ it away would undo the pin.
 
 So the sentence says "Rotate them every 1h" once, about the instance, which is
 where the setting lives.
+
+## The usefulness clause, shaped from the paper instead of guessed
+
+The demo clause was "scoring at least 70", a score on one story. Reading the
+paper Xris cited (Lu, Dumitrache, Graus, UMAP 2020) shows that is the wrong
+shape. All four of its usefulness metrics are measured over a list:
+
+- Diversity is intra-list: average pairwise dissimilarity within one list.
+- Dynamism is inter-list: |L2 \ L1| / N between two consecutive rankings.
+- Coverage is the share of a day's published articles a list serves.
+- Serendipity balances confidence against distance from one reader's history.
+
+None is a per-story score, so the clause is now "spread across at least 3
+categories", a constraint on the set. Same cost to add, same one line to remove.
+
+Two consequences worth saying out loud:
+
+- Dynamism is already in the design. Inter-list change between two consecutive
+  rankings is what this screen calls rotation.
+- Serendipity cannot apply to a Curated Posts instance. It needs one reader's
+  history, and an instance shows the same stories to everyone.
