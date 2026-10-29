@@ -1198,3 +1198,31 @@ at the time. Everything from here uses instance.
 Checked with the cache defeated on all eleven pages: no "shelf" in any rendered text, the
 index still lists 47, every route on the combined page still works, axe-core clean, and no
 console errors.
+
+---
+
+## Key, not slug
+
+Both words were on the screen, for two different things, which is the reason to settle it.
+
+**A slug is a URL-safe string that appears in a web address.** A key is a lookup name in a
+data structure. An instance has no address: `Curated_Posts_Store` keeps them as keys in a
+WordPress option, and the theme fetches one with
+`Curated_Posts::get_wp_posts( 'editors-picks', 5 )`. There is no page at `/editors-picks`,
+no rewrite rule, no permalink. The `get_permalink()` calls in the cache purge are for the
+posts an instance returns, not for the instance.
+
+**The theme already reserves "slug" for something else.** Every one of its seven uses is a
+post type slug or a taxonomy term slug. The term picker inside this very dialog says "Type
+a name or a slug", and it means term slugs, which genuinely are slugs. Calling the instance
+identifier a slug too would put one word on two things one dialog apart.
+
+**The API says key and so will the errors.** `sanitize_key`, `new_key`, and the 409 reads
+"An instance with this key already exists." An editor who trips that error should see the
+same word the field used.
+
+So: key. The instance search said "Search name or slug" on five pages and now says
+"Search name or key". The term search is untouched.
+
+Premium here is one word meaning one thing, not the fancier-sounding word. The field's hint
+does the explaining anyway: "The site asks for this instance by this key."
