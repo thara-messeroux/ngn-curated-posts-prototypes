@@ -456,6 +456,9 @@
       windowDays: 14,
       searchTypes: typesFrom(d.search),
       filters: filters,
+      /* The export has no by-hand term filters, because the panel has never
+         been able to set any. Empty is the truth, not a placeholder. */
+      searchFilters: {},
       /* The export records that rotation is on and when it starts, but not
          how long the gap is, so 1h is this prototype's stand-in. */
       rotation: { on: d.rot !== 'Off', interval: '1h', start: toTime(d.rotStart) }
@@ -500,7 +503,7 @@
      instance. Not a guess, and not blank. */
   var EMPTY_RULE = {
     count: 5, sort: 'Newest', types: ['newspost'], windowDays: 14,
-    searchTypes: ['newspost'], filters: {},
+    searchTypes: ['newspost'], filters: {}, searchFilters: {},
     rotation: { on: false, interval: '1h', start: '00:00' }
   };
 
@@ -745,10 +748,10 @@
   }
 
   /* One clause per non-empty group, in the order the query would emit them. */
-  function includeView(s) {
-    var out = [];
-    Object.keys(s.filters).forEach(function (tax) {
-      s.filters[tax].groups.forEach(function (g) {
+  function includeView(s, which) {
+    var bag = s[which || 'filters'] || {}, out = [];
+    Object.keys(bag).forEach(function (tax) {
+      bag[tax].groups.forEach(function (g) {
         if (g.length) out.push({ tax: tax, terms: g });
       });
     });
@@ -760,10 +763,10 @@
     }).join('');
   }
 
-  function excludeView(s) {
-    var out = [];
-    Object.keys(s.filters).forEach(function (tax) {
-      s.filters[tax].exclude.forEach(function (t) {
+  function excludeView(s, which) {
+    var bag = s[which || 'filters'] || {}, out = [];
+    Object.keys(bag).forEach(function (tax) {
+      bag[tax].exclude.forEach(function (t) {
         out.push({ tax: TAXONOMIES[tax] ? TAXONOMIES[tax].n : tax, term: t });
       });
     });
@@ -808,6 +811,7 @@
         '</div>') + '</div>';
 
     var inc = includeView(s), exc = excludeView(s);
+    var sInc = includeView(s, 'searchFilters'), sExc = excludeView(s, 'searchFilters');
     var rot = s.rotation;
 
     html += '<div class="sections">' +
@@ -818,8 +822,12 @@
         (s.sort === 'Most viewed' ? row('Looking back', s.windowDays + (s.windowDays === 1 ? ' day' : ' days')) : '') +
         row('Include terms', inc || 'none set', !inc) +
         row('Exclude terms', exc || 'none set', !exc) +
-        row('Search post types', s.searchTypes.length ? esc(listJoin(s.searchTypes.map(function (k) { return pluralType(k, 2); }))) : 'any type', !s.searchTypes.length) +
         row('Matches now', '<b>' + matchCount(flat(s)).toLocaleString() + '</b> <span class="muted">prototype figure</span>') +
+      '</div></div>' +
+      '<div class="sect"><h3>Pinning by hand</h3><div class="kv">' +
+        row('Post types', s.searchTypes.length ? esc(listJoin(s.searchTypes.map(function (k) { return pluralType(k, 2); }))) : 'any type', !s.searchTypes.length) +
+        row('Include terms', sInc || 'none set', !sInc) +
+        row('Exclude terms', sExc || 'none set', !sExc) +
       '</div></div>' +
       '<div class="sect"><h3>Rotation</h3><div class="kv">' +
         row('Interval', rot.on ? 'every ' + esc(rot.interval) : 'off', !rot.on) +
@@ -876,30 +884,50 @@
      empty records and empty groups dropped, keeps Save honest. */
   function norm(d) {
     var c = JSON.parse(JSON.stringify(d));
-    Object.keys(c.filters).forEach(function (tax) {
-      var f = c.filters[tax];
-      f.groups = f.groups.filter(function (g) { return g.length; });
-      if (!f.groups.length && !f.exclude.length) delete c.filters[tax];
+    ['filters', 'searchFilters'].forEach(function (bag) {
+      if (!c[bag]) return;
+      Object.keys(c[bag]).forEach(function (tax) {
+        var f = c[bag][tax];
+        f.groups = f.groups.filter(function (g) { return g.length; });
+        if (!f.groups.length && !f.exclude.length) delete c[bag][tax];
+      });
     });
     return JSON.stringify(c);
   }
 
   var slug = null, SAVED = null, draft = null, open = null, lastTok = null, taxKey = null, termQ = {};
 
+  /* The /search route takes its own terms_include and terms_exclude, so the
+     manual search can filter by term independently of the automatic fill.
+     Today the panel sends the automatic query's terms to both, which is why
+     the by-hand line only ever offered post types. scope says which of the
+     two sets a token or editor is working on. */
+  var scope = 'auto';
+  var SCOPES = {
+    auto:   { bag: 'filters',       types: 'types',       inc: 'include',       exc: 'exclude' },
+    manual: { bag: 'searchFilters', types: 'searchTypes', inc: 'searchInclude', exc: 'searchExclude' }
+  };
+  var scopeOf = function (tokKey) {
+    return (tokKey === 'searchInclude' || tokKey === 'searchExclude') ? 'manual' : 'auto';
+  };
+  var bagFor  = function (sc) { return draft[SCOPES[sc].bag]; };
+  var typesFor = function (sc) { return draft[SCOPES[sc].types]; };
+
   var changed = function () { return norm(draft) !== norm(SAVED); };
   var INTERVALS = ['15m', '30m', '1h', '2h', '3h', '4h', '6h', '12h', '24h'];
   var isCustom = function (v) { return INTERVALS.indexOf(v) < 0; };
 
-  function fil(tax) {
-    if (!draft.filters[tax]) draft.filters[tax] = { groups: [[]], exclude: [] };
-    if (!draft.filters[tax].groups.length) draft.filters[tax].groups = [[]];
-    return draft.filters[tax];
+  function fil(tax, sc) {
+    var bag = bagFor(sc || scope);
+    if (!bag[tax]) bag[tax] = { groups: [[]], exclude: [] };
+    if (!bag[tax].groups.length) bag[tax].groups = [[]];
+    return bag[tax];
   }
 
-  function clauses() {
-    var out = [];
-    Object.keys(draft.filters).forEach(function (tax) {
-      draft.filters[tax].groups.forEach(function (g, gi) {
+  function clauses(sc) {
+    var bag = bagFor(sc || scope), out = [];
+    Object.keys(bag).forEach(function (tax) {
+      bag[tax].groups.forEach(function (g, gi) {
         if (g.length) out.push({ tax: tax, gi: gi, terms: g });
       });
     });
@@ -909,25 +937,29 @@
   /* One token per taxonomy that has exclusions, each opening the editor for
      that taxonomy, so "skipping Preview or Final" can no longer hide which
      taxonomy those two came from. */
-  function excludeTokens() {
-    var byTax = [];
-    Object.keys(draft.filters).forEach(function (tax) {
-      var ex = draft.filters[tax].exclude;
+  function excludeTokens(sc) {
+    sc = sc || 'auto';
+    var bag = bagFor(sc), key = SCOPES[sc].exc, byTax = [];
+    Object.keys(bag).forEach(function (tax) {
+      var ex = bag[tax].exclude;
       if (ex.length) byTax.push({ tax: tax, terms: ex });
     });
-    if (!byTax.length) return tok('exclude', 'nothing', true);
+    if (!byTax.length) return tok(key, 'nothing', true);
     return byTax.map(function (x) {
-      return tok('exclude', taxLabel(x.tax, x.terms), false, x.tax + ':x', true);
+      return tok(key, taxLabel(x.tax, x.terms), false, x.tax + ':x', true);
     }).join(' <span class="plain">and</span> ');
   }
 
   /* The taxonomies the chosen post types offer, plus any that already carry a
      filter, so a term set on an instance is never stranded out of reach. */
   function availableTax() {
-    var a = taxonomiesFor(draft.types).slice();
-    Object.keys(draft.filters).forEach(function (t) {
+    var types = typesFor(scope), bag = bagFor(scope);
+    /* An empty post type list means every type, and the by-hand search is
+       usually left empty, so fall back to every taxonomy rather than none. */
+    var a = (types.length ? taxonomiesFor(types) : Object.keys(TAXONOMIES)).slice();
+    Object.keys(bag).forEach(function (t) {
       if (!TAXONOMIES[t] || a.indexOf(t) > -1) return;
-      var f = draft.filters[t];
+      var f = bag[t];
       if (f.groups.some(function (g) { return g.length; }) || f.exclude.length) a.push(t);
     });
     return a;
@@ -944,13 +976,17 @@
     if (d.sort !== 'Most viewed' && d.rotation.on && !intervalMinutes(d.rotation.interval)) {
       out.push('"' + (d.rotation.interval || 'blank') + '" is not an interval. Try 1h, 30m or a number of minutes.');
     }
-    Object.keys(d.filters).forEach(function (tax) {
-      var f = d.filters[tax];
-      var inc = f.groups.reduce(function (a, g) { return a.concat(g); }, []);
-      f.exclude.forEach(function (t) {
-        if (inc.indexOf(t) > -1) {
-          out.push('“' + t + '” is both required and skipped, so nothing can match it.');
-        }
+    /* Both sets, because a contradiction in the by-hand filters is just as
+       unsaveable as one in the automatic query. */
+    ['filters', 'searchFilters'].forEach(function (bag) {
+      Object.keys(d[bag] || {}).forEach(function (tax) {
+        var f = d[bag][tax];
+        var inc = f.groups.reduce(function (a, g) { return a.concat(g); }, []);
+        f.exclude.forEach(function (t) {
+          if (inc.indexOf(t) > -1) {
+            out.push('“' + t + '” is both required and skipped, so nothing can match it.');
+          }
+        });
       });
     });
     return out;
@@ -972,11 +1008,12 @@
     return '<span class="tax">' + esc(name) + ':</span> ' + esc(listJoin(terms));
   }
 
-  function groupTokens() {
-    var c = clauses();
-    if (!c.length) return tok('include', 'anything', true);
+  function groupTokens(sc) {
+    sc = sc || 'auto';
+    var key = SCOPES[sc].inc, c = clauses(sc);
+    if (!c.length) return tok(key, 'anything', true);
     return c.map(function (x) {
-      return tok('include', taxLabel(x.tax, x.terms), false, x.tax + ':' + x.gi, true);
+      return tok(key, taxLabel(x.tax, x.terms), false, x.tax + ':' + x.gi, true);
     }).join(' <span class="plain">and also in</span> ');
   }
 
@@ -992,9 +1029,9 @@
     if (views) str += ' <span class="plain">from the last</span> ' +
       tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
 
-    str += ' <span class="plain">in</span> ' + groupTokens() +
+    str += ' <span class="plain">in</span> ' + groupTokens('auto') +
       '<span class="punc">,</span> <span class="plain">skipping</span> ' +
-      excludeTokens() +
+      excludeTokens('auto') +
       '<span class="punc">.</span>';
 
     str += views
@@ -1007,6 +1044,9 @@
       tok('searchTypes', draft.searchTypes.length
         ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, 2); }))
         : 'any type', !draft.searchTypes.length) +
+      ' <span class="plain">in</span> ' + groupTokens('manual') +
+      '<span class="punc">,</span> <span class="plain">skipping</span> ' +
+      excludeTokens('manual') +
       '<span class="punc">.</span>';
 
     return str;
@@ -1056,15 +1096,16 @@
   }
 
   function elsewhere() {
-    var others = Object.keys(draft.filters).filter(function (t) {
+    var bag = bagFor(scope);
+    var others = Object.keys(bag).filter(function (t) {
       if (t === taxKey) return false;
-      var f = draft.filters[t];
+      var f = bag[t];
       return f.groups.some(function (g) { return g.length; }) || f.exclude.length;
     });
     if (!others.length) return '';
     return '<p class="t-body-sm muted" style="margin:0">Also filtered: ' +
       others.map(function (t) {
-        var f = draft.filters[t];
+        var f = bag[t];
         var n = f.groups.reduce(function (a, g) { return a + g.length; }, 0) + f.exclude.length;
         return esc(TAXONOMIES[t].n) + ' (' + n + ')';
       }).join(', ') + '.</p>';
@@ -1128,23 +1169,25 @@
         : 'Nothing selected, so the search offers all ' + POST_TYPES.length + ' types.') +
       '</p>' + done + '</div>';
 
-    if (open === 'include' || open === 'exclude') {
-      var isEx = open === 'exclude';
+    if (open === 'include' || open === 'exclude' ||
+        open === 'searchInclude' || open === 'searchExclude') {
+      var isEx = (open === 'exclude' || open === 'searchExclude');
+      var manual = scope === 'manual';
       var available = availableTax();
       if (!available.length) return '<div class="editor">' + head('No filters available') +
-        '<p class="t-body-sm" style="margin:0">' +
-        (draft.types.length
-          ? 'These post types have nothing to filter on.'
-          : 'Pick a post type first. Term filters belong to a type.') + '</p>' + done + '</div>';
+        '<p class="t-body-sm" style="margin:0">These post types have nothing to filter on.</p>' +
+        done + '</div>';
       if (available.indexOf(taxKey) < 0) taxKey = available[0];
       var tax = TAXONOMIES[taxKey];
       var f = fil(taxKey);
 
       return '<div class="editor">' +
-        head(isEx ? 'Never show stories tagged' : 'Only stories tagged') +
+        head(manual
+          ? (isEx ? 'Keep these out of the by-hand search' : 'The by-hand search only offers stories tagged')
+          : (isEx ? 'Never show stories tagged' : 'Only stories tagged')) +
         '<label class="screen-reader-text" for="e-tax">Taxonomy</label>' +
         '<select id="e-tax">' + available.map(function (k) {
-          var ff = draft.filters[k];
+          var ff = bagFor(scope)[k];
           var n = ff ? ff.groups.reduce(function (a, g) { return a + g.length; }, 0) + ff.exclude.length : 0;
           return '<option value="' + k + '"' + (k === taxKey ? ' selected' : '') + '>' + esc(TAXONOMIES[k].n) +
             ' (' + TAXONOMIES[k].count.toLocaleString() + ')' + (n ? ' • ' + n + ' set' : '') + '</option>';
@@ -1234,7 +1277,8 @@
     slug = which;
     SAVED = clone(SETTINGS[which]);
     draft = clone(SAVED);
-    open = null; lastTok = null; taxKey = null; termQ = {};
+    open = null; lastTok = null; taxKey = null; termQ = {}; scope = 'auto';
+    if (!draft.searchFilters) draft.searchFilters = {};
     $('who').textContent = d.n;
     $('scrim').hidden = false;
     document.body.style.overflow = 'hidden';
@@ -1312,6 +1356,7 @@
       if (t) {
         if (open === t.dataset.tok && !t.dataset.ref) { closeEditor(); return; }
         open = t.dataset.tok; termQ = {}; lastTok = t.dataset.tok;
+        scope = scopeOf(open);
         if (t.dataset.ref) taxKey = t.dataset.ref.split(':')[0];
         renderSheet(); focusEditor();
         return;

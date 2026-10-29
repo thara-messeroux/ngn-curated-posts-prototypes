@@ -1355,3 +1355,51 @@ shelf-to-instance pass. Now "An instance".
 
 Checked both delete cases, a plain delete with no warning, both rename cases and the empty
 name. axe-core clean, no console errors.
+
+## The by-hand search gets its own term filters
+
+This was open question 2 in `ASK-XRIS.md`: does the manual search get its own term filters
+or share the ones above? Xris asking for this answers it. **Its own.**
+
+**The endpoint was already there.** `Post_Selector_Controller::search` reads
+`terms_include` and `terms_exclude` as its own request parameters and hands them to
+`Post_Selector_Search::query`, which builds a `tax_query` from them. Nothing needed
+inventing at the search layer.
+
+**What is missing is one layer up.** `QuerySettings` in `types.ts` carries its own
+`searchPostTypes` but only one `termsInclude` / `termsExclude` pair, and `handleApply`
+sends `searchPostTypes: localSettings.searchPostTypes` beside
+`termsInclude: params.termsInclude` — the automatic query's terms, to both. So the panel
+has always had the post types separate and the terms shared, which is exactly why the
+by-hand line only ever offered post types. **Building this needs a second pair on the
+stored query, `search_terms_include` and `search_terms_exclude`, in
+`Curated_Posts_Store::empty_query` and the controller's extract. That is a store change,
+not a UI change, and it belongs in the estimate.**
+
+The sentence now reads the same shape on both halves:
+
+> When you pin a story by hand, search **News Posts** in **Category: Research**, skipping
+> **Campus: Oakland**.
+
+`draft.searchFilters` mirrors `draft.filters`, and a `scope` of `auto` or `manual` decides
+which set a token or editor is working on. The whole apparatus is shared: the taxonomy
+dropdown, the ranked term search across all 17,435 terms, AND groups, the "also filtered"
+line, the term chips, and the rule that a term cannot be required and skipped at once
+within one taxonomy. `norm()` and `problems()` run over both sets.
+
+Three things that are deliberately not shared:
+
+- **The match count ignores the by-hand filters.** It answers "what fills this instance",
+  which is the automatic query. The by-hand filters only narrow what the picker offers.
+- **The editor headings differ**, so you always know which half you are in: "Only stories
+  tagged" against "The by-hand search only offers stories tagged".
+- **An empty post type list falls back to every taxonomy** rather than none, because the
+  by-hand types are usually left empty and an empty list means every type.
+
+The detail pane gained a **Pinning by hand** section rather than more rows under Rules, so
+the two halves of the rule read apart there as well.
+
+Checked: a term on each side independently, an AND group on the by-hand side, switching
+scopes with neither leaking into the other, the mutual exclusion firing inside the manual
+set only, save writing both sets through to the pane. axe-core clean on both new editors
+and the pane. No console errors.
