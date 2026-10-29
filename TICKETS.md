@@ -1257,3 +1257,40 @@ was rendering at the full 720px until that was caught.
 Checked at 1440 and 320: axe-core clean with and without the template warning, no
 horizontal scroll, title and both buttons visible, Keep it to the left of Delete on one
 row, and five routes exercised including an actual delete, which took the list to 46.
+
+## The sentence names the taxonomy now
+
+He is right, and the proof was already on screen. The sentence read
+
+> Show the 3 newest Posts in **Arts & Entertainment**, skipping **Hide Post** and **Seen
+> Around Northeastern**.
+
+while the chips directly beneath it read "Category: Arts & Entertainment" and "Display
+Options: Hide Post". Two renderings of the same rule, on one screen, disagreeing about
+whether the taxonomy matters.
+
+**A term alone does not say what it is.** "Health" is a Category, a Department and a Kicker
+Category. Picking it from the dropdown dropped the dropdown's own answer on the floor.
+Worse on the exclude side, where every excluded term from every taxonomy was flattened into
+one list, so "skipping Hide Post and Seen Around Northeastern" hid that those are two
+different taxonomies, which is the whole architecture of the query.
+
+So the taxonomy goes inside the token, muted at .82em, in the same shape the chips use:
+
+> Show the 3 newest Posts, 8:05 Posts, Magazine Articles or News Posts in
+> **Category: Arts & Entertainment**, skipping **Display Options: Hide Post** and
+> **Article Format: Seen Around Northeastern**.
+
+Excludes are now one token per taxonomy rather than one flat list, and each carries its own
+`data-ref`, so clicking "Article Format: Seen Around Northeastern" opens the Article Format
+exclude editor rather than whichever taxonomy happened to be first. `allExcluded()` had no
+callers left and went.
+
+`tok()` takes an `isHtml` flag for this, because the label now carries markup. Term text
+still goes through `esc`.
+
+Checked on three instances: tags only, one category with seven category exclusions, and the
+two-taxonomy exclude case above. Both include clauses across two taxonomies read "Category:
+… and also in Department: …". Clicking each of the three tokens in turn opens its own
+taxonomy, re-queried each time because the sentence is rebuilt on every render. axe-core
+clean on the exclude editor and with two clauses. No console errors.

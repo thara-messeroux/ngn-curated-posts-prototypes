@@ -194,6 +194,9 @@
 .tok.is-empty { color: var(--ngn-on-surface-variant); font-style: italic; }
 
 .rule .plain { color: var(--ngn-on-surface-variant); }
+/* The taxonomy sits inside the token but reads as a label on the term rather
+   than as one of the terms. */
+.tok .tax { color: var(--ngn-on-surface-variant); font-size: .82em; }
 .rule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
 
 .result {
@@ -875,12 +878,19 @@
     return out;
   }
 
-  function allExcluded() {
-    var out = [];
+  /* One token per taxonomy that has exclusions, each opening the editor for
+     that taxonomy, so "skipping Preview or Final" can no longer hide which
+     taxonomy those two came from. */
+  function excludeTokens() {
+    var byTax = [];
     Object.keys(draft.filters).forEach(function (tax) {
-      draft.filters[tax].exclude.forEach(function (t) { out.push({ tax: tax, term: t }); });
+      var ex = draft.filters[tax].exclude;
+      if (ex.length) byTax.push({ tax: tax, terms: ex });
     });
-    return out;
+    if (!byTax.length) return tok('exclude', 'nothing', true);
+    return byTax.map(function (x) {
+      return tok('exclude', taxLabel(x.tax, x.terms), false, x.tax + ':x', true);
+    }).join(' <span class="plain">and</span> ');
   }
 
   /* The taxonomies the chosen post types offer, plus any that already carry a
@@ -918,17 +928,27 @@
     return out;
   }
 
-  function tok(key, text, empty, ref) {
+  function tok(key, text, empty, ref, isHtml) {
     return '<button class="tok' + (open === key ? ' is-open' : '') + (empty ? ' is-empty' : '') +
       '" type="button" data-tok="' + key + '"' + (ref ? ' data-ref="' + ref + '"' : '') +
-      '>' + esc(text) + '</button>';
+      '>' + (isHtml ? text : esc(text)) + '</button>';
+  }
+
+  /* Terms alone do not say what they are. "Health" is a Category, a Department
+     and a Kicker Category, and the sentence used to name the term and drop the
+     taxonomy, so two clauses from two taxonomies read as one list. The
+     taxonomy goes in the token, muted, in the same shape the chips below the
+     sentence already use. */
+  function taxLabel(tax, terms) {
+    var name = TAXONOMIES[tax] ? TAXONOMIES[tax].n : tax;
+    return '<span class="tax">' + esc(name) + ':</span> ' + esc(listJoin(terms));
   }
 
   function groupTokens() {
     var c = clauses();
     if (!c.length) return tok('include', 'anything', true);
     return c.map(function (x) {
-      return tok('include', listJoin(x.terms), false, x.tax + ':' + x.gi);
+      return tok('include', taxLabel(x.tax, x.terms), false, x.tax + ':' + x.gi, true);
     }).join(' <span class="plain">and also in</span> ');
   }
 
@@ -944,10 +964,9 @@
     if (views) str += ' <span class="plain">from the last</span> ' +
       tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
 
-    var ex = allExcluded();
     str += ' <span class="plain">in</span> ' + groupTokens() +
       '<span class="punc">,</span> <span class="plain">skipping</span> ' +
-      tok('exclude', ex.length ? listJoin(ex.map(function (f) { return f.term; })) : 'nothing', !ex.length) +
+      excludeTokens() +
       '<span class="punc">.</span>';
 
     str += views
