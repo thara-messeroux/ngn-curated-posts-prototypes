@@ -604,8 +604,6 @@
       '<div class="acts">' +
         '<button class="btn btn-filled btn-sm has-icon" type="button" data-settings="' + esc(d.s) + '">' +
           COG + 'Query settings</button>' +
-        '<button class="btn btn-outlined btn-sm" type="button" data-act="rename" data-on="' + esc(d.s) + '">Rename</button>' +
-        '<button class="btn btn-outlined btn-sm" type="button" data-act="duplicate" data-on="' + esc(d.s) + '">Duplicate</button>' +
         '<span class="menu-wrap">' +
           '<button class="btn btn-outlined btn-sm kebab" type="button" aria-haspopup="menu" ' +
             'aria-expanded="false" aria-label="More actions for ' + esc(d.n) + '" data-menu="' + esc(d.s) + '">⋯</button>' +
@@ -671,8 +669,7 @@
     var m = document.createElement('div');
     m.className = 'menu';
     m.setAttribute('role', 'menu');
-    m.innerHTML = '<button type="button" role="menuitem" data-settings="' + esc(btn.dataset.menu) + '">Query settings…</button>' +
-      '<button type="button" role="menuitem" data-act="rename" data-on="' + esc(btn.dataset.menu) + '">Rename</button>' +
+    m.innerHTML = '<button type="button" role="menuitem" data-act="rename" data-on="' + esc(btn.dataset.menu) + '">Rename</button>' +
       '<button type="button" role="menuitem" data-act="duplicate" data-on="' + esc(btn.dataset.menu) + '">Duplicate</button>' +
       '<div class="menu-sep"></div>' +
       '<button type="button" role="menuitem" class="is-delete" data-del="' + esc(btn.dataset.menu) + '">Delete…</button>';
@@ -1231,8 +1228,10 @@
       shelf(from).n = label;
       closeNamer();
       renderIndex();
-      var r = document.querySelector('[data-act="rename"]');
-      if (r) r.focus();
+      /* Rename now lives in the kebab, so focus goes back to the kebab that
+         opened it rather than to a button that is no longer on the page. */
+      var k = document.querySelector('[data-menu]');
+      if (k) k.focus();
       return;
     }
 

@@ -988,3 +988,28 @@ Duplicate and Delete stayed at the left edge, so four items read as a ragged col
 icon among four unlabelled ones is worse than none. All four now start at the same x.
 
 axe-core clean on the index, with the menu open, and in the dialog.
+
+---
+
+## One action visible, the rest behind the kebab
+
+Rename and Duplicate were in the header and in the kebab, so the same three actions sat on
+screen twice. They are gone from the header.
+
+**Query settings left the kebab instead of the header.** Removing all three would have put
+the screen's primary action two clicks away behind an unlabelled glyph, and the whole point
+of this screen is reading and changing the rule. So the split is by role rather than by
+convenience:
+
+- **Query settings** is the thing you came to do, so it is one click, labelled, and the
+  only filled button on the row.
+- **Rename, Duplicate, Delete** are occasional and reversible-ish, so they sit under the
+  kebab beside each other.
+
+Nothing now appears in both places, the header is two controls instead of four, and the
+kebab's three items line up without the odd icon pushing one of them out.
+
+Rename's focus return had to move with it: it pointed at a header button that no longer
+exists, and now goes back to the kebab that opened it.
+
+axe-core clean on the index, with the kebab open, and in the dialog. No overflow.
