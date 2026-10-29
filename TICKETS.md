@@ -1170,3 +1170,31 @@ they stay unless they are asked about too.
 Checked on all four shelves that used to show it, plus a newly created shelf, which has no
 terms by definition. axe-core clean, focus still returns to the kebab from every route,
 no overflow.
+
+---
+
+## "Instance", not "shelf"
+
+Xris names a Curated Posts entry an **instance**, and the code has been saying so all
+along: `class-curated-posts-instance-controller.php`, `create_instance`,
+`rename_instance`, `duplicate_instance`, `list_instances`, and a store that talks about
+instances throughout. "Shelf" was my word, and it appears nowhere in the theme.
+
+Renamed in everything a person reads, across all eleven pages plus `README.md`,
+`AUDIT.md` and `FILES.md`: 47 instances, Search instances, Name this instance, What this
+instance shows, "An instance already uses featured-stories", "The site asks for this
+instance by this key". The a/an before it was fixed with it, so the hub now reads "every
+automatically-filled instance" and "Pick an instance, press Query settings".
+
+**Identifiers were left alone.** The `.shelf` CSS class and the `shelf()` lookup still say
+shelf, and `window.SHELF` in `assets/settings-data.js` is untouched because four pages
+read it and renaming a shared global to no reader's benefit is how two designs got broken
+earlier in this log. `addShelf` did become `addInstance`, since it lives in one file.
+Rename the rest when it is built in the theme.
+
+Entries above this line keep the old word, because a dated log should say what was written
+at the time. Everything from here uses instance.
+
+Checked with the cache defeated on all eleven pages: no "shelf" in any rendered text, the
+index still lists 47, every route on the combined page still works, axe-core clean, and no
+console errors.

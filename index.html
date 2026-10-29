@@ -87,9 +87,9 @@ footer.page-foot a { color: var(--wp-blue); }
     <p class="eyebrow">NUEAC-398 · Phase 1 · Concepts</p>
     <h1>Three ways to fix the Curated Posts screen</h1>
     <p>
-      Curated Posts is the screen that controls every automatically-filled shelf on
+      Curated Posts is the screen that controls every automatically-filled instance on
       Northeastern Global News — the homepage rails, the Most read lists, the section
-      fronts. There are 47 shelves on it. All of them render open, in the order they were
+      fronts. There are 47 instances on it. All of them render open, in the order they were
       created, with no way to search. These are three working prototypes of the same data,
       built on WordPress's own admin design system so any of them drops in without a
       restyle.
@@ -100,8 +100,8 @@ footer.page-foot a { color: var(--wp-blue); }
     <b>Start here: the whole screen</b>
     <p>
       The index and the settings dialog on one page, the way the real screen works. Pick a
-      shelf, press <b>Query settings</b>, and the rule opens as a sentence over the list.
-      Save and the shelf underneath updates. All 47 shelves are seeded from the live export.
+      instance, press <b>Query settings</b>, and the rule opens as a sentence over the list.
+      Save and the instance underneath updates. All 47 instances are seeded from the live export.
       <br>
       <a href="10-complete.html"><b>Open the combined screen</b></a>
     </p>
@@ -109,7 +109,7 @@ footer.page-foot a { color: var(--wp-blue); }
 
   <h2 class="sec">What the screen costs today</h2>
   <div class="stats">
-    <div class="stat"><b>47</b><span>shelves on one page</span></div>
+    <div class="stat"><b>47</b><span>instances on one page</span></div>
     <div class="stat"><b>~40</b><span>screens of scroll at 1440px</span></div>
     <div class="stat"><b>0</b><span>ways to search or filter</span></div>
     <div class="stat"><b>~376</b><span>label/value lines rendered on load</span></div>
@@ -118,19 +118,19 @@ footer.page-foot a { color: var(--wp-blue); }
   <h2 class="sec">Three problems, worst first</h2>
   <div class="probs">
     <div class="prob">
-      <b>1 · Finding one shelf means reading all of them</b>
+      <b>1 · Finding one instance means reading all of them</b>
       <p>No search, no filter, no jump list. Reaching "Most read health" means scrolling
       past 29 other blocks and reading 13px titles until you spot it.</p>
     </div>
     <div class="prob">
-      <b>2 · Every shelf is expanded, including its empty fields</b>
+      <b>2 · Every instance is expanded, including its empty fields</b>
       <p>Each block prints all eight settings whether or not they hold a value. Roughly
       half of what is on screen reads <code>None</code>, <code>N/A</code> or
       <code>Off</code>.</p>
     </div>
     <div class="prob">
       <b>3 · Delete sits beside Rename and Duplicate</b>
-      <p>Same size, same row, one gap apart, on every card. Nothing warns that a shelf is
+      <p>Same size, same row, one gap apart, on every card. Nothing warns that an instance is
       live on the site before it is removed.</p>
     </div>
   </div>
@@ -148,7 +148,7 @@ footer.page-foot a { color: var(--wp-blue); }
         <dl>
           <dt>Best for</dt><dd>Editors who live in wp-admin already</dd>
           <dt>Strength</dt><dd>Zero learning curve, least code to write</dd>
-          <dt>Trade-off</dt><dd>One row per shelf means less room for the rules</dd>
+          <dt>Trade-off</dt><dd>One row per instance means less room for the rules</dd>
         </dl>
       </div>
       <div class="card-foot"><a class="button button-primary" href="01-list-table.html">Open direction A</a></div>
@@ -158,13 +158,13 @@ footer.page-foot a { color: var(--wp-blue); }
       <div class="card-top">
         <span class="tag">Direction B</span>
         <h3>Grouped accordion</h3>
-        <p class="what">The 47 shelves fall into six families that already exist in their
+        <p class="what">The 47 instances fall into six families that already exist in their
         names. Each family collapses. The toolbar sticks to the top of the screen so
         search stays reachable however far down you are.</p>
         <dl>
           <dt>Best for</dt><dd>Working through one family at a time</dd>
-          <dt>Strength</dt><dd>Matches how the shelves are actually maintained</dd>
-          <dt>Trade-off</dt><dd>One more click to reach a single shelf</dd>
+          <dt>Strength</dt><dd>Matches how the instances are actually maintained</dd>
+          <dt>Trade-off</dt><dd>One more click to reach a single instance</dd>
         </dl>
       </div>
       <div class="card-foot"><a class="button button-primary" href="02-grouped-accordion.html">Open direction B</a></div>
@@ -175,12 +175,12 @@ footer.page-foot a { color: var(--wp-blue); }
         <span class="tag">Direction C</span>
         <h3>Two-pane workbench</h3>
         <p class="what">A searchable index on the left that never moves, and the selected
-        shelf's settings on the right. Changing shelf swaps only the right pane, so your
+        instance's settings on the right. Changing instance swaps only the right pane, so your
         place in the list is never lost. Each slot shows the headline that is
         <strong>live on the site right now</strong>.</p>
         <dl>
-          <dt>Best for</dt><dd>Editing six shelves in a row</dd>
-          <dt>Strength</dt><dd>The only direction that shows what a shelf actually holds</dd>
+          <dt>Best for</dt><dd>Editing six instances in a row</dd>
+          <dt>Strength</dt><dd>The only direction that shows what an instance actually holds</dd>
           <dt>Trade-off</dt><dd>Least like the rest of wp-admin, most to build</dd>
         </dl>
       </div>
@@ -192,7 +192,7 @@ footer.page-foot a { color: var(--wp-blue); }
 
   <h2 class="sec" id="settings">Query settings — three designs</h2>
   <p class="note">
-    The dialog behind the icon on every shelf is where the real work happens, and it is
+    The dialog behind the icon on every instance is where the real work happens, and it is
     the part the redesign had not touched. It asks for sixteen post types, nine taxonomies
     under each, and hundreds of terms under those, in one 510px column with no summary and
     no feedback. These three rebuild it on NGN's own v2 design system, whose tokens are
@@ -224,7 +224,7 @@ footer.page-foot a { color: var(--wp-blue); }
         <p class="what">The settings are the right pane. Each line opens in place, and a
         save bar appears only once something has changed.</p>
         <dl>
-          <dt>Best for</dt><dd>Small edits to a shelf you can see</dd>
+          <dt>Best for</dt><dd>Small edits to an instance you can see</dd>
           <dt>Strength</dt><dd>Nothing ever covers the list</dd>
           <dt>Trade-off</dt><dd>Less room, so filters stay compact</dd>
         </dl>
@@ -239,7 +239,7 @@ footer.page-foot a { color: var(--wp-blue); }
         <p class="what">The whole query is one sentence. Every underlined part is a
         button that opens a small editor beneath it.</p>
         <dl>
-          <dt>Best for</dt><dd>Reading a shelf at a glance</dd>
+          <dt>Best for</dt><dd>Reading an instance at a glance</dd>
           <dt>Strength</dt><dd>Impossible to misread what it does</dd>
           <dt>Trade-off</dt><dd>Strains on long or multi-group rules</dd>
         </dl>
@@ -255,8 +255,8 @@ footer.page-foot a { color: var(--wp-blue); }
         <span class="tag">Settings D</span>
         <h3>The workbench</h3>
         <p class="what">A's guided steps, its sentence and its live count, put where B puts
-        them: in the pane rather than over it. The shelves stay on screen the whole time,
-        unsaved work is kept per shelf and marked in the list, and nothing is written until
+        them: in the pane rather than over it. The instances stay on screen the whole time,
+        unsaved work is kept per instance and marked in the list, and nothing is written until
         you save.</p>
         <dl>
           <dt>Scales</dt><dd>Four common types up front, the rest behind a link</dd>
@@ -274,7 +274,7 @@ footer.page-foot a { color: var(--wp-blue); }
         <h3>The sentence, in the pane</h3>
         <p class="what">C's rule written as one plain English line you could read aloud to
         anyone, moved out of the dialog and into D's pane. Click any underlined word to
-        change it. The shelves stay on screen, unsaved work is kept per shelf, and the
+        change it. The instances stay on screen, unsaved work is kept per instance, and the
         live count sits under the sentence so you can see what the rule actually returns.</p>
         <dl>
           <dt>Reads as English</dt><dd>One sentence, no field labels to decode</dd>
@@ -295,7 +295,7 @@ footer.page-foot a { color: var(--wp-blue); }
     pane: the rule still reads as English, and the pane gives it the room the dialog never
     had. Checked against all four tests &mdash; two columns at 1280 and 1440 with no
     horizontal scroll, axe finds no WCAG 2.1 AA violations, the live count updates on every
-    keystroke, and switching shelf mid-edit keeps the unsaved work and marks it in the
+    keystroke, and switching instance mid-edit keeps the unsaved work and marks it in the
     list.</p>
   </div>
 
@@ -326,12 +326,12 @@ footer.page-foot a { color: var(--wp-blue); }
       <tr><th></th><th>A — List table</th><th>B — Grouped accordion</th><th>C — Two-pane</th></tr>
     </thead>
     <tbody>
-      <tr><td>Find one shelf</td><td>Search or sort</td><td>Search or open its family</td><td>Search, list never moves</td></tr>
+      <tr><td>Find one instance</td><td>Search or sort</td><td>Search or open its family</td><td>Search, list never moves</td></tr>
       <tr><td>Screens of scroll</td><td>About 2</td><td>About 1 collapsed</td><td>None — panes scroll separately</td></tr>
       <tr><td>Empty fields</td><td>Hidden</td><td>Hidden</td><td>Shown as "off" / "none set"</td></tr>
       <tr><td>Delete</td><td>Row actions, on hover</td><td>Overflow menu</td><td>Overflow menu</td></tr>
-      <tr><td>Confirm step</td><td colspan="3">All three name the shelf and say it is live before anything is removed</td></tr>
-      <tr><td>Shows live content</td><td>No</td><td>No</td><td><strong>Yes — all 47 shelves filled with real headlines</strong></td></tr>
+      <tr><td>Confirm step</td><td colspan="3">All three name the instance and say it is live before anything is removed</td></tr>
+      <tr><td>Shows live content</td><td>No</td><td>No</td><td><strong>Yes — all 47 instances filled with real headlines</strong></td></tr>
       <tr><td>Familiarity</td><td>Highest</td><td>Medium</td><td>Lowest</td></tr>
       <tr><td>Build cost</td><td>Lowest</td><td>Medium</td><td>Highest</td></tr>
     </tbody>
@@ -340,7 +340,7 @@ footer.page-foot a { color: var(--wp-blue); }
   <div class="rec">
     <b>Recommendation: C, with A as the fallback.</b>
     <p>All three solve the three problems. Only C answers the question editors actually
-    have — <em>what is on this shelf right now?</em> — by showing the live headline in each
+    have — <em>what is on this instance right now?</em> — by showing the live headline in each
     slot instead of a number. That is worth the extra build.
     If the build cost comes back too high, Direction A plus B's grouping as view links
     gets most of the value for a fraction of the work, and the comparison is already here
@@ -349,7 +349,7 @@ footer.page-foot a { color: var(--wp-blue); }
 
   <footer class="page-foot">
     Built for <strong>NUEAC-398</strong>, Northeastern Global News.<br>
-    Shelf settings read from the live screen at <code>admin.php?page=ngn-curated-posts</code>
+    Instance settings read from the live screen at <code>admin.php?page=ngn-curated-posts</code>
     on 20 October 2026. Headlines in Direction C scraped from news.northeastern.edu on
     21 October 2026 — a snapshot, not a feed. Prototypes are front-end only: no data is
     written and the public site is untouched.<br>

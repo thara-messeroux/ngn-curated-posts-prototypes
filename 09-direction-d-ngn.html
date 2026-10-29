@@ -108,10 +108,10 @@
 
     <div class="card index">
       <div class="tools">
-        <label class="screen-reader-text" for="q">Search shelves</label>
+        <label class="screen-reader-text" for="q">Search instances</label>
         <input type="search" id="q" placeholder="Search name or slug">
       </div>
-      <div class="scroll" id="list" role="listbox" aria-label="Shelves"></div>
+      <div class="scroll" id="list" role="listbox" aria-label="Instances"></div>
       <p class="foot" id="num"></p>
     </div>
 
@@ -136,7 +136,7 @@
 
   function renderList() {
     var list = visible();
-    $('num').textContent = list.length + ' of ' + live().length + ' shelves';
+    $('num').textContent = list.length + ' of ' + live().length + ' instances';
 
     if (!list.length) { $('list').innerHTML = '<p class="empty">Nothing matches that.</p>'; return; }
 
@@ -166,7 +166,7 @@
 
   function renderDetail() {
     var d = live().filter(function (x) { return x.s === sel; })[0];
-    if (!d) { $('detail').innerHTML = '<p class="empty">Pick a shelf on the left to see its settings.</p>'; return; }
+    if (!d) { $('detail').innerHTML = '<p class="empty">Pick an instance on the left to see its settings.</p>'; return; }
 
     var html = '<div class="detail-head">' +
       '<div><span class="title-line"><h2 class="t-title" style="margin:0">' + esc(d.n) + '</h2>' +

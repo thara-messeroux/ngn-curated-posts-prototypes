@@ -21,7 +21,7 @@ the admin screen itself to change, and none of the settings redesign exists in
 
 | What he asked for | Status | Evidence |
 | --- | --- | --- |
-| No grouping into Featured / Most Read / Latest sections, too high maintenance | Met | The shelf list is a flat A to Z list. No headings, no `optgroup`. |
+| No grouping into Featured / Most Read / Latest sections, too high maintenance | Met | The instance list is a flat A to Z list. No headings, no `optgroup`. |
 | No live story slots shown as boxes, the page is for setup not monitoring | Met | No slot or story-row elements anywhere on the page. |
 | No red for Exclude terms, keep red for things that matter | Met | Exclude chips are a dashed border with a minus sign in muted ink. Red appears only on the Save button, where it is the Northeastern brand. |
 | The settings are the whole purpose, make them premium and modern and follow the NGN design system | Met | The settings are now the primary interface rather than a dialog. Every colour, radius and type size is a token read from the theme's own design system v2. |
@@ -39,7 +39,7 @@ the admin screen itself to change, and none of the settings redesign exists in
 
 | What he found | Status |
 | --- | --- |
-| Editing the shelf you are viewing left stale headlines | Fixed in code on `NUEAC-398-curated-posts-admin`, with six regression tests. |
+| Editing the instance you are viewing left stale headlines | Fixed in code on `NUEAC-398-curated-posts-admin`, with six regression tests. |
 
 ---
 
@@ -67,8 +67,8 @@ Every field of `QuerySettings` is reachable, verified by clicking each one.
 | Check | Result |
 | --- | --- |
 | Save bar appears on change | Pass |
-| Switching shelf mid-edit keeps the draft and marks the row | Pass |
-| Returning to the shelf restores the draft | Pass |
+| Switching instance mid-edit keeps the draft and marks the row | Pass |
+| Returning to the instance restores the draft | Pass |
 | Discard reverts | Pass |
 | Save clears the bar and the marker | Pass |
 | Count typed as 999 or 51 clamps to 50 | Pass |
@@ -143,7 +143,7 @@ missed. All four were real, all four are fixed.
 | Typing 0 or -5 left the box showing 0 while the sentence said 1 | I asserted on the sentence and never read the box back. |
 | 3.7 was accepted, giving "Show the 3.7 newest" | I only tested integers. |
 | The stories box and the days box had no label a screen reader could read | My axe runs scanned the page with those editors closed. Running axe in **every** editor state found two `label` violations. |
-| "1 stories" in the shelf list, and "News Post" never pluralised | No plural handling existed anywhere. |
+| "1 stories" in the instance list, and "News Post" never pluralised | No plural handling existed anywhere. |
 
 The axe gap is the serious one. "0 violations, all nine pages" was true only of the
 states I happened to leave open. The scan now walks every editor.

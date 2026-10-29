@@ -65,7 +65,7 @@
 
 .empty { padding: var(--ngn-space-6) var(--ngn-space-5); color: var(--ngn-on-surface-variant); font-size: 13.5px; }
 
-/* Naming happens in the right pane, where a shelf's own details are read,
+/* Naming happens in the right pane, where an instance's own details are read,
    rather than on top of the list of names. The detail card steps aside while
    it is open, so the pane holds one thing at a time. */
 .namer { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-4); }
@@ -248,30 +248,30 @@
     <button class="btn btn-outlined btn-sm" type="button" id="addnew" style="align-self:center">Add new</button>
   </div>
   <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:76ch">
-    Direction D and Settings C on one screen, the way the real one works. Pick a shelf,
-    press Query settings, and the sentence opens over the list. Save and the shelf
-    underneath updates. All 47 shelves are seeded from the live export.
+    Direction D and Settings C on one screen, the way the real one works. Pick an instance,
+    press Query settings, and the sentence opens over the list. Save and the instance
+    underneath updates. All 47 instances are seeded from the live export.
   </p>
 
   <div class="panes">
 
     <div class="card index">
       <div class="tools">
-        <label class="screen-reader-text" for="q">Search shelves</label>
+        <label class="screen-reader-text" for="q">Search instances</label>
         <input type="search" id="q" placeholder="Search name or slug">
       </div>
-      <div class="scroll" id="list" role="listbox" aria-label="Shelves"></div>
+      <div class="scroll" id="list" role="listbox" aria-label="Instances"></div>
       <p class="foot" id="num"></p>
     </div>
 
     <div class="right">
       <form class="card namer" id="namer" hidden>
         <div>
-          <h2 class="t-title" id="namelab" style="margin:0">Name this shelf</h2>
+          <h2 class="t-title" id="namelab" style="margin:0">Name this instance</h2>
           <p class="t-body-sm muted" id="namesub" style="margin:2px 0 0"></p>
         </div>
         <div class="field">
-          <label for="name">Shelf name</label>
+          <label for="name">Instance name</label>
           <input type="text" id="name" autocomplete="off">
         </div>
         <div class="field">
@@ -296,7 +296,7 @@
 
     <div class="sheet-head">
       <div>
-        <h2 class="t-headline" id="t" style="margin:0">What this shelf shows</h2>
+        <h2 class="t-headline" id="t" style="margin:0">What this instance shows</h2>
         <p class="t-body-sm muted" style="margin:2px 0 0" id="who"></p>
       </div>
       <button class="x" type="button" aria-label="Close" id="x">&times;</button>
@@ -336,7 +336,7 @@
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   /* ====================================================================
-     Seeding one shelf's rule from the taxonomy export.
+     Seeding one instance's rule from the taxonomy export.
 
      The export is a spreadsheet, so its columns carry labels rather than
      slugs. Everything that can be mapped to a real post type or taxonomy is;
@@ -421,28 +421,28 @@
      ==================================================================== */
 
   var sel = CURATED[0].s, confirming = null, deleted = {}, justSaved = null, naming = null;
-  /* editing holds the key of the shelf whose title is being edited in place.
+  /* editing holds the key of the instance whose title is being edited in place.
      keyTouched stops the key following the name once it has been typed in. */
   var editing = null, keyTouched = false;
 
   /* PATCH .../{key}/key renames an instance and Store::rename moves the entry
      and its purge log. What it does not move is the theme's own code: these
      two keys are written into template files, so renaming either of them
-     leaves those templates asking for a shelf that is no longer there. */
+     leaves those templates asking for an instance that is no longer there. */
   var WIRED_IN = {
     'editors-picks':   'sidebar-editors-picks.php',
     'featured-stories': 'class-feed-featured.php and overlay-fullscreen-menu-news.php'
   };
 
   /* Curated_Posts_Store::empty_query: what the backend gives a brand new
-     shelf. Not a guess, and not blank. */
+     instance. Not a guess, and not blank. */
   var EMPTY_RULE = {
     count: 5, sort: 'Newest', types: ['newspost'], windowDays: 14,
     searchTypes: ['newspost'], filters: {},
     rotation: { on: false, interval: '1h', start: '00:00' }
   };
 
-  /* The key is the shelf's identity. create_instance sanitises it, refuses a
+  /* The key is the instance's identity. create_instance sanitises it, refuses a
      duplicate with a 409, and nothing afterwards can change it, so the name
      field shows the key it is about to take. */
   function keyFrom(name) {
@@ -460,7 +460,7 @@
 
   function shelf(k) { return CURATED.filter(function (d) { return d.s === k; })[0]; }
 
-  function addShelf(key, label, rule) {
+  function addInstance(key, label, rule) {
     CURATED.push({ n: label, s: key, g: 'Other', stories: 0, types: '', inc: [], exc: [],
                    search: '', rot: 'Off', rotStart: 'N/A', upcoming: 0 });
     SETTINGS[key] = JSON.parse(JSON.stringify(rule));
@@ -497,9 +497,9 @@
     var bad = '', warn = '';
 
     if (!k) bad = 'The key needs some letters or numbers.';
-    else if (moved && keyTaken(k)) bad = 'A shelf already uses ' + k + '. Pick another.';
+    else if (moved && keyTaken(k)) bad = 'An instance already uses ' + k + '. Pick another.';
     else if (moved && WIRED_IN[editing]) {
-      warn = 'The theme asks for this shelf by ' + editing + ' in ' + WIRED_IN[editing] +
+      warn = 'The theme asks for this instance by ' + editing + ' in ' + WIRED_IN[editing] +
              '. Changing the key empties whatever those render until they are updated too.';
     } else if (moved) {
       warn = 'Changing the key is an administrator action. Anything asking for ' + editing + ' stops finding it.';
@@ -508,7 +508,7 @@
     }
 
     h.className = 'hint' + (bad ? ' is-bad' : (warn ? ' is-warn' : ''));
-    h.textContent = bad || warn || 'The site asks for this shelf by this key.';
+    h.textContent = bad || warn || 'The site asks for this instance by this key.';
     $('r-save').disabled = !!bad || (name === shelf(editing).n && !moved);
   }
 
@@ -538,7 +538,7 @@
   function openNamer(mode, from) {
     naming = { mode: mode, from: from || null };
     var d = from ? shelf(from) : null;
-    $('namelab').textContent = mode === 'rename' ? 'Rename this shelf' : 'Name this shelf';
+    $('namelab').textContent = mode === 'rename' ? 'Rename this instance' : 'Name this instance';
     $('namesub').textContent = mode === 'rename' ? d.n : 'It will join the list on the left, in order.';
     $('namego').textContent  = mode === 'rename' ? 'Save name' : 'Create';
     $('name').value = mode === 'rename' ? d.n : '';
@@ -569,8 +569,8 @@
 
     if (!v && !k)         { h.className = 'hint'; h.textContent = 'The key follows the name. Edit it here if you want a different one.'; }
     else if (!k)          { h.className = 'hint is-bad'; h.textContent = 'The key needs some letters or numbers.'; }
-    else if (keyTaken(k)) { h.className = 'hint is-bad'; h.innerHTML = 'A shelf already uses <code>' + esc(k) + '</code>. Pick another.'; }
-    else                  { h.className = 'hint'; h.innerHTML = 'The site will ask for this shelf by <code>' + esc(k) + '</code>.'; }
+    else if (keyTaken(k)) { h.className = 'hint is-bad'; h.innerHTML = 'An instance already uses <code>' + esc(k) + '</code>. Pick another.'; }
+    else                  { h.className = 'hint'; h.innerHTML = 'The site will ask for this instance by <code>' + esc(k) + '</code>.'; }
 
     $('namego').disabled = !v || !k || keyTaken(k);
   }
@@ -611,7 +611,7 @@
 
   function renderList() {
     var list = visible();
-    $('num').textContent = list.length + ' of ' + liveShelves().length + ' shelves';
+    $('num').textContent = list.length + ' of ' + liveShelves().length + ' instances';
 
     if (!list.length) { $('list').innerHTML = '<p class="empty">Nothing matches that.</p>'; return; }
 
@@ -668,7 +668,7 @@
 
   function renderDetail() {
     var d = liveShelves().filter(function (x) { return x.s === sel; })[0];
-    if (!d) { $('detail').innerHTML = '<p class="empty">Pick a shelf on the left to see its settings.</p>'; return; }
+    if (!d) { $('detail').innerHTML = '<p class="empty">Pick an instance on the left to see its settings.</p>'; return; }
     var s = SETTINGS[d.s];
 
     var html = '<div class="detail-head">' +
@@ -816,7 +816,7 @@
   }
 
   /* The taxonomies the chosen post types offer, plus any that already carry a
-     filter, so a term set on a shelf is never stranded out of reach. */
+     filter, so a term set on an instance is never stranded out of reach. */
   function availableTax() {
     var a = taxonomiesFor(draft.types).slice();
     Object.keys(draft.filters).forEach(function (t) {
@@ -1111,8 +1111,8 @@
     return gi === 'x' ? fil(taxKey).exclude : fil(taxKey).groups[+gi];
   }
 
-  /* The dialog is seeded from whatever the shelf has saved, so it opens on
-     that shelf's real rule rather than on a blank one. */
+  /* The dialog is seeded from whatever the instance has saved, so it opens on
+     that instance's real rule rather than on a blank one. */
   function openDialog(which) {
     var d = liveShelves().filter(function (x) { return x.s === which; })[0];
     if (!d) return;
@@ -1214,7 +1214,7 @@
         /* The store names and keys the copy itself, so there is nothing to
            ask: one click, and the copy is selected and ready to edit. */
         var src = shelf(on);
-        addShelf(copyKey(on), src.n + ' (Copy)', SETTINGS[on]);
+        addInstance(copyKey(on), src.n + ' (Copy)', SETTINGS[on]);
         closeNamer();
         return renderIndex();
       }
@@ -1346,10 +1346,10 @@
 
     var key = keyFrom($('nkey').value);
     if (!key || keyTaken(key)) { nameHint(); $('nkey').focus(); return; }
-    addShelf(key, label, EMPTY_RULE);
+    addInstance(key, label, EMPTY_RULE);
     closeNamer();
     renderIndex();
-    /* A new shelf has defaults and no terms, so the rule is the next step. */
+    /* A new instance has defaults and no terms, so the rule is the next step. */
     openDialog(key);
   });
 

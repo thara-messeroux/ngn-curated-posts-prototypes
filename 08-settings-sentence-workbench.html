@@ -109,17 +109,17 @@
   <h1 class="t-headline" style="margin:0 0 4px">Curated Posts</h1>
   <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:74ch">
     The rule reads as one plain sentence. Click any underlined word to change it. The
-    shelf list stays on screen the whole time, and unsaved work is kept per shelf.
+    instance list stays on screen the whole time, and unsaved work is kept per instance.
   </p>
 
   <div class="panes">
 
     <div class="card index">
       <div class="tools">
-        <label class="screen-reader-text" for="q">Search shelves</label>
+        <label class="screen-reader-text" for="q">Search instances</label>
         <input type="search" id="q" placeholder="Search shelves">
       </div>
-      <div class="scroll" id="list" role="listbox" aria-label="Shelves"></div>
+      <div class="scroll" id="list" role="listbox" aria-label="Instances"></div>
       <p class="foot" id="foot"></p>
     </div>
 
@@ -515,7 +515,7 @@
         ((dirty[r.i] || (r.i === sel && changed())) ? '<span class="edited" title="Unsaved changes"></span>' : '') +
         '</button>';
     }).join('');
-    $('foot').textContent = shown.length + ' of ' + SHELVES.length + ' shelves';
+    $('foot').textContent = shown.length + ' of ' + SHELVES.length + ' instances';
   }
 
   function select(i) {

@@ -14,37 +14,37 @@ admin design system so any direction drops in without a restyle.
 
 ## The problem
 
-Curated Posts controls every automatically-filled shelf on the site — the homepage rails,
-the Most read lists, the section fronts. There are **47 shelves** on one page.
+Curated Posts controls every automatically-filled instance on the site — the homepage rails,
+the Most read lists, the section fronts. There are **47 instances** on one page.
 
-1. **No search or filter.** Reaching one shelf means reading past the others.
-2. **Every shelf renders expanded**, including fields that hold no value. Around 376
+1. **No search or filter.** Reaching one instance means reading past the others.
+2. **Every instance renders expanded**, including fields that hold no value. Around 376
    label/value lines are printed on load; roughly half read `None`, `N/A` or `Off`.
 3. **Delete sits beside Rename and Duplicate**, same size, same row, with nothing marking
-   a shelf as live on the site before it is removed.
+   an instance as live on the site before it is removed.
 
 ## What each prototype does
 
 All three are driven by the same data and share the same fixes:
 
 - Search filters on name and slug, client side, no reload
-- Collapsed by default; a shelf opens to show only the fields that are set
-- A one-line summary (`stories · post types · include terms`) tells similar shelves apart
-- One flat list, A to Z — no group headings to maintain, and shelves sharing a name
+- Collapsed by default; an instance opens to show only the fields that are set
+- A one-line summary (`stories · post types · include terms`) tells similar instances apart
+- One flat list, A to Z — no group headings to maintain, and instances sharing a name
   prefix still land together
 - Delete moved behind an overflow menu or row-actions strip, with an inline confirm that
-  names the shelf and says it is live
-- A state pill: **Live**, or **Needs check** where a shelf has unresolved exclude rules
+  names the instance and says it is live
+- A state pill: **Live**, or **Needs check** where an instance has unresolved exclude rules
 
 Direction C adds one thing the others do not: each slot shows the **headline currently
-live on the site** for that shelf, so the screen answers "what is on this shelf right
+live on the site** for that instance, so the screen answers "what is on this instance right
 now?" without opening the site in another tab.
 
-All **47 shelves are filled**, 182 headlines in total. Two sources, named on screen:
+All **47 instances are filled**, 182 headlines in total. Two sources, named on screen:
 
-- **Read off the live page** — scraped from the rail where that shelf renders
-- **Matched by this shelf's rules** — fetched from the site's own WordPress REST API
-  using the shelf's post type and include terms, newest first
+- **Read off the live page** — scraped from the rail where that instance renders
+- **Matched by this instance's rules** — fetched from the site's own WordPress REST API
+  using the instance's post type and include terms, newest first
 
 Where a slot could not be filled it is drawn differently and labelled *not captured*,
 never shown as empty — a gap in the prototype's data is never mistaken for a gap on the
@@ -92,15 +92,15 @@ index.html                  Stakeholder hub — problems, three directions, comp
 03-two-pane.html            Direction C
 assets/wp-admin.css         WordPress 6.x admin design tokens and components
 assets/data.js              The 47 instances, read from the live screen, plus shared helpers
-assets/headlines.js         182 headlines, all 47 shelves filled, captured 21 Oct 2026
+assets/headlines.js         182 headlines, all 47 instances filled, captured 21 Oct 2026
 ```
 
 ## Data
 
-Shelf settings read from the live wp-admin screen on **20 October 2026**; field names
+Instance settings read from the live wp-admin screen on **20 October 2026**; field names
 match the plugin's own labels. Headlines scraped from news.northeastern.edu on
 **21 October 2026** — a snapshot, not a feed. In the real plugin these come from the same
-query the shelf already runs, so no extra request is needed.
+query the instance already runs, so no extra request is needed.
 
 The prototypes write nothing — static HTML, CSS and vanilla JS, no build step, no
 dependencies.
@@ -108,7 +108,7 @@ dependencies.
 ## Recommendation
 
 **Direction C is the strongest, and it is not what shipped first.** All three solve the
-three problems; only C answers the question editors actually have — *what is on this shelf
+three problems; only C answers the question editors actually have — *what is on this instance
 right now?* — by showing the live headline in each slot instead of a number.
 
 What shipped in [PR #898](https://github.com/News-at-Northeastern/environment/pull/898) is

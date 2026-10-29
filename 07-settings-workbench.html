@@ -9,7 +9,7 @@
 .panes { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 300px; } }
 
-/* Left: the shelves. Never covered, never moves. */
+/* Left: the instances. Never covered, never moves. */
 .index { overflow: hidden; display: flex; flex-direction: column; max-height: 700px; position: sticky; top: var(--ngn-space-4); }
 .index .tools { padding: var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); }
 .index .tools input { width: 100%; }
@@ -128,7 +128,7 @@
   <h1 class="t-headline" style="margin:0 0 4px">Curated Posts</h1>
   <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:72ch">
     Settings D. A's guided steps, its sentence and its live count, put where B puts
-    them: in the pane rather than over it. The list of shelves is never covered, and
+    them: in the pane rather than over it. The list of instances is never covered, and
     nothing is written until you save.
   </p>
 
@@ -136,10 +136,10 @@
 
     <div class="card index">
       <div class="tools">
-        <label class="screen-reader-text" for="q">Search shelves</label>
+        <label class="screen-reader-text" for="q">Search instances</label>
         <input type="search" id="q" placeholder="Search shelves">
       </div>
-      <div class="scroll" id="list" role="listbox" aria-label="Shelves"></div>
+      <div class="scroll" id="list" role="listbox" aria-label="Instances"></div>
       <p class="foot" id="foot"></p>
     </div>
 
@@ -280,7 +280,7 @@
         ((dirty[r.i] || (r.i === sel && changed())) ? '<span class="edited" title="Unsaved changes"></span>' : '') +
         '</button>';
     }).join('');
-    $('foot').textContent = shown.length + ' of ' + SHELVES.length + ' shelves';
+    $('foot').textContent = shown.length + ' of ' + SHELVES.length + ' instances';
   }
 
   function renderTypes() {

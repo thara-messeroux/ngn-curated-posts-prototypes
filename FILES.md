@@ -23,7 +23,7 @@ WordPress core admin design tokens so any of them drops into wp-admin without a 
 | --- | --- |
 | [`assets/wp-admin.css`](assets/wp-admin.css) | The WordPress 6.x admin design system as tokens and components: surfaces, borders, text, the blue and the danger red, `.button`, `.button-primary`, `.wp-list-table`, notices, pills. Shared by all three directions. |
 | [`assets/data.js`](assets/data.js) | All 47 curated instances read off the live wp-admin screen on 20 October 2026, with the plugin's own field names, plus the shared helpers the three directions use to render terms, summaries and pills. |
-| [`assets/headlines.js`](assets/headlines.js) | 182 headlines filling every slot on all 47 shelves. Each one records where it came from: `rail` means it was read off the live page, `rule` means it was fetched through the site's WordPress REST API using that shelf's own post type and include terms. |
+| [`assets/headlines.js`](assets/headlines.js) | 182 headlines filling every slot on all 47 instances. Each one records where it came from: `rail` means it was read off the live page, `rule` means it was fetched through the site's WordPress REST API using that instance's own post type and include terms. |
 
 ## The evidence
 

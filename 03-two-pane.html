@@ -130,16 +130,16 @@
   </div>
   <p class="wp-subtitle">
     <strong>Direction C — Two-pane workbench.</strong>
-    A searchable index on the left that never moves, and the selected shelf's settings on
-    the right. Picking a different shelf swaps the right pane only, so your place in the
-    list is never lost — the thing that makes editing six shelves in a row painful today.
+    A searchable index on the left that never moves, and the selected instance's settings on
+    the right. Picking a different instance swaps the right pane only, so your place in the
+    list is never lost — the thing that makes editing six instances in a row painful today.
   </p>
   <hr class="wp-header-end">
 
   <div class="notice notice-info">
     <p><strong>Why this one:</strong> this is a setup screen, opened now and then rather
-    than watched. The left pane holds every shelf in 340px so you can find one by typing,
-    and the right pane shows that shelf's rules without the other 46 in the way.</p>
+    than watched. The left pane holds every instance in 340px so you can find one by typing,
+    and the right pane shows that instance's rules without the other 46 in the way.</p>
   </div>
 
   <div class="panes">
@@ -185,8 +185,8 @@
     }
 
     // One flat list, A to Z. No group headings and no rule deciding which
-    // family a shelf belongs to, so a rename cannot quietly move it.
-    // Shelves that share a name prefix still sit together, for free.
+    // family an instance belongs to, so a rename cannot quietly move it.
+    // Instances that share a name prefix still sit together, for free.
     list.slice().sort(function (a, b) {
       return a.n.localeCompare(b.n);
     }).forEach(function (d) {
@@ -205,7 +205,7 @@
     var d = live().filter(function (x) { return x.s === sel; })[0], host = $("detail");
 
     if (!d) {
-      host.innerHTML = '<div class="empty-detail">Pick a shelf on the left to see its settings.</div>';
+      host.innerHTML = '<div class="empty-detail">Pick an instance on the left to see its settings.</div>';
       return;
     }
 
