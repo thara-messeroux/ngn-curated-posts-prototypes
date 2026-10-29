@@ -88,7 +88,21 @@
 .dbody { padding: var(--ngn-space-3) var(--ngn-space-5) var(--ngn-space-5); }
 .dbody p { margin: 0; font-size: 13.5px; line-height: 1.6; }
 .dbody p + p { margin-top: var(--ngn-space-3); }
-.dbody .is-warn { color: var(--ngn-warning); }
+
+/* The consequences are the point of the dialog, so they are a panel rather
+   than a muted line under the question. #bf0229 on #ffdad8 is 5.00:1. */
+.danger-note {
+  margin-top: var(--ngn-space-4);
+  background: var(--ngn-error-container);
+  border-left: 3px solid var(--ngn-error);
+  border-radius: var(--ngn-radius-sm);
+  padding: var(--ngn-space-3) var(--ngn-space-4);
+  display: flex; gap: var(--ngn-space-3); align-items: flex-start;
+}
+.danger-note svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--ngn-error); }
+.danger-note .lines { min-width: 0; }
+.danger-note p { color: var(--ngn-error); font-weight: 500; }
+.danger-note p + p { margin-top: var(--ngn-space-2); font-weight: 400; }
 /* The brand fill is already red, so the destructive button takes the error
    red instead and the two do not read as the same button. */
 .btn-danger { background: var(--ngn-error); color: #fff; border-color: var(--ngn-error); }
@@ -344,8 +358,13 @@
     </div>
     <div class="dbody" id="d-body">
       <p id="d-what"></p>
-      <p class="is-warn" id="d-wired" hidden></p>
-      <p class="muted" id="d-undo">This cannot be undone. There is no trash to restore it from.</p>
+      <div class="danger-note">
+        <span id="d-icon"></span>
+        <span class="lines">
+          <p id="d-undo">This cannot be undone. There is no trash to restore it from.</p>
+          <p id="d-wired" hidden></p>
+        </span>
+      </div>
     </div>
     <div class="sheet-foot">
       <span class="spacer"></span>
@@ -503,12 +522,15 @@
      trash, no restore and no undo anywhere in the module, so the dialog says
      so and the safe answer takes focus. */
 
+  /* assets/images/icons/exclamation-triangle-micro.svg, from the theme. */
+  var WARN_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-slot="icon"><path fill-rule="evenodd" d="M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 4a.75.75 0 0 1 .75.75v3a.75.75 0 1 1-1.5 0v-3A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/></svg>';
+
   function openDelete(which) {
     var d = shelf(which);
     if (!d) return;
     confirming = which;
     closeMenu();
-    $('d-title').textContent = 'Delete \u201c' + d.n + '\u201d?';
+    $('d-title').textContent = 'Are you sure you want to delete \u201c' + d.n + '\u201d?';
     $('d-what').textContent = 'It fills ' + stories(d.stories) + ' on the site right now.';
 
     var wired = WIRED_IN[which];
@@ -518,6 +540,7 @@
         wired + '. Those will render nothing once it is gone.';
     }
 
+    $('d-icon').innerHTML = WARN_ICON;
     $('dscrim').hidden = false;
     document.body.style.overflow = 'hidden';
     /* Focus the answer that changes nothing, so Enter or a stray space cannot

@@ -1294,3 +1294,25 @@ two-taxonomy exclude case above. Both include clauses across two taxonomies read
 … and also in Department: …". Clicking each of the three tokens in turn opens its own
 taxonomy, re-queried each time because the sentence is rebuilt on every render. axe-core
 clean on the exclude editor and with two clauses. No console errors.
+
+## The delete question asks it out loud
+
+"Delete "Artificial intelligence"?" was a question, but the consequence sat under it as a
+muted line that read like a footnote. Both halves fixed.
+
+**The title says it.** "Are you sure you want to delete "Artificial intelligence"?"
+
+**The consequence is a panel, not a footnote.** `--ngn-error-container` behind
+`--ngn-error`, measured at **5.00:1**, with a 3px left border and the theme's own
+`exclamation-triangle-micro.svg`. The irreversibility line is the first thing in it, at
+weight 500.
+
+Both consequences live in the one panel, because they answer the same question. For
+`editors-picks` and `featured-stories` the template warning joins it underneath at normal
+weight, so the eye takes the severe line first and the specific one second, rather than
+weighing two panels against each other.
+
+Checked at 1440 and 320: axe-core clean with and without the template warning, no
+horizontal scroll, the title wraps to two lines on a phone with the panel and both buttons
+still in view, Keep it still to the left of Delete. All four routes re-run after the
+change, including a real delete that took the list to 46. No console errors.
