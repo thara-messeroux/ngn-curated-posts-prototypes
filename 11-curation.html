@@ -959,7 +959,7 @@
   }
 
   /* One token per taxonomy that has exclusions, each opening the editor for
-     that taxonomy, so "skipping Preview or Final" can no longer hide which
+     that taxonomy, so "excluding Preview or Final" can no longer hide which
      taxonomy those two came from. */
   function excludeTokens(sc) {
     sc = sc || 'auto';
@@ -1008,7 +1008,7 @@
         var inc = f.groups.reduce(function (a, g) { return a.concat(g); }, []);
         f.exclude.forEach(function (t) {
           if (inc.indexOf(t) > -1) {
-            out.push('“' + t + '” is both required and skipped, so nothing can match it.');
+            out.push('“' + t + '” is both required and excluded, so nothing can match it.');
           }
         });
       });
@@ -1060,7 +1060,7 @@
       tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
 
     str += ' ' + groupTokens('auto') +
-      '<span class="punc">,</span> <span class="plain">skipping</span> ' +
+      '<span class="punc">,</span> <span class="plain">excluding</span> ' +
       excludeTokens('auto') +
       (draft.useful
         ? '<span class="punc">,</span> <span class="plain">scoring at least</span> ' +
@@ -1096,7 +1096,7 @@
       tok('searchWindow', draft.searchWindowDays + (draft.searchWindowDays === 1 ? ' day' : ' days'));
 
     str += ' ' + groupTokens('manual') +
-      '<span class="punc">,</span> <span class="plain">skipping</span> ' +
+      '<span class="punc">,</span> <span class="plain">excluding</span> ' +
       excludeTokens('manual') +
       '<span class="punc">.</span>';
 
@@ -1450,7 +1450,7 @@
         var bucket = bucketFor(tm.dataset.gi), term = tm.dataset.term, pos = bucket.indexOf(term);
         if (pos > -1) { bucket.splice(pos, 1); }
         else {
-          // Within one taxonomy a term cannot be required and skipped at once.
+          // Within one taxonomy a term cannot be required and excluded at once.
           var f = fil(taxKey);
           if (tm.dataset.gi === 'x') {
             f.groups.forEach(function (g) { var q = g.indexOf(term); if (q > -1) g.splice(q, 1); });

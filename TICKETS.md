@@ -1551,3 +1551,31 @@ says so, so Xris can choose rather than being asked.
 Checked: axe-core clean on the curation screen and in the usefulness editor, the dialog
 opens and saves from this screen, 0 removes the clause, no console errors. All twelve pages
 restamped so nothing serves a cached asset.
+
+## Excluding, not skipping
+
+Xris asked for "excluding" in place of "skipping". It is the word the rest of the
+screen already uses: the detail pane says "Exclude terms" and the editor is
+headed "Exclude". The sentence was the only place reading "skipping", so the
+screen was using two words for one thing.
+
+Changed in the four pages that render the sentence (06, 08, 10, 11), in the UI
+string and in the validation message that read "is both required and skipped".
+The dated entries above keep the old word, since they record what was written at
+the time.
+
+## Rotation stays on the instance, not on the manual search
+
+Thara asked whether the manual half needs its own "Rotate them every 1h", since
+the automatic half has one.
+
+It does not, and the model settles it. Rotation is stored once per instance
+(`rot`, `rotStart`), and `Post_Selector_Search::query()` takes `terms_include`,
+`terms_exclude`, `count`, `sort` and `sort_window_days` and no rotation
+parameter at all. The manual half is a search tool: an editor is looking at the
+results and picking one. Rotating a list while someone is reading it would be a
+defect, not a feature. And a story pinned by hand is pinned on purpose; rotating
+it away would undo the pin.
+
+So the sentence says "Rotate them every 1h" once, about the instance, which is
+where the setting lives.

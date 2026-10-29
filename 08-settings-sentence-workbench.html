@@ -259,7 +259,7 @@
       var inc = f.groups.reduce(function (a, g) { return a.concat(g); }, []);
       f.exclude.forEach(function (t) {
         if (inc.indexOf(t) > -1) {
-          out.push('\u201c' + t + '\u201d is both required and skipped, so nothing can match it.');
+          out.push('\u201c' + t + '\u201d is both required and excluded, so nothing can match it.');
         }
       });
     });
@@ -306,7 +306,7 @@
 
     var ex = allExcluded();
     str += ' <span class="plain">in</span> ' + groupTokens() +
-      '<span class="punc">,</span> <span class="plain">skipping</span> ' +
+      '<span class="punc">,</span> <span class="plain">excluding</span> ' +
       tok('exclude', ex.length ? listJoin(ex.map(function (f) { return f.term; })) : 'nothing', !ex.length) +
       '<span class="punc">.</span>';
 
@@ -585,7 +585,7 @@
       var bucket = bucketFor(tm.dataset.gi), term = tm.dataset.term, at = bucket.indexOf(term);
       if (at > -1) { bucket.splice(at, 1); }
       else {
-        // Within one taxonomy a term cannot be required and skipped at once.
+        // Within one taxonomy a term cannot be required and excluded at once.
         var f = fil(taxKey);
         if (tm.dataset.gi === 'x') {
           f.groups.forEach(function (g) { var q = g.indexOf(term); if (q > -1) g.splice(q, 1); });
