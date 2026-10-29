@@ -76,16 +76,6 @@
 .namer code { font-family: var(--ngn-mono); font-size: 12px; }
 .detail[hidden] { display: none; }
 
-/* A shelf with no terms matches everything, which is worth saying before
-   someone walks away thinking it is finished. */
-.notice {
-  margin: var(--ngn-space-4) var(--ngn-space-5) 0;
-  border: 1px solid var(--ngn-outline-variant); border-left: 3px solid var(--ngn-tertiary);
-  border-radius: var(--ngn-radius-sm); padding: var(--ngn-space-3) var(--ngn-space-4);
-  display: flex; align-items: center; gap: var(--ngn-space-3); flex-wrap: wrap; font-size: 13.5px;
-}
-.notice .btn { margin-left: auto; }
-
 .saved-note { font-size: 12px; color: var(--ngn-success); }
 
 .confirm {
@@ -721,15 +711,6 @@
     var inc = includeView(s), exc = excludeView(s);
     var rot = s.rotation;
 
-    /* No terms either way means the shelf takes whatever is newest, which is
-       almost never what a new shelf is for. */
-    if (!inc && !exc) {
-      html += '<div class="notice"><span>No terms set, so this shelf takes the newest ' +
-        (s.types.length ? esc(listJoin(s.types.map(function (k) { return pluralType(k, 2); }))) : 'stories of any type') +
-        ' on the site.</span>' +
-        '<button class="btn btn-outlined btn-sm" type="button" data-settings="' + esc(d.s) + '">Narrow it</button></div>';
-    }
-
     html += '<div class="sections">' +
       '<div class="sect"><h3>Rules</h3><div class="kv">' +
         row('Stories', s.count) +
@@ -804,7 +785,7 @@
     return JSON.stringify(c);
   }
 
-  var slug = null, SAVED = null, draft = null, open = null, lastTok = null, taxKey = null, termQ = {}, returnTo = null;
+  var slug = null, SAVED = null, draft = null, open = null, lastTok = null, taxKey = null, termQ = {};
 
   var changed = function () { return norm(draft) !== norm(SAVED); };
   var INTERVALS = ['15m', '30m', '1h', '2h', '3h', '4h', '6h', '12h', '24h'];
@@ -1132,10 +1113,10 @@
 
   /* The dialog is seeded from whatever the shelf has saved, so it opens on
      that shelf's real rule rather than on a blank one. */
-  function openDialog(which, from) {
+  function openDialog(which) {
     var d = liveShelves().filter(function (x) { return x.s === which; })[0];
     if (!d) return;
-    slug = which; returnTo = from || '[data-menu]';
+    slug = which;
     SAVED = clone(SETTINGS[which]);
     draft = clone(SAVED);
     open = null; lastTok = null; taxKey = null; termQ = {};
@@ -1150,12 +1131,10 @@
     $('scrim').hidden = true;
     document.body.style.overflow = '';
     open = null; slug = null;
-    /* The kebab item and the notice's button both open this, so focus goes
-       back to whichever was clicked rather than to the first match. The kebab
-       is the fallback, since the menu item itself has closed by now. */
-    var back = (returnTo && document.querySelector(returnTo)) || document.querySelector('[data-menu]');
+    /* The menu item that opened this has closed behind it, so focus goes
+       back to the kebab it came from. */
+    var back = document.querySelector('[data-menu]');
     if (back) back.focus();
-    returnTo = null;
   }
 
   /* Tab must not walk out of the dialog into the list behind it. */
@@ -1223,11 +1202,10 @@
 
     if (set) {
       var at = set.dataset.settings;
-      var from = set.closest('.notice') ? '.notice [data-settings]' : '[data-menu]';
       closeMenu(); closeNamer();
-      sel = at; justSaved = null;
+      sel = at; justSaved = null; editing = null;
       renderIndex();
-      return openDialog(at, from);
+      return openDialog(at);
     }
     if (act) {
       var on = act.dataset.on;
@@ -1372,7 +1350,7 @@
     closeNamer();
     renderIndex();
     /* A new shelf has defaults and no terms, so the rule is the next step. */
-    openDialog(key, '.notice [data-settings]');
+    openDialog(key);
   });
 
   $('q').addEventListener('input', function () {

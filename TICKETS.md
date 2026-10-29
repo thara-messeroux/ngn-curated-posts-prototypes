@@ -1149,3 +1149,24 @@ Checked: name only, key only, a key the theme hardcodes, a colliding key, an emp
 the key following and then not following on Add new, Enter, Escape, and focus return.
 axe-core clean on the add form, the inline editor and the inline editor showing a warning.
 No overflow.
+
+---
+
+## The no-terms bar is gone
+
+Removed from the detail pane: the style, the markup and the Narrow it button it carried.
+It appeared on the four shelves with no terms, which are the hand-picked ones, so it was
+warning about something deliberate on every shelf it ever showed on. Flagged as suspect in
+this log when it went in, and now out.
+
+The kebab is the only way into the dialog again, so `returnTo` and the selector it carried
+have gone with it and focus returns to the kebab, which is the one control that opened it.
+
+Three other `.notice` blocks remain, on `01-list-table.html`, `02-grouped-accordion.html`
+and `03-two-pane.html`. Those are the "Why this one" explanations on the closed A, B and C
+concepts, which are commentary for a reader rather than anything the product renders, so
+they stay unless they are asked about too.
+
+Checked on all four shelves that used to show it, plus a newly created shelf, which has no
+terms by definition. axe-core clean, focus still returns to the kebab from every route,
+no overflow.
