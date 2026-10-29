@@ -1226,3 +1226,34 @@ So: key. The instance search said "Search name or slug" on five pages and now sa
 
 Premium here is one word meaning one thing, not the fancier-sounding word. The field's hint
 does the explaining anyway: "The site asks for this instance by this key."
+
+---
+
+## Deleting asks in a dialog
+
+The strip could be clicked past. `Store::delete` unsets the entry, writes the option and
+drops the purge log, and there is no trash, no restore and no undo anywhere in the module,
+so the question now arrives as a modal that has to be answered.
+
+- `role="alertdialog"`, which is the role for a question that must be settled before
+  anything else, rather than `dialog`.
+- **Focus opens on "Keep it."** A stray Enter or space should not delete anything, so the
+  answer that changes nothing has the keyboard.
+- Three lines: what it is, what it costs, and that it cannot be taken back. "This cannot be
+  undone. There is no trash to restore it from" is the literal behaviour of
+  `Store::delete`.
+- Deleting `editors-picks` or `featured-stories` also tells you which template file stops
+  rendering, by name.
+- **The destructive button takes `--ngn-error`, not the brand fill.** The brand is already
+  red, so a red Delete and a red Save would otherwise read as the same button.
+- Escape cancels, a click on the scrim cancels, Tab stays inside, and focus returns to the
+  kebab whichever way it ends.
+
+460px rather than the settings dialog's 720px, because a question with two answers should
+not look like a workspace. The `.sheet` rule is declared further down the file, so the
+narrow width needed `.sheet.sheet-sm` to win on specificity rather than source order; it
+was rendering at the full 720px until that was caught.
+
+Checked at 1440 and 320: axe-core clean with and without the template warning, no
+horizontal scroll, title and both buttons visible, Keep it to the left of Delete on one
+row, and five routes exercised including an actual delete, which took the list to 46.
