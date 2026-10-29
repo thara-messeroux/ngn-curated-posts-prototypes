@@ -152,7 +152,20 @@
   var $ = function (id) { return document.getElementById(id); };
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
   var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
-  var changed = function () { return JSON.stringify(draft) !== JSON.stringify(SAVED); };
+  var changed = function () { return norm(draft) !== norm(SAVED); };
+
+  /* Opening a taxonomy's editor creates its filter record, so a plain look
+     round used to count as an edit. Comparing normalised copies, with the
+     empty records and empty groups dropped, keeps Save honest. */
+  function norm(d) {
+    var c = JSON.parse(JSON.stringify(d));
+    Object.keys(c.filters).forEach(function (tax) {
+      var f = c.filters[tax];
+      f.groups = f.groups.filter(function (g) { return g.length; });
+      if (!f.groups.length && !f.exclude.length) delete c.filters[tax];
+    });
+    return JSON.stringify(c);
+  }
 
   var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
   var pluralType = function (k, n) { var nm = typeName(k); return n === 1 || /s$/.test(nm) ? nm : nm + 's'; };

@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The whole screen: index and settings together · NUEAC-398</title>
+<link rel="stylesheet" href="assets/ngn-v2.css?v=202610290913">
+<style>
+/* ---- The index, from Direction D ------------------------------------- */
+.panes { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: var(--ngn-space-4); align-items: start; }
+@media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 320px; position: static; } }
+
+.index { overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 48px); position: sticky; top: var(--ngn-space-4); }
+.index .tools { padding: var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); }
+.index .tools input { width: 100%; }
+.index .scroll { overflow-y: auto; flex: 1 1 auto; }
+.index .foot { border-top: 1px solid var(--ngn-outline-variant); padding: var(--ngn-space-2) var(--ngn-space-3); font-size: 12px; color: var(--ngn-on-surface-variant); margin: 0; }
+
+.shelf {
+  display: flex; align-items: center; gap: var(--ngn-space-3); width: 100%; text-align: left;
+  border: 0; border-bottom: 1px solid var(--ngn-outline-variant); border-left: 3px solid transparent;
+  background: none; font: inherit; cursor: pointer; padding: var(--ngn-space-3); color: inherit;
+}
+.shelf:hover { background: var(--ngn-surface-container-low); }
+.shelf.is-sel { background: var(--ngn-surface-container); border-left-color: var(--ngn-primary); }
+.shelf .txt { min-width: 0; flex: 1 1 auto; }
+.shelf b { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shelf span { display: block; font-size: 12px; color: var(--ngn-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ngn-success); }
+.shelf .state {
+  flex: none; display: block; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ngn-warning); background: var(--ngn-warning-container);
+  border-radius: 999px; padding: 2px 8px;
+}
+
+.detail { display: flex; flex-direction: column; }
+.detail-head { padding: var(--ngn-space-4) var(--ngn-space-5) var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); display: flex; gap: var(--ngn-space-3); align-items: flex-start; flex-wrap: wrap; }
+.detail-head .acts { margin-left: auto; display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; }
+
+.title-line { display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap; }
+.badge {
+  font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
+  padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+  background: var(--ngn-surface-container); color: var(--ngn-on-surface-variant);
+}
+.badge.is-live { background: var(--ngn-success-container); color: var(--ngn-success); }
+
+.sections { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-5); }
+.sect h3 { margin: 0 0 var(--ngn-space-3); font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
+.kv { margin: 0; display: grid; grid-template-columns: minmax(130px, 170px) minmax(0, 1fr); gap: var(--ngn-space-2) var(--ngn-space-4); }
+.kv .k { font-size: 13px; color: var(--ngn-on-surface-variant); }
+.kv .v { font-size: 13.5px; min-width: 0; }
+.kv .unset { font-style: italic; color: var(--ngn-on-surface-variant); }
+.chips { display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; }
+/* Clauses are ANDed, so they are stacked with the word between them rather
+   than run together into one bag of chips. */
+.clause { display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap; }
+.clause + .clause { margin-top: var(--ngn-space-2); }
+.clause .join { font-size: 12px; color: var(--ngn-on-surface-variant); }
+
+.empty { padding: var(--ngn-space-6) var(--ngn-space-5); color: var(--ngn-on-surface-variant); font-size: 13.5px; }
+
+.saved-note { font-size: 12px; color: var(--ngn-success); }
+
+.confirm {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-4);
+  border: 1px solid var(--ngn-outline-variant); border-left: 3px solid var(--ngn-error);
+  border-radius: var(--ngn-radius-sm); padding: var(--ngn-space-3) var(--ngn-space-4);
+  display: flex; align-items: center; gap: var(--ngn-space-3); flex-wrap: wrap; font-size: 13.5px;
+}
+.confirm .btns { margin-left: auto; display: flex; gap: var(--ngn-space-2); }
+
+.menu-wrap { position: relative; display: inline-flex; }
+.kebab { min-width: 36px; padding-left: 0; padding-right: 0; }
+.menu {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 10; min-width: 190px;
+  background: var(--ngn-surface); border: 1px solid var(--ngn-outline-variant);
+  border-radius: var(--ngn-radius-sm); box-shadow: 0 6px 20px rgba(0,0,0,.12);
+  padding: var(--ngn-space-1) 0; display: flex; flex-direction: column;
+}
+.menu button {
+  border: 0; background: none; font: inherit; font-size: 13.5px; text-align: left;
+  padding: var(--ngn-space-2) var(--ngn-space-4); cursor: pointer; color: inherit;
+}
+.menu button:hover { background: var(--ngn-surface-container-low); }
+.menu .is-delete { color: var(--ngn-error); }
+.menu-sep { height: 1px; background: var(--ngn-outline-variant); margin: var(--ngn-space-1) 0; }
+
+/* ---- The dialog, from Settings C ------------------------------------- */
+/* On its own page the scrim was part of the flow. Here it has to cover the
+   index, so it is fixed and scrolls itself. */
+.scrim.is-modal {
+  position: fixed; inset: 0; z-index: 50; min-height: 0;
+  overflow-y: auto; padding: var(--ngn-space-5) var(--ngn-space-4);
+}
+.scrim[hidden] { display: none; }
+
+.sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; max-height: calc(100vh - 64px); }
+.sheet-scroll { overflow-y: auto; flex: 1 1 auto; }
+.sheet-head {
+  padding: var(--ngn-space-4) var(--ngn-space-5);
+  border-bottom: 1px solid var(--ngn-outline-variant);
+  display: flex; align-items: flex-start;
+}
+.sheet-head .x { margin-left: auto; border: 0; background: none; cursor: pointer; font-size: 20px; color: var(--ngn-on-surface-variant); padding: 4px 8px; border-radius: var(--ngn-radius-full); }
+.sheet-head .x:hover { background: var(--ngn-surface-container); }
+
+.rule { padding: var(--ngn-space-6) var(--ngn-space-5); font-size: 22px; line-height: 1.9; }
+/* At 22px the sentence breaks after two or three words on a phone, which
+   loses the thing that makes it a sentence. */
+@media (max-width: 560px) {
+  .rule { font-size: 18px; line-height: 1.8; padding: var(--ngn-space-5) var(--ngn-space-4); }
+  .sheet-foot { flex-wrap: wrap; }
+}
+
+.tok {
+  border: 0; background: none; font: inherit; color: var(--ngn-on-surface);
+  cursor: pointer; padding: 2px 6px; border-radius: var(--ngn-radius-xs);
+  border-bottom: 2px solid var(--ngn-outline-variant);
+}
+.tok:hover { background: var(--ngn-surface-container); border-bottom-color: var(--ngn-on-surface-variant); }
+.tok.is-open { background: var(--ngn-secondary-container); border-bottom-color: var(--ngn-on-surface); }
+.tok.is-empty { color: var(--ngn-on-surface-variant); font-style: italic; }
+
+.rule .plain { color: var(--ngn-on-surface-variant); }
+.rule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
+
+.result {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
+  padding: var(--ngn-space-3) var(--ngn-space-4);
+  background: var(--ngn-surface-container-low);
+  border-radius: var(--ngn-radius-sm);
+  display: flex; align-items: center; gap: var(--ngn-space-3); flex-wrap: wrap;
+}
+.result b { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.result .note { font-size: 12px; color: var(--ngn-on-surface-variant); margin-left: auto; }
+
+.editor {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
+  border: 1px solid var(--ngn-tertiary); border-radius: var(--ngn-radius-md);
+  padding: var(--ngn-space-4); display: flex; flex-direction: column; gap: var(--ngn-space-3);
+}
+.editor h3 { margin: 0; font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
+.editor .done { align-self: flex-start; }
+.upcoming-label { margin: var(--ngn-space-3) 0 6px; font-size: 13px; font-weight: 500; }
+.upcoming {
+  margin: 0; padding: 0; list-style: none;
+  font-size: 13px; color: var(--ngn-on-surface-variant);
+  display: grid; gap: 2px; font-variant-numeric: tabular-nums;
+}
+
+.group {
+  border: 1px solid var(--ngn-outline-variant); border-radius: var(--ngn-radius-sm);
+  padding: var(--ngn-space-3); display: flex; flex-direction: column; gap: var(--ngn-space-2);
+}
+.group + .group { margin-top: calc(var(--ngn-space-2) * -1); }
+.group-head { display: flex; align-items: center; gap: var(--ngn-space-2); }
+.group-head b { font-size: 13px; font-weight: 500; }
+.group-head .btn { margin-left: auto; }
+
+.sheet-foot {
+  border-top: 1px solid var(--ngn-outline-variant);
+  padding: var(--ngn-space-3) var(--ngn-space-5);
+  display: flex; gap: var(--ngn-space-3); align-items: center;
+}
+.sheet-foot .spacer { flex: 1 1 auto; }
+.sheet-foot .problem { color: var(--ngn-error); font-size: 13px; }
+.sheet-foot .btn[disabled] { opacity: .45; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <strong>NUEAC-398 · The whole screen</strong>
+  <span class="sep">|</span>
+  <a href="index.html">All designs</a>
+  <span class="sep">|</span>
+  <a href="09-direction-d-ngn.html">D on its own</a>
+  <a href="06-settings-sentence.html">Settings C on its own</a>
+</div>
+
+<div class="wrap">
+  <div style="display:flex;align-items:flex-start;gap:var(--ngn-space-3);flex-wrap:wrap;margin:0 0 4px">
+    <h1 class="t-headline" style="margin:0">Curated Posts</h1>
+    <button class="btn btn-outlined btn-sm" type="button" style="align-self:center">Add new</button>
+  </div>
+  <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:76ch">
+    Direction D and Settings C on one screen, the way the real one works. Pick a shelf,
+    press Query settings, and the sentence opens over the list. Save and the shelf
+    underneath updates. All 47 shelves are seeded from the live export.
+  </p>
+
+  <div class="panes">
+
+    <div class="card index">
+      <div class="tools">
+        <label class="screen-reader-text" for="q">Search shelves</label>
+        <input type="search" id="q" placeholder="Search name or slug">
+      </div>
+      <div class="scroll" id="list" role="listbox" aria-label="Shelves"></div>
+      <p class="foot" id="num"></p>
+    </div>
+
+    <div class="card detail" id="detail"></div>
+
+  </div>
+</div>
+
+<div class="scrim is-modal" id="scrim" hidden>
+  <div class="card sheet" role="dialog" aria-modal="true" aria-labelledby="t">
+
+    <div class="sheet-head">
+      <div>
+        <h2 class="t-headline" id="t" style="margin:0">What this shelf shows</h2>
+        <p class="t-body-sm muted" style="margin:2px 0 0" id="who"></p>
+      </div>
+      <button class="x" type="button" aria-label="Close" id="x">&times;</button>
+    </div>
+
+    <div class="sheet-scroll">
+      <p class="rule" id="rule"></p>
+
+      <div class="result">
+        <b id="count">&ndash;</b>
+        <span class="t-body-sm muted">stories match this rule right now</span>
+        <span class="note">prototype figure</span>
+      </div>
+
+      <div id="editor"></div>
+    </div>
+
+    <div class="sheet-foot">
+      <span class="t-body-sm muted" id="dirty">No changes yet</span>
+      <span class="problem" id="problem" role="status"></span>
+      <span class="spacer"></span>
+      <button class="btn btn-text" type="button" id="cancel">Cancel</button>
+      <button class="btn btn-filled" type="button" id="save">Save</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="assets/terms.js?v=202610290913"></script>
+<script src="assets/settings-data.js?v=202610290913"></script>
+<script src="assets/data.js?v=202610290913"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  var esc = function (t) { return String(t).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+  /* ====================================================================
+     Seeding one shelf's rule from the taxonomy export.
+
+     The export is a spreadsheet, so its columns carry labels rather than
+     slugs. Everything that can be mapped to a real post type or taxonomy is;
+     what cannot is left out rather than guessed at.
+     ==================================================================== */
+
+  /* The export excludes "Hide Post", which belongs to a taxonomy the term
+     export did not cover. Registered here, on this page only, so the term
+     still shows and can be removed. */
+  if (!TAXONOMIES['display-options']) {
+    TAXONOMIES['display-options'] = { n: 'Display Options', count: 1, terms: [ { n: 'Hide Post', s: 'hide-post', c: 0 } ] };
+  }
+
+  var TAX_ALIAS = { 'tag': 'post_tag', 'article format': 'article-format' };
+
+  function taxFor(label) {
+    var l = String(label).trim();
+    if (TAX_ALIAS[l]) return TAX_ALIAS[l];
+    if (TAXONOMIES[l]) return l;
+    var hit = Object.keys(TAXONOMIES).filter(function (k) {
+      return TAXONOMIES[k].n.toLowerCase() === l.toLowerCase();
+    })[0];
+    return hit || null;
+  }
+
+  function typesFrom(str) {
+    var keys = {};
+    POST_TYPES.forEach(function (p) { keys[p.k] = p.k; keys[p.n.toLowerCase()] = p.k; });
+    return String(str || '').split(',').map(function (t) { return keys[t.trim()] || keys[t.trim().toLowerCase()]; })
+      .filter(function (k, i, a) { return k && a.indexOf(k) === i; });
+  }
+
+  /* "11:00 AM" out of the export, "11:00" into <input type="time">. */
+  function toTime(s) {
+    var m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(s).trim());
+    if (!m) return '00:00';
+    var h = (+m[1]) % 12;
+    if (/pm/i.test(m[3])) h += 12;
+    return (h < 10 ? '0' : '') + h + ':' + m[2];
+  }
+
+  /* The input stores 24-hour time; the page shows it the way the export did. */
+  function clockLabel(t) {
+    var m = /^(\d{2}):(\d{2})$/.exec(String(t));
+    if (!m) return t;
+    var h = +m[1], ampm = h < 12 ? 'AM' : 'PM';
+    return ((h % 12) || 12) + ':' + m[2] + ' ' + ampm;
+  }
+
+  function seed(d) {
+    var filters = {};
+    function put(list, into) {
+      list.forEach(function (f) {
+        var tax = taxFor(f.t);
+        if (!tax) return;
+        if (!filters[tax]) filters[tax] = { groups: [[]], exclude: [] };
+        var bucket = into === 'exclude' ? filters[tax].exclude : filters[tax].groups[0];
+        if (bucket.indexOf(f.v) < 0) bucket.push(f.v);
+      });
+    }
+    put(d.inc, 'include');
+    put(d.exc, 'exclude');
+
+    return {
+      count: Math.min(50, Math.max(1, d.stories || 1)),
+      sort: 'Newest',
+      types: typesFrom(d.types),
+      windowDays: 14,
+      searchTypes: typesFrom(d.search),
+      filters: filters,
+      /* The export records that rotation is on and when it starts, but not
+         how long the gap is, so 1h is this prototype's stand-in. */
+      rotation: { on: d.rot !== 'Off', interval: '1h', start: toTime(d.rotStart) }
+    };
+  }
+
+  var SETTINGS = {};
+  CURATED.forEach(function (d) { SETTINGS[d.s] = seed(d); });
+
+  /* ====================================================================
+     The index
+     ==================================================================== */
+
+  var sel = CURATED[0].s, confirming = null, deleted = {}, justSaved = null;
+
+  function liveShelves() { return CURATED.filter(function (d) { return !deleted[d.s]; }); }
+  function visible() {
+    var t = $('q').value.trim().toLowerCase();
+    return liveShelves().filter(function (d) { return !t || (d.n + ' ' + d.s).toLowerCase().indexOf(t) > -1; });
+  }
+  var stories = function (n) { return n + (n === 1 ? ' story' : ' stories'); };
+
+  var typeName = function (k) { var t = POST_TYPES.filter(function (x) { return x.k === k; })[0]; return t ? t.n : k; };
+  var pluralType = function (k, n) { var nm = typeName(k); return n === 1 || /s$/.test(nm) ? nm : nm + 's'; };
+
+  function listJoin(items) {
+    if (items.length < 3) return items.join(' or ');
+    return items.slice(0, -1).join(', ') + ' or ' + items[items.length - 1];
+  }
+
+  /* matchCount wants the rule flattened: every include clause, every excluded
+     term, with the taxonomy they came from dropped. */
+  function flat(d) {
+    var groups = [], exclude = [];
+    Object.keys(d.filters).forEach(function (tax) {
+      d.filters[tax].groups.forEach(function (g) { if (g.length) groups.push(g); });
+      d.filters[tax].exclude.forEach(function (t) { exclude.push(t); });
+    });
+    return { types: d.types, groups: groups,
+             include: groups.reduce(function (a, g) { return a.concat(g); }, []),
+             exclude: exclude, sort: d.sort, windowDays: d.windowDays };
+  }
+
+  function typeSummary(s) {
+    return s.types.length ? s.types.map(typeName).join(', ') : 'All types';
+  }
+
+  function renderList() {
+    var list = visible();
+    $('num').textContent = list.length + ' of ' + liveShelves().length + ' shelves';
+
+    if (!list.length) { $('list').innerHTML = '<p class="empty">Nothing matches that.</p>'; return; }
+
+    $('list').innerHTML = list.slice().sort(function (a, b) { return a.n.localeCompare(b.n); })
+      .map(function (d) {
+        var s = SETTINGS[d.s];
+        return '<button type="button" class="shelf' + (sel === d.s ? ' is-sel' : '') + '" role="option" ' +
+          'aria-selected="' + (sel === d.s) + '" data-sel="' + esc(d.s) + '">' +
+          '<span class="txt"><b>' + esc(d.n) + '</b>' +
+          '<span>' + stories(s.count) + ' · ' + esc(typeSummary(s)) + '</span></span>' +
+          (d.state === 'live'
+            ? '<span class="dot" title="Live"></span>'
+            : '<span class="state">Check</span>') + '</button>';
+      }).join('');
+  }
+
+  function row(k, v, unset) {
+    return '<span class="k">' + k + '</span><span class="v">' +
+      (unset ? '<span class="unset">' + v + '</span>' : v) + '</span>';
+  }
+
+  function chipSet(terms, kind, tax) {
+    return '<span class="chips">' + terms.map(function (t) {
+      return '<span class="chip' + (kind === 'exc' ? ' chip-exclude' : '') + '">' +
+        esc(tax) + ': ' + esc(t) + '</span>';
+    }).join('') + '</span>';
+  }
+
+  /* One clause per non-empty group, in the order the query would emit them. */
+  function includeView(s) {
+    var out = [];
+    Object.keys(s.filters).forEach(function (tax) {
+      s.filters[tax].groups.forEach(function (g) {
+        if (g.length) out.push({ tax: tax, terms: g });
+      });
+    });
+    if (!out.length) return null;
+    return out.map(function (c, i) {
+      return '<span class="clause">' +
+        (i ? '<span class="join">and also in</span>' : '') +
+        chipSet(c.terms, 'inc', TAXONOMIES[c.tax] ? TAXONOMIES[c.tax].n : c.tax) + '</span>';
+    }).join('');
+  }
+
+  function excludeView(s) {
+    var out = [];
+    Object.keys(s.filters).forEach(function (tax) {
+      s.filters[tax].exclude.forEach(function (t) {
+        out.push({ tax: TAXONOMIES[tax] ? TAXONOMIES[tax].n : tax, term: t });
+      });
+    });
+    if (!out.length) return null;
+    return '<span class="chips">' + out.map(function (f) {
+      return '<span class="chip chip-exclude">' + esc(f.tax) + ': ' + esc(f.term) + '</span>';
+    }).join('') + '</span>';
+  }
+
+  function renderDetail() {
+    var d = liveShelves().filter(function (x) { return x.s === sel; })[0];
+    if (!d) { $('detail').innerHTML = '<p class="empty">Pick a shelf on the left to see its settings.</p>'; return; }
+    var s = SETTINGS[d.s];
+
+    var html = '<div class="detail-head">' +
+      '<div><span class="title-line"><h2 class="t-title" style="margin:0">' + esc(d.n) + '</h2>' +
+      '<span class="badge' + (d.state === 'live' ? ' is-live' : '') + '">' +
+      (d.state === 'live' ? 'Live' : 'Needs check') + '</span></span>' +
+      '<p class="t-label-sm muted" style="margin:2px 0 0;font-family:var(--ngn-mono)">' + esc(d.s) + '</p>' +
+      '<p class="saved-note" role="status" style="margin:4px 0 0">' +
+        (justSaved === d.s ? 'Settings saved.' : '') + '</p></div>' +
+      '<div class="acts">' +
+        '<button class="btn btn-filled btn-sm" type="button" data-settings="' + esc(d.s) + '">Query settings</button>' +
+        '<button class="btn btn-outlined btn-sm" type="button">Rename</button>' +
+        '<button class="btn btn-outlined btn-sm" type="button">Duplicate</button>' +
+        '<span class="menu-wrap">' +
+          '<button class="btn btn-outlined btn-sm kebab" type="button" aria-haspopup="menu" ' +
+            'aria-expanded="false" aria-label="More actions for ' + esc(d.n) + '" data-menu="' + esc(d.s) + '">⋯</button>' +
+        '</span>' +
+      '</div></div>';
+
+    if (confirming === d.s) {
+      html += '<div class="confirm"><span>Delete <b>' + esc(d.n) + '</b>? It is live and fills ' +
+        stories(d.stories) + '.</span><span class="btns">' +
+        '<button class="btn btn-text btn-sm" type="button" data-no="1">Keep it</button>' +
+        '<button class="btn btn-filled btn-sm" type="button" data-yes="' + esc(d.s) + '">Delete</button>' +
+        '</span></div>';
+    }
+
+    var inc = includeView(s), exc = excludeView(s);
+    var rot = s.rotation;
+
+    html += '<div class="sections">' +
+      '<div class="sect"><h3>Rules</h3><div class="kv">' +
+        row('Stories', s.count) +
+        row('Sort', s.sort) +
+        row('Post types', s.types.length ? esc(listJoin(s.types.map(function (k) { return pluralType(k, s.count); }))) : 'All', !s.types.length) +
+        (s.sort === 'Most viewed' ? row('Looking back', s.windowDays + (s.windowDays === 1 ? ' day' : ' days')) : '') +
+        row('Include terms', inc || 'none set', !inc) +
+        row('Exclude terms', exc || 'none set', !exc) +
+        row('Search post types', s.searchTypes.length ? esc(listJoin(s.searchTypes.map(function (k) { return pluralType(k, 2); }))) : 'any type', !s.searchTypes.length) +
+        row('Matches now', '<b>' + matchCount(flat(s)).toLocaleString() + '</b> <span class="muted">prototype figure</span>') +
+      '</div></div>' +
+      '<div class="sect"><h3>Rotation</h3><div class="kv">' +
+        row('Interval', rot.on ? 'every ' + esc(rot.interval) : 'off', !rot.on) +
+        (rot.on ? row('Starts', esc(clockLabel(rot.start))) : '') +
+        (rot.on ? row('Next runs', esc(nextRunLine(rot.start, rot.interval))) : '') +
+      '</div></div>' +
+    '</div>';
+
+    $('detail').innerHTML = html;
+  }
+
+  function renderIndex() { renderList(); renderDetail(); }
+
+  function closeMenu() {
+    var m = document.querySelector('.menu');
+    if (m) {
+      var btn = m.parentElement.querySelector('[data-menu]');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+      m.remove();
+    }
+  }
+
+  function openMenu(btn) {
+    var already = btn.parentElement.querySelector('.menu');
+    closeMenu();
+    if (already) return;
+    var m = document.createElement('div');
+    m.className = 'menu';
+    m.setAttribute('role', 'menu');
+    m.innerHTML = '<button type="button" role="menuitem" data-settings="' + esc(btn.dataset.menu) + '">Query settings…</button>' +
+      '<button type="button" role="menuitem">Rename</button>' +
+      '<button type="button" role="menuitem">Duplicate</button>' +
+      '<div class="menu-sep"></div>' +
+      '<button type="button" role="menuitem" class="is-delete" data-del="' + esc(btn.dataset.menu) + '">Delete…</button>';
+    btn.parentElement.appendChild(m);
+    btn.setAttribute('aria-expanded', 'true');
+    m.querySelector('button').focus();
+  }
+
+  /* ====================================================================
+     The dialog
+
+     The query groups terms BY TAXONOMY. buildQueryParams emits one
+     { taxonomy, terms } clause per group, and clauses are ANDed, so a single
+     OR group can never span two taxonomies. The state mirrors that shape:
+
+       filters[taxSlug] = { groups: [ [term, term], [term] ], exclude: [term] }
+
+     groups[0] is the taxonomy's base include; the rest are its AND groups.
+     ==================================================================== */
+
+  /* Opening a taxonomy's editor creates its filter record, so a plain look
+     round used to count as an edit. Comparing normalised copies, with the
+     empty records and empty groups dropped, keeps Save honest. */
+  function norm(d) {
+    var c = JSON.parse(JSON.stringify(d));
+    Object.keys(c.filters).forEach(function (tax) {
+      var f = c.filters[tax];
+      f.groups = f.groups.filter(function (g) { return g.length; });
+      if (!f.groups.length && !f.exclude.length) delete c.filters[tax];
+    });
+    return JSON.stringify(c);
+  }
+
+  var slug = null, SAVED = null, draft = null, open = null, lastTok = null, taxKey = null, termQ = {}, returnTo = null;
+
+  var changed = function () { return norm(draft) !== norm(SAVED); };
+  var INTERVALS = ['15m', '30m', '1h', '2h', '3h', '4h', '6h', '12h', '24h'];
+  var isCustom = function (v) { return INTERVALS.indexOf(v) < 0; };
+
+  function fil(tax) {
+    if (!draft.filters[tax]) draft.filters[tax] = { groups: [[]], exclude: [] };
+    if (!draft.filters[tax].groups.length) draft.filters[tax].groups = [[]];
+    return draft.filters[tax];
+  }
+
+  function clauses() {
+    var out = [];
+    Object.keys(draft.filters).forEach(function (tax) {
+      draft.filters[tax].groups.forEach(function (g, gi) {
+        if (g.length) out.push({ tax: tax, gi: gi, terms: g });
+      });
+    });
+    return out;
+  }
+
+  function allExcluded() {
+    var out = [];
+    Object.keys(draft.filters).forEach(function (tax) {
+      draft.filters[tax].exclude.forEach(function (t) { out.push({ tax: tax, term: t }); });
+    });
+    return out;
+  }
+
+  /* The taxonomies the chosen post types offer, plus any that already carry a
+     filter, so a term set on a shelf is never stranded out of reach. */
+  function availableTax() {
+    var a = taxonomiesFor(draft.types).slice();
+    Object.keys(draft.filters).forEach(function (t) {
+      if (!TAXONOMIES[t] || a.indexOf(t) > -1) return;
+      var f = draft.filters[t];
+      if (f.groups.some(function (g) { return g.length; }) || f.exclude.length) a.push(t);
+    });
+    return a;
+  }
+
+  function clampWhole(raw, lo, hi) {
+    var n = Math.round(parseFloat(raw));
+    if (!isFinite(n)) return lo;
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  function problems(d) {
+    var out = [];
+    if (d.sort !== 'Most viewed' && d.rotation.on && !intervalMinutes(d.rotation.interval)) {
+      out.push('"' + (d.rotation.interval || 'blank') + '" is not an interval. Try 1h, 30m or a number of minutes.');
+    }
+    Object.keys(d.filters).forEach(function (tax) {
+      var f = d.filters[tax];
+      var inc = f.groups.reduce(function (a, g) { return a.concat(g); }, []);
+      f.exclude.forEach(function (t) {
+        if (inc.indexOf(t) > -1) {
+          out.push('“' + t + '” is both required and skipped, so nothing can match it.');
+        }
+      });
+    });
+    return out;
+  }
+
+  function tok(key, text, empty, ref) {
+    return '<button class="tok' + (open === key ? ' is-open' : '') + (empty ? ' is-empty' : '') +
+      '" type="button" data-tok="' + key + '"' + (ref ? ' data-ref="' + ref + '"' : '') +
+      '>' + esc(text) + '</button>';
+  }
+
+  function groupTokens() {
+    var c = clauses();
+    if (!c.length) return tok('include', 'anything', true);
+    return c.map(function (x) {
+      return tok('include', listJoin(x.terms), false, x.tax + ':' + x.gi);
+    }).join(' <span class="plain">and also in</span> ');
+  }
+
+  function rule() {
+    var views = draft.sort === 'Most viewed';
+    var str = '<span class="plain">Show the</span> ' +
+      tok('count', draft.count === 1 ? 'single' : draft.count) + ' ' +
+      tok('sort', views ? 'most viewed' : 'newest') + ' ' +
+      tok('types', draft.types.length
+        ? listJoin(draft.types.map(function (k) { return pluralType(k, draft.count); }))
+        : 'stories of any type', !draft.types.length);
+
+    if (views) str += ' <span class="plain">from the last</span> ' +
+      tok('window', draft.windowDays + (draft.windowDays === 1 ? ' day' : ' days'));
+
+    var ex = allExcluded();
+    str += ' <span class="plain">in</span> ' + groupTokens() +
+      '<span class="punc">,</span> <span class="plain">skipping</span> ' +
+      tok('exclude', ex.length ? listJoin(ex.map(function (f) { return f.term; })) : 'nothing', !ex.length) +
+      '<span class="punc">.</span>';
+
+    str += views
+      ? '<br><span class="plain">Most viewed reshuffles itself, so there is no rotation.</span>'
+      : (draft.rotation.on
+        ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="punc">.</span>'
+        : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="punc">.</span>');
+
+    str += '<br><span class="plain">When you pin a story by hand, search</span> ' +
+      tok('searchTypes', draft.searchTypes.length
+        ? listJoin(draft.searchTypes.map(function (k) { return pluralType(k, 2); }))
+        : 'any type', !draft.searchTypes.length) +
+      '<span class="punc">.</span>';
+
+    return str;
+  }
+
+  function countLine(tax, showing, q) {
+    if (q) {
+      var hits = countMatches(taxKey, q);
+      if (!hits) return 'Nothing matches “' + esc(q) + '”.';
+      return hits.toLocaleString() + (hits === 1 ? ' term matches “' : ' terms match “') +
+        esc(q) + '”' + (hits > showing ? ', showing the closest ' + showing : '') + '.';
+    }
+    if (showing >= tax.count) return tax.count.toLocaleString() + (tax.count === 1 ? ' term.' : ' terms.');
+    return 'Showing ' + showing + ' of ' + tax.count.toLocaleString() + '. Type to find the rest.';
+  }
+
+  function groupBox(tax, bucket, gi, isEx) {
+    var key = (isEx ? 'x' : gi);
+    var q = termQ[key] || '';
+    var shown = searchTerms(taxKey, q, 40);
+    var title = isEx ? 'Never tagged' : (gi === 0 ? 'Has any of' : 'AND has any of');
+    var groupCount = fil(taxKey).groups.length;
+
+    return '<div class="group">' +
+      '<div class="group-head"><b>' + title + ' <span class="muted">(' + bucket.length + ' selected)</span></b>' +
+        (!isEx && groupCount > 1
+          ? '<button class="btn btn-text btn-sm" type="button" data-dropgroup="' + gi + '">Remove</button>' : '') +
+      '</div>' +
+      '<div class="field"><label for="e-q-' + key + '">Search ' + esc(tax.n) + '</label>' +
+        '<input type="search" id="e-q-' + key + '" data-q="' + key + '" value="' + esc(q) +
+        '" placeholder="Type a name or a slug…"></div>' +
+      '<div class="chips">' + shown.map(function (t) {
+        var on = bucket.indexOf(t.n) > -1;
+        return '<button class="chip' + (on ? ' is-on' : '') + '" type="button" data-term="' + esc(t.n) +
+          '" data-gi="' + key + '"' + (t.p ? ' title="Inside ' + esc(t.p) + '"' : '') + '>' +
+          (t.p ? '<span class="muted">' + esc(t.p) + ' › </span>' : '') + esc(t.n) +
+          ' <span class="muted">' + t.c.toLocaleString() + '</span></button>';
+      }).join('') + '</div>' +
+      '<p class="t-body-sm muted" style="margin:0">' + countLine(tax, shown.length, q) + '</p>' +
+      (bucket.length ? '<div class="chips" style="padding-top:var(--ngn-space-2);border-top:1px solid var(--ngn-outline-variant)">' +
+        bucket.map(function (t) {
+          return '<span class="chip' + (isEx ? ' chip-exclude' : ' is-on') + '">' + esc(t) +
+            ' <button class="chip-remove" type="button" data-rm="' + esc(t) + '" data-gi="' + key +
+            '" aria-label="Remove ' + esc(t) + '">&times;</button></span>';
+        }).join('') + '</div>' : '') +
+    '</div>';
+  }
+
+  function elsewhere() {
+    var others = Object.keys(draft.filters).filter(function (t) {
+      if (t === taxKey) return false;
+      var f = draft.filters[t];
+      return f.groups.some(function (g) { return g.length; }) || f.exclude.length;
+    });
+    if (!others.length) return '';
+    return '<p class="t-body-sm muted" style="margin:0">Also filtered: ' +
+      others.map(function (t) {
+        var f = draft.filters[t];
+        var n = f.groups.reduce(function (a, g) { return a + g.length; }, 0) + f.exclude.length;
+        return esc(TAXONOMIES[t].n) + ' (' + n + ')';
+      }).join(', ') + '.</p>';
+  }
+
+  function upcoming(rot) {
+    var times = nextRotations(rot.start, rot.interval, 5);
+    if (!times.length) return '<p class="t-body-sm muted" style="margin:0">Try 1h, 30m, 1h 30m, or a number of minutes.</p>';
+    var clock = function (d) {
+      return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric',
+                                           hour: 'numeric', minute: '2-digit' });
+    };
+    var repeats = 1440 % intervalMinutes(rot.interval) === 0;
+    return '<p class="t-body-sm muted" style="margin:0 0 4px">' + esc(nextRunLine(rot.start, rot.interval)) + '</p>' +
+      '<p class="upcoming-label">Upcoming rotations</p>' +
+      '<ol class="upcoming">' + times.map(function (t) { return '<li>' + esc(clock(t)) + '</li>'; }).join('') + '</ol>' +
+      (repeats ? '' :
+        '<p class="t-body-sm muted" style="margin:6px 0 0">The times move each day, because ' +
+        esc(rot.interval) + ' does not divide evenly into 24 hours.</p>');
+  }
+
+  function editor() {
+    if (!open) return '';
+    var head = function (t) { return '<h3>' + t + '</h3>'; };
+    var done = '<button class="btn btn-outlined btn-sm done" type="button" data-close>Done</button>';
+
+    if (open === 'count') return '<div class="editor">' + head('How many stories') +
+      '<label class="screen-reader-text" for="e-count">How many stories</label>' +
+      '<input type="number" id="e-count" min="1" max="50" step="1" value="' + draft.count + '" style="width:120px">' +
+      '<p class="t-body-sm muted" style="margin:0" id="e-count-note">1 to 50.</p>' + done + '</div>';
+
+    if (open === 'window') return '<div class="editor">' + head('How far back to look') +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+      '<label class="screen-reader-text" for="e-window">How many days back</label>' +
+      '<input type="number" id="e-window" min="1" step="1" value="' + draft.windowDays + '" style="width:110px">' +
+      '<span class="t-body-sm muted">days</span></div>' + done + '</div>';
+
+    if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
+      ['Newest', 'Most viewed'].map(function (o) {
+        return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>';
+      }).join('') + '</div>' + done + '</div>';
+
+    if (open === 'types') return '<div class="editor">' + head('Where stories come from') + '<div class="chips">' +
+      POST_TYPES.map(function (t) {
+        return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '"' +
+          (t.tax.length ? '' : ' title="No filterable taxonomies"') + '>' + esc(t.n) +
+          (t.tax.length ? '' : ' <span class="muted">· no filters</span>') + '</button>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' +
+      (draft.types.length
+        ? draft.types.length + ' selected · ' + taxonomiesFor(draft.types).length + ' taxonomies available'
+        : 'Nothing selected, so every type is included. Pick some to narrow it, and to filter by term.') +
+      '</p>' + done + '</div>';
+
+    if (open === 'searchTypes') return '<div class="editor">' + head('Types you can pin by hand') +
+      '<div class="chips">' + POST_TYPES.map(function (t) {
+        return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') +
+          '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
+      }).join('') + '</div><p class="t-body-sm muted" style="margin:0">' +
+      (draft.searchTypes.length
+        ? draft.searchTypes.length + ' of ' + POST_TYPES.length + ' selected.'
+        : 'Nothing selected, so the search offers all ' + POST_TYPES.length + ' types.') +
+      '</p>' + done + '</div>';
+
+    if (open === 'include' || open === 'exclude') {
+      var isEx = open === 'exclude';
+      var available = availableTax();
+      if (!available.length) return '<div class="editor">' + head('No filters available') +
+        '<p class="t-body-sm" style="margin:0">' +
+        (draft.types.length
+          ? 'These post types have nothing to filter on.'
+          : 'Pick a post type first. Term filters belong to a type.') + '</p>' + done + '</div>';
+      if (available.indexOf(taxKey) < 0) taxKey = available[0];
+      var tax = TAXONOMIES[taxKey];
+      var f = fil(taxKey);
+
+      return '<div class="editor">' +
+        head(isEx ? 'Never show stories tagged' : 'Only stories tagged') +
+        '<label class="screen-reader-text" for="e-tax">Taxonomy</label>' +
+        '<select id="e-tax">' + available.map(function (k) {
+          var ff = draft.filters[k];
+          var n = ff ? ff.groups.reduce(function (a, g) { return a + g.length; }, 0) + ff.exclude.length : 0;
+          return '<option value="' + k + '"' + (k === taxKey ? ' selected' : '') + '>' + esc(TAXONOMIES[k].n) +
+            ' (' + TAXONOMIES[k].count.toLocaleString() + ')' + (n ? ' • ' + n + ' set' : '') + '</option>';
+        }).join('') + '</select>' +
+        (isEx
+          ? groupBox(tax, f.exclude, -1, true)
+          : f.groups.map(function (g, gi) { return groupBox(tax, g, gi, false); }).join('') +
+            '<button class="btn btn-outlined btn-sm" type="button" data-addgroup style="align-self:flex-start">' +
+            '+ Add AND group to ' + esc(tax.n) + '</button>') +
+        elsewhere() +
+        done + '</div>';
+    }
+
+    if (open === 'rotation') return '<div class="editor">' + head('Rotation') +
+      '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' +
+      (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
+      (draft.rotation.on ? '' : '<p class="t-body-sm muted" style="margin:0">Turn this on to set an interval.</p>') +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
+        '<div class="field"><label for="e-every">Every</label>' +
+          '<select id="e-every"' + (draft.rotation.on ? '' : ' disabled') + '>' +
+          INTERVALS.map(function (o) { return '<option value="' + o + '"' + (o === draft.rotation.interval ? ' selected' : '') + '>' + o + '</option>'; }).join('') +
+          '<option value="custom"' + (isCustom(draft.rotation.interval) ? ' selected' : '') + '>Custom…</option>' +
+          '</select></div>' +
+        (isCustom(draft.rotation.interval)
+          ? '<div class="field" style="width:130px"><label for="e-int">How long</label>' +
+            '<input type="text" id="e-int" value="' + esc(draft.rotation.interval) + '" placeholder="1h 30m"' +
+            (draft.rotation.on ? '' : ' disabled') + '></div>' : '') +
+        '<div class="field" style="width:150px"><label for="e-start">Starting at</label>' +
+        '<input type="time" id="e-start" value="' + esc(draft.rotation.start) + '"' + (draft.rotation.on ? '' : ' disabled') + '></div>' +
+      '</div>' +
+      '<div id="e-next">' + (draft.rotation.on ? upcoming(draft.rotation) : '') + '</div>' + done + '</div>';
+    return '';
+  }
+
+  function refreshSave() {
+    var bad = problems(draft);
+    $('dirty').textContent = bad.length ? '' : (changed() ? 'Unsaved changes' : 'No changes yet');
+    $('problem').textContent = bad[0] || '';
+    $('save').disabled = bad.length > 0 || !changed();
+  }
+
+  function bindTax() {
+    var t = $('e-tax');
+    if (t) t.addEventListener('change', function () { taxKey = this.value; termQ = {}; renderSheet(); });
+  }
+
+  function renderSheet() {
+    $('rule').innerHTML = rule();
+    $('editor').innerHTML = editor();
+    $('count').textContent = matchCount(flat(draft)).toLocaleString();
+    refreshSave();
+    bindTax();
+  }
+
+  function redrawTerms(boxId) {
+    var ed = $('editor'), box = $(boxId);
+    if (!ed || !box) return;
+    var at = box.selectionStart;
+    ed.innerHTML = editor();
+    var again = $(boxId);
+    if (again) { again.focus(); again.setSelectionRange(at, at); }
+    bindTax();
+  }
+
+  function focusEditor() {
+    var first = $('editor').querySelector('input, select, button');
+    if (first) first.focus();
+  }
+
+  function closeEditor() {
+    var back = lastTok;
+    open = null; termQ = {};
+    renderSheet();
+    var el = back && document.querySelector('[data-tok="' + back + '"]');
+    if (el) el.focus();
+  }
+
+  function bucketFor(gi) {
+    return gi === 'x' ? fil(taxKey).exclude : fil(taxKey).groups[+gi];
+  }
+
+  /* The dialog is seeded from whatever the shelf has saved, so it opens on
+     that shelf's real rule rather than on a blank one. */
+  function openDialog(which, from) {
+    var d = liveShelves().filter(function (x) { return x.s === which; })[0];
+    if (!d) return;
+    slug = which; returnTo = from || null;
+    SAVED = clone(SETTINGS[which]);
+    draft = clone(SAVED);
+    open = null; lastTok = null; taxKey = null; termQ = {};
+    $('who').textContent = d.n;
+    $('scrim').hidden = false;
+    document.body.style.overflow = 'hidden';
+    renderSheet();
+    $('x').focus();
+  }
+
+  function closeDialog() {
+    $('scrim').hidden = true;
+    document.body.style.overflow = '';
+    open = null; slug = null;
+    var back = returnTo && document.querySelector('[data-settings="' + returnTo + '"]');
+    if (back) back.focus();
+    returnTo = null;
+  }
+
+  /* Tab must not walk out of the dialog into the list behind it. */
+  function trap(ev) {
+    if (ev.key !== 'Tab' || $('scrim').hidden) return;
+    var all = [].slice.call($('scrim').querySelectorAll(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href]'))
+      .filter(function (el) { return el.offsetParent !== null; });
+    if (!all.length) return;
+    var first = all[0], last = all[all.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  }
+
+  /* ====================================================================
+     Events
+     ==================================================================== */
+
+  document.addEventListener('click', function (ev) {
+    /* Dialog first: while it is up, nothing behind it should react. */
+    if (!$('scrim').hidden) {
+      if (ev.target === $('scrim')) { closeDialog(); return; }
+
+      var t = ev.target.closest('[data-tok]'), c = ev.target.closest('[data-close]'),
+          ty = ev.target.closest('[data-type]'), so = ev.target.closest('[data-sort]'),
+          tm = ev.target.closest('[data-term]'), rm = ev.target.closest('[data-rm]'),
+          st = ev.target.closest('[data-stype]'), dg = ev.target.closest('[data-dropgroup]');
+
+      if (c) { closeEditor(); return; }
+      if (ty) { var i = draft.types.indexOf(ty.dataset.type); if (i > -1) draft.types.splice(i, 1); else draft.types.push(ty.dataset.type); return renderSheet(); }
+      if (so) { draft.sort = so.dataset.sort; return renderSheet(); }
+      if (st) { var j = draft.searchTypes.indexOf(st.dataset.stype); if (j > -1) draft.searchTypes.splice(j, 1); else draft.searchTypes.push(st.dataset.stype); return renderSheet(); }
+      if (rm) { var b = bucketFor(rm.dataset.gi); var k = b.indexOf(rm.dataset.rm); if (k > -1) b.splice(k, 1); return renderSheet(); }
+      if (tm) {
+        var bucket = bucketFor(tm.dataset.gi), term = tm.dataset.term, pos = bucket.indexOf(term);
+        if (pos > -1) { bucket.splice(pos, 1); }
+        else {
+          // Within one taxonomy a term cannot be required and skipped at once.
+          var f = fil(taxKey);
+          if (tm.dataset.gi === 'x') {
+            f.groups.forEach(function (g) { var q = g.indexOf(term); if (q > -1) g.splice(q, 1); });
+          } else {
+            var e = f.exclude.indexOf(term); if (e > -1) f.exclude.splice(e, 1);
+          }
+          bucket.push(term);
+        }
+        return renderSheet();
+      }
+      if (ev.target.closest('[data-addgroup]')) { fil(taxKey).groups.push([]); return renderSheet(); }
+      if (dg) { fil(taxKey).groups.splice(+dg.dataset.dropgroup, 1); termQ = {}; return renderSheet(); }
+      if (t) {
+        if (open === t.dataset.tok && !t.dataset.ref) { closeEditor(); return; }
+        open = t.dataset.tok; termQ = {}; lastTok = t.dataset.tok;
+        if (t.dataset.ref) taxKey = t.dataset.ref.split(':')[0];
+        renderSheet(); focusEditor();
+        return;
+      }
+      return;
+    }
+
+    var set = ev.target.closest('[data-settings]');
+    var s = ev.target.closest('[data-sel]'), del = ev.target.closest('[data-del]'),
+        menu = ev.target.closest('[data-menu]'),
+        y = ev.target.closest('[data-yes]'), n = ev.target.closest('[data-no]');
+
+    if (set)  { var at = set.dataset.settings; closeMenu(); sel = at; justSaved = null; renderIndex(); return openDialog(at, at); }
+    if (y)    { deleted[y.dataset.yes] = true; confirming = null; sel = (liveShelves()[0] || {}).s; closeMenu(); return renderIndex(); }
+    if (n)    { confirming = null; return renderIndex(); }
+    if (del)  { confirming = del.dataset.del; closeMenu(); return renderIndex(); }
+    if (menu) { return openMenu(menu); }
+    if (s)    { sel = s.dataset.sel; confirming = null; justSaved = null; closeMenu(); return renderIndex(); }
+    closeMenu();
+  });
+
+  document.addEventListener('input', function (ev) {
+    if ($('scrim').hidden) return;
+    if (ev.target.id === 'e-count') {
+      draft.count = clampWhole(ev.target.value, 1, 50);
+      if (ev.target.value !== '' && +ev.target.value !== draft.count) ev.target.value = draft.count;
+      var note = $('e-count-note');
+      if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.';
+      $('rule').innerHTML = rule();
+      $('count').textContent = matchCount(flat(draft)).toLocaleString();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-window') {
+      draft.windowDays = clampWhole(ev.target.value, 1, 3650);
+      if (ev.target.value !== '' && +ev.target.value !== draft.windowDays) ev.target.value = draft.windowDays;
+      $('rule').innerHTML = rule();
+      $('count').textContent = matchCount(flat(draft)).toLocaleString();
+      refreshSave();
+    }
+    if (ev.target.id === 'e-int') {
+      draft.rotation.interval = ev.target.value;
+      $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
+    }
+    if (ev.target.id === 'e-start') {
+      draft.rotation.start = ev.target.value;
+      $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
+    }
+    if (ev.target.dataset && ev.target.dataset.q !== undefined) {
+      termQ[ev.target.dataset.q] = ev.target.value;
+      redrawTerms(ev.target.id);
+    }
+  });
+
+  document.addEventListener('change', function (ev) {
+    if (!$('scrim').hidden) {
+      if (ev.target.id === 'e-rot') { draft.rotation.on = ev.target.checked; renderSheet(); }
+      if (ev.target.id === 'e-every') {
+        draft.rotation.interval = ev.target.value === 'custom' ? '' : ev.target.value;
+        renderSheet();
+        var box = $('e-int'); if (box) box.focus();
+      }
+    }
+  });
+
+  document.addEventListener('keydown', function (ev) {
+    if (!$('scrim').hidden) {
+      trap(ev);
+      if (ev.key !== 'Escape') return;
+      /* Escape closes the editor it is in first, then the dialog. */
+      if (open && ($('editor').contains(document.activeElement) || (document.activeElement.dataset || {}).tok)) {
+        ev.preventDefault(); closeEditor(); return;
+      }
+      ev.preventDefault(); closeDialog();
+      return;
+    }
+    if (ev.key === 'Escape') closeMenu();
+  });
+
+  $('x').addEventListener('click', closeDialog);
+  $('cancel').addEventListener('click', closeDialog);
+  $('save').addEventListener('click', function () {
+    if (problems(draft).length || !changed()) return;
+    SETTINGS[slug] = clone(draft);
+    justSaved = slug;
+    /* The index is redrawn before the dialog closes, so the button focus goes
+       back to is the one now on the page rather than the one just replaced. */
+    renderIndex();
+    closeDialog();
+  });
+
+  $('q').addEventListener('input', function () {
+    var list = visible();
+    if (list.length && !list.some(function (d) { return d.s === sel; })) sel = list[0].s;
+    renderIndex();
+  });
+
+  renderIndex();
+})();
+</script>
+</body>
+</html>

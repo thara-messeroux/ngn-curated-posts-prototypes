@@ -824,3 +824,51 @@ Also unified the vocabulary. The two sentences said "stories of any type" and "e
 type" for the same idea, which reads as two different settings. Both now say "any type",
 so the difference lives where it actually is: one sentence is about what fills the shelf,
 the other about what you can pin by hand.
+
+---
+
+## The index and the dialog on one page
+
+The two prototypes answered half a question each. The index proved you could find a shelf
+among 47; the dialog proved you could read its rule. Neither showed the thing an editor
+actually does, which is go from one to the other and back. `10-complete.html` is both:
+Direction D's list, Settings C's sentence, and a **Query settings** button on the selected
+shelf that opens the dialog over the page.
+
+**Every shelf is seeded from the real export.** Opening Artificial intelligence shows
+*"Show the 4 newest News Posts in AI, artificial intelligence or AI ethics"*, because
+those are its three tags. World Cup 2026 stories opens on one category and seven
+exclusions. Nothing is typed in by hand.
+
+**Save writes back to the list.** Change the count to 9, save, and the dialog closes, the
+row reads "9 stories", the detail pane reads 9, and a quiet "Settings saved." appears. A
+dialog that saves into nothing is a mockup; this one is the loop.
+
+Three things the export cannot tell us, carried as stated assumptions rather than
+invented detail:
+
+- **The rotation interval.** The export records that rotation is on and when it starts,
+  not how long the gap is. Seeded as 1h.
+- **Sort and look-back.** Not in the export. Seeded as Newest and 14 days.
+- **Post type labels.** The export's column is prose: "web", "print", "9 post types".
+  Only the tokens matching a real post type are mapped; the rest are left out, so a shelf
+  may open on "stories of any type" where the spreadsheet named something.
+
+"Hide Post" belongs to a taxonomy the term export did not cover, so it is registered on
+this page alone. The taxonomy dropdown now also lists any taxonomy that already carries a
+filter, not only the ones the chosen post types offer, so a term set on a shelf can
+always be found and removed.
+
+### A defect this page exposed in the other two
+
+Opening a taxonomy's editor creates that taxonomy's filter record, which counted as an
+edit. On the dialog pages it only lit the Save button early. Here, where Save closes and
+writes, a plain look round would have saved an empty record. `changed()` now compares
+normalised copies with the empty records and empty groups dropped. Fixed in all three
+pages, and all three re-tested: Save stays off through a look round, comes on for a real
+change, and goes off again after saving.
+
+Checked at 1440, 1280 and 375: axe-core finds nothing in nine states, index and dialog
+and each of the seven editors. No page overflow at any width, the sheet scrolls itself
+rather than the page, Tab stays inside the dialog, Escape closes the editor before the
+dialog, and focus returns to the button that opened it.
