@@ -1071,3 +1071,34 @@ same as Cancel.
 
 The whole run end to end after the change: rename, duplicate, add new, pick a term, save,
 list and detail both update, notice clears. axe-core clean at every step. No overflow.
+
+---
+
+## Naming moved to the right pane
+
+It opened at the top of the left list, which put a form on top of the list of names and
+squeezed it into a 340px column. It is now a card in the right pane, where a shelf's own
+details are read, and the detail card steps aside while it is open so the pane holds one
+thing at a time.
+
+What it gains besides the position:
+
+- **A heading rather than a field label.** "Name this shelf" is a title now, with "It will
+  join the list on the left, in order." underneath, and the input has its own label.
+- **Room.** The field is 420px instead of 300px, and the key hint sits on one line instead
+  of wrapping to two.
+- **The list stays whole.** You can read the 47 names you might be about to duplicate while
+  typing the forty-eighth.
+
+Rename opens in the same place, with the shelf's current name as the subtitle and the key
+line unchanged.
+
+The form is static markup toggled with `hidden`, not rebuilt on each render, so the caret
+and focus survive typing. The detail card carries `hidden` too, since it is written on
+every render whether or not it is on screen.
+
+Checked: Add new and Rename both open in the right pane with the list intact, the caret
+holds while typing, the key clash still blocks Create, Cancel and Escape both restore the
+detail card and return focus to Add new, Rename returns focus to the kebab, and creating
+still opens the dialog on the new shelf. axe-core clean in all four form states. No
+overflow.

@@ -28,6 +28,9 @@
 .shelf span { display: block; font-size: 12px; color: var(--ngn-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 
+/* The right column holds the naming form and the detail card, one at a time.
+   min-width guards the grid track against a long term chip. */
+.right { min-width: 0; }
 .detail { display: flex; flex-direction: column; }
 .detail-head { padding: var(--ngn-space-4) var(--ngn-space-5) var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); display: flex; gap: var(--ngn-space-3); align-items: flex-start; flex-wrap: wrap; }
 .detail-head .acts { margin-left: auto; display: flex; gap: var(--ngn-space-2); flex-wrap: wrap; }
@@ -52,13 +55,16 @@
 
 .empty { padding: var(--ngn-space-6) var(--ngn-space-5); color: var(--ngn-on-surface-variant); font-size: 13.5px; }
 
-/* Naming a shelf happens where the shelf will appear, at the top of the list,
-   rather than in a dialog over the page. */
-.namer { display: flex; flex-direction: column; gap: var(--ngn-space-2); margin-bottom: var(--ngn-space-3); }
+/* Naming happens in the right pane, where a shelf's own details are read,
+   rather than on top of the list of names. The detail card steps aside while
+   it is open, so the pane holds one thing at a time. */
+.namer { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-4); }
 .namer[hidden] { display: none; }
+.namer input { max-width: 420px; }
 .namer .btns { display: flex; gap: var(--ngn-space-2); }
 .namer .hint.is-bad { color: var(--ngn-error); }
 .namer code { font-family: var(--ngn-mono); font-size: 12px; }
+.detail[hidden] { display: none; }
 
 /* A shelf with no terms matches everything, which is worth saying before
    someone walks away thinking it is finished. */
@@ -251,17 +257,6 @@
 
     <div class="card index">
       <div class="tools">
-        <form class="namer" id="namer" hidden>
-          <div class="field">
-            <label for="name" id="namelab">Name this shelf</label>
-            <input type="text" id="name" autocomplete="off">
-            <p class="hint" id="namehint"></p>
-          </div>
-          <div class="btns">
-            <button class="btn btn-filled btn-sm" type="submit" id="namego">Create</button>
-            <button class="btn btn-text btn-sm" type="button" id="namecancel">Cancel</button>
-          </div>
-        </form>
         <label class="screen-reader-text" for="q">Search shelves</label>
         <input type="search" id="q" placeholder="Search name or slug">
       </div>
@@ -269,7 +264,25 @@
       <p class="foot" id="num"></p>
     </div>
 
-    <div class="card detail" id="detail"></div>
+    <div class="right">
+      <form class="card namer" id="namer" hidden>
+        <div>
+          <h2 class="t-title" id="namelab" style="margin:0">Name this shelf</h2>
+          <p class="t-body-sm muted" id="namesub" style="margin:2px 0 0"></p>
+        </div>
+        <div class="field">
+          <label for="name">Shelf name</label>
+          <input type="text" id="name" autocomplete="off">
+          <p class="hint" id="namehint"></p>
+        </div>
+        <div class="btns">
+          <button class="btn btn-filled btn-sm" type="submit" id="namego">Create</button>
+          <button class="btn btn-text btn-sm" type="button" id="namecancel">Cancel</button>
+        </div>
+      </form>
+
+      <div class="card detail" id="detail"></div>
+    </div>
 
   </div>
 </div>
@@ -443,9 +456,12 @@
     naming = { mode: mode, from: from || null };
     var d = from ? shelf(from) : null;
     $('namelab').textContent = mode === 'rename' ? 'Rename this shelf' : 'Name this shelf';
+    $('namesub').textContent = mode === 'rename' ? d.n : 'It will join the list on the left, in order.';
     $('namego').textContent  = mode === 'rename' ? 'Save name' : 'Create';
     $('name').value = mode === 'rename' ? d.n : '';
+    /* One thing at a time in the right pane. */
     $('namer').hidden = false;
+    $('detail').hidden = true;
     nameHint();
     $('name').focus();
     $('name').select();
@@ -454,6 +470,7 @@
   function closeNamer() {
     naming = null;
     $('namer').hidden = true;
+    $('detail').hidden = false;
     $('name').value = '';
     $('namehint').className = 'hint';
   }
