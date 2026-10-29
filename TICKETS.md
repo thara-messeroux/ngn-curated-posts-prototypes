@@ -919,3 +919,51 @@ Two things the backend does that are worth a ticket, not a redesign:
 Checked again with axe-core in four more states: the naming field empty, the naming field
 showing the key clash error, a fresh shelf with the no-terms notice, and the rename field.
 Nothing found, no overflow. Escape closes the field and returns focus to Add new.
+
+---
+
+## Where the dialog sits
+
+It opened pinned near the top with a large empty gap underneath, which reads as
+unfinished rather than deliberate. Four things decide this, in the order they cost
+something when they are wrong.
+
+**1. `margin: auto` on the sheet, not `align-items: center` on the scrim.** Centring a
+flex child that is taller than its scrollable parent puts the top of it above the scroll
+origin, where no amount of scrolling will reach it. Auto margins centre it while there is
+room and let it sit at the top and scroll once there is not. This is the bug that the
+usual `display:flex; align-items:center` recipe ships with.
+
+**2. More gutter below than above.** `padding: 4vh ... 9vh`, which lands the sheet's
+centre at **47.5%** of the viewport rather than 50%. The optical centre of a frame sits
+above the geometric one, so a dialog at a true 50% reads as low. It also shortens the
+trip from the button that opened it, which is in the upper half of the page.
+
+**3. The sheet never outgrows the viewport.** `max-height: 100%`, which is 100% of the
+scrim's content box and therefore already excludes the gutters. The title stays at the
+top, Cancel and Save stay at the bottom, and only the middle scrolls.
+
+This one was found by testing rather than reasoning. The first attempt released the
+height cap on short windows, on the theory that content should win. At 1440x560 with the
+term picker open the sheet grew to 1005px and **took the footer off screen with it**, so
+Save and Cancel could not be reached at all. Capping it instead, and letting
+`.sheet-scroll` do the scrolling, keeps both ends in place at every size tested.
+
+**4. A gutter at both ends.** Some scrim always shows above and below, so the sheet reads
+as a layer over the page rather than a new page.
+
+Below 640px tall or 400px wide the gutters shrink to 12px, per **WCAG 1.4.10 Reflow**,
+which has to hold at 320px wide and at 400% zoom. The height cap does not shrink, for the
+reason above.
+
+The footer needed its own fix at that width. Wrapping alone dropped Save onto a second
+row to the left of Cancel, reversing them. The status line now takes the first row and
+the two buttons share the second, Save still last.
+
+A 140ms fade and 8px rise on open, inside `prefers-reduced-motion: no-preference`. A full
+width layer that appears with no transition reads as a page change.
+
+Measured at 1440x900: 182px of scrim above, 229px below, centre at 47.5%. Checked at
+1440x900, 1440x560, 375x812 and 320x480: title and Save visible in all eight editor
+states at every size, only the body scrolls, no horizontal scroll anywhere, axe-core
+clean.

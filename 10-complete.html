@@ -107,14 +107,55 @@
 
 /* ---- The dialog, from Settings C ------------------------------------- */
 /* On its own page the scrim was part of the flow. Here it has to cover the
-   index, so it is fixed and scrolls itself. */
+   index, so it is fixed and scrolls itself.
+
+   Placement, in order of what it costs to get wrong:
+
+   1. `margin: auto` on the sheet rather than `align-items: center` on the
+      scrim. Centring a flex child taller than its scrollable parent puts the
+      top of it above the scroll origin, where it cannot be reached. Auto
+      margins centre it while it fits and let it sit at the top and scroll
+      once it does not.
+   2. More room underneath than above, so the sheet lands a little over the
+      middle. The optical centre is above the geometric one, a dialog at a
+      true 50% reads as low, and the trigger it came from is usually in the
+      upper half of the page.
+   3. A gutter at both ends, so some scrim always shows above and below and
+      the sheet reads as a layer over the page rather than a new page. */
 .scrim.is-modal {
   position: fixed; inset: 0; z-index: 50; min-height: 0;
-  overflow-y: auto; padding: var(--ngn-space-5) var(--ngn-space-4);
+  overflow-y: auto;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 4vh var(--ngn-space-4) 9vh;
 }
 .scrim[hidden] { display: none; }
 
-.sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; max-height: calc(100vh - 64px); }
+.sheet {
+  width: 100%; max-width: 720px; display: flex; flex-direction: column;
+  margin: auto;
+  /* 100% of the scrim's content box, which already excludes the gutters. The
+     sheet therefore never outgrows the viewport, so the title and the Save
+     and Cancel buttons stay put and only the middle scrolls. Letting it grow
+     instead pushed the footer off screen on a short window, which takes Save
+     with it. */
+  max-height: 100%;
+}
+
+/* A layer that appears with no transition reads as a page change. Short
+   enough not to delay anything, and off entirely for anyone who asked. */
+@media (prefers-reduced-motion: no-preference) {
+  .scrim.is-modal:not([hidden]) .sheet { animation: sheet-in 140ms ease-out; }
+  @keyframes sheet-in {
+    from { opacity: 0; transform: translateY(-8px) scale(.99); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+
+/* WCAG 1.4.10: at 320px, and at 400% zoom, the gutters give way to the
+   content. The height cap does not, for the reason above. */
+@media (max-height: 640px), (max-width: 400px) {
+  .scrim.is-modal { padding: var(--ngn-space-3) var(--ngn-space-3) var(--ngn-space-4); }
+}
 .sheet-scroll { overflow-y: auto; flex: 1 1 auto; }
 .sheet-head {
   padding: var(--ngn-space-4) var(--ngn-space-5);
@@ -129,7 +170,13 @@
    loses the thing that makes it a sentence. */
 @media (max-width: 560px) {
   .rule { font-size: 18px; line-height: 1.8; padding: var(--ngn-space-5) var(--ngn-space-4); }
+  /* Wrapping on its own dropped Save below Cancel and put it on the left, so
+     the two buttons read in the wrong order. The status line takes the first
+     row instead and the buttons share the second, Save still last. */
   .sheet-foot { flex-wrap: wrap; }
+  .sheet-foot #dirty, .sheet-foot .problem:not(:empty) { flex: 1 0 100%; }
+  .sheet-foot .spacer { display: none; }
+  .sheet-foot .btn { flex: 1 1 auto; justify-content: center; }
 }
 
 .tok {
