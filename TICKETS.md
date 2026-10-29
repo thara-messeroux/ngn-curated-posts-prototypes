@@ -1013,3 +1013,35 @@ Rename's focus return had to move with it: it pointed at a header button that no
 exists, and now goes back to the kebab that opened it.
 
 axe-core clean on the index, with the kebab open, and in the dialog. No overflow.
+
+---
+
+## The "Check" chip was mine, and it was wrong
+
+Nine shelves carried an amber **Check** chip. The export never said they needed checking.
+`state: 'check'` is a field I added to `assets/data.js` myself, and looking at what those
+nine actually hold, there is nothing to check:
+
+- all nine have an include term
+- all nine have post types
+- all nine are filling their 3 or 4 stories
+- eight of them share the same four-post-type config as each other
+
+The only thing they have in common is exclusions, which is a normal thing for a shelf to
+have. So the chip was reporting a judgement I had no evidence for, on a status the backend
+does not have. `Curated_Posts_Store` has no "needs check" state.
+
+**The green dot and the Live badge went with it.** Once the exception is gone, every row is
+the same, and a status that reads the same on all 47 rows is not a status, it is 47 pieces
+of decoration. The list is now name, count and post types, which is the whole of what the
+export can honestly tell you.
+
+The delete confirmation claimed liveness too: "It is live and fills 4 stories" is now
+"It fills 4 stories on the site", which is a fact rather than a status.
+
+**There is a real published state, and this is not it.** `save_draft_query` says settings
+have no draft stage, saving them is publishing them, while story picks and exclusions are
+drafted and published separately. So a badge could one day mean "this shelf has unpublished
+story picks". That is a thing the store actually tracks. "Needs check" was not.
+
+axe-core clean on the index, the delete confirmation and the dialog. No overflow.

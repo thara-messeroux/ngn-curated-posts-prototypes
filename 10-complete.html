@@ -27,12 +27,6 @@
 .shelf b { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .shelf span { display: block; font-size: 12px; color: var(--ngn-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ngn-success); }
-.shelf .state {
-  flex: none; display: block; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
-  color: var(--ngn-warning); background: var(--ngn-warning-container);
-  border-radius: 999px; padding: 2px 8px;
-}
 
 .detail { display: flex; flex-direction: column; }
 .detail-head { padding: var(--ngn-space-4) var(--ngn-space-5) var(--ngn-space-3); border-bottom: 1px solid var(--ngn-outline-variant); display: flex; gap: var(--ngn-space-3); align-items: flex-start; flex-wrap: wrap; }
@@ -46,12 +40,6 @@
 .btn.has-icon { padding-left: var(--ngn-space-3); }
 
 .title-line { display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap; }
-.badge {
-  font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
-  padding: 2px 9px; border-radius: 999px; white-space: nowrap;
-  background: var(--ngn-surface-container); color: var(--ngn-on-surface-variant);
-}
-.badge.is-live { background: var(--ngn-success-container); color: var(--ngn-success); }
 
 .sections { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-5); }
 .sect h3 { margin: 0 0 var(--ngn-space-3); font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant); }
@@ -452,7 +440,7 @@
 
   function addShelf(key, label, rule) {
     CURATED.push({ n: label, s: key, g: 'Other', stories: 0, types: '', inc: [], exc: [],
-                   search: '', rot: 'Off', rotStart: 'N/A', upcoming: 0, state: 'check' });
+                   search: '', rot: 'Off', rotStart: 'N/A', upcoming: 0 });
     SETTINGS[key] = JSON.parse(JSON.stringify(rule));
     sel = key; confirming = null; justSaved = null;
     $('q').value = '';
@@ -541,10 +529,7 @@
         return '<button type="button" class="shelf' + (sel === d.s ? ' is-sel' : '') + '" role="option" ' +
           'aria-selected="' + (sel === d.s) + '" data-sel="' + esc(d.s) + '">' +
           '<span class="txt"><b>' + esc(d.n) + '</b>' +
-          '<span>' + stories(s.count) + ' · ' + esc(typeSummary(s)) + '</span></span>' +
-          (d.state === 'live'
-            ? '<span class="dot" title="Live"></span>'
-            : '<span class="state">Check</span>') + '</button>';
+          '<span>' + stories(s.count) + ' · ' + esc(typeSummary(s)) + '</span></span></button>';
       }).join('');
   }
 
@@ -595,9 +580,7 @@
     var s = SETTINGS[d.s];
 
     var html = '<div class="detail-head">' +
-      '<div><span class="title-line"><h2 class="t-title" style="margin:0">' + esc(d.n) + '</h2>' +
-      '<span class="badge' + (d.state === 'live' ? ' is-live' : '') + '">' +
-      (d.state === 'live' ? 'Live' : 'Needs check') + '</span></span>' +
+      '<div><span class="title-line"><h2 class="t-title" style="margin:0">' + esc(d.n) + '</h2></span>' +
       '<p class="t-label-sm muted" style="margin:2px 0 0;font-family:var(--ngn-mono)">' + esc(d.s) + '</p>' +
       '<p class="saved-note" role="status" style="margin:4px 0 0">' +
         (justSaved === d.s ? 'Settings saved.' : '') + '</p></div>' +
@@ -611,8 +594,8 @@
       '</div></div>';
 
     if (confirming === d.s) {
-      html += '<div class="confirm"><span>Delete <b>' + esc(d.n) + '</b>? It is live and fills ' +
-        stories(d.stories) + '.</span><span class="btns">' +
+      html += '<div class="confirm"><span>Delete <b>' + esc(d.n) + '</b>? It fills ' +
+        stories(d.stories) + ' on the site.</span><span class="btns">' +
         '<button class="btn btn-text btn-sm" type="button" data-no="1">Keep it</button>' +
         '<button class="btn btn-filled btn-sm" type="button" data-yes="' + esc(d.s) + '">Delete</button>' +
         '</span></div>';
