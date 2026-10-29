@@ -967,3 +967,24 @@ Measured at 1440x900: 182px of scrim above, 229px below, centre at 47.5%. Checke
 1440x900, 1440x560, 375x812 and 320x480: title and Save visible in all eight editor
 states at every size, only the body scrolls, no horizontal scroll anywhere, axe-core
 clean.
+
+---
+
+## The cog on Query settings
+
+`assets/images/icons/cog-8-tooth-micro.svg`, taken from the theme as it is and inlined
+rather than linked, so `fill="currentColor"` picks up the button's own colour and it stays
+white on the filled button and correct in dark mode. 16px against the 13px label, with the
+leading edge tightened from 16px to 12px, which is what the system's own buttons do.
+`aria-hidden="true"` is already on the file: the icon is decoration beside a real label,
+so a screen reader should read "Query settings" once.
+
+**The label stays.** A cog on its own is ambiguous, it could be settings, preferences or
+configure, and this is the primary action on the row. The icon earns its place next to the
+word, not instead of it. Happy to go icon-only if that is the call.
+
+**It is not in the kebab menu.** It was, and it pushed "Query settings" right while Rename,
+Duplicate and Delete stayed at the left edge, so four items read as a ragged column. One
+icon among four unlabelled ones is worse than none. All four now start at the same x.
+
+axe-core clean on the index, with the menu open, and in the dialog.
