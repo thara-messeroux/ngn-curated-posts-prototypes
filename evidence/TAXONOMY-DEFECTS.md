@@ -1,8 +1,15 @@
-# Taxonomy data defects, counted from the export
+# Taxonomy findings, counted from the export
 Source: [NGN_Curated_Posts_Taxonomy_Terms.csv](NGN_Curated_Posts_Taxonomy_Terms.csv), 14,983 rows read from the live site.
 
-## 1. Terms that cannot be browsed
-The term endpoint asks for `number => 500` per taxonomy, ordered by name, so only the first 500 A-Z appear when you scroll. The rest need an exact substring typed into the search box.
+## 1. Terms that cannot be browsed — closed, working as intended
+
+The term endpoint asks for `number => 500` per taxonomy, ordered by name, so only
+the first 500 A-Z appear when you scroll. The rest need a substring typed into the
+search box.
+
+**Not a defect.** Raised with Xris on 29 October and closed: the cap is deliberate,
+because returning more than 500 makes the query significantly slower. Recorded here
+so the next person to count these terms does not raise it again.
 
 | | Count |
 | --- | --- |
