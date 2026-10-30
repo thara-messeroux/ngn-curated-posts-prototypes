@@ -214,21 +214,17 @@
 .rule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
 
 
-/* The manual search is built here rather than spelled out in the sentence, so
-   the sentence keeps the one token that switches between the two modes and the
-   way back is never taken off screen. */
+/* The rule being built sits under the two choices, inside the same editor, so
+   the way back is never taken off screen while you work on it. */
 .subrule {
-  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
   border: 1px solid var(--ngn-outline-variant); border-radius: var(--ngn-radius-md);
   padding: var(--ngn-space-4);
-}
-.subrule h4 {
-  margin: 0 0 var(--ngn-space-2); font: inherit; font-size: 11px; font-weight: 500;
-  letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant);
 }
 .subrule .line { font-size: 17px; line-height: 1.9; }
 .subrule .plain { color: var(--ngn-on-surface-variant); }
 .subrule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
+/* An editor opened from inside the box is a step down, not a second panel. */
+.editor .editor { margin: 0; border-color: var(--ngn-outline-variant); }
 
 .editor {
   margin: 0 var(--ngn-space-5) var(--ngn-space-5);
@@ -338,8 +334,6 @@
 
     <div class="sheet-scroll">
       <p class="rule" id="rule"></p>
-
-      <div id="manual"></div>
 
       <div id="editor"></div>
     </div>
@@ -1075,7 +1069,36 @@
 
   /* The manual rule, in the same words as the first sentence because it is the
      same kind of rule: how many, in what order, of what, narrowed how. */
-  function manualRule() {
+  /* Everything the manual search owns opens in one place, so the two choices
+     and the rule you are building stay on screen together. */
+  var MANUAL = ['searchSame', 'searchCount', 'searchSort', 'searchTypes', 'searchWindow',
+                'searchInclude', 'searchExclude'];
+
+  function manualShell() {
+    var chips = '<div class="chips">' +
+      '<button class="chip' + (draft.searchSame ? ' is-on' : '') + '" type="button" data-same="1">The same stories</button>' +
+      '<button class="chip' + (draft.searchSame ? '' : ' is-on') + '" type="button" data-same="0">Something different</button>' +
+      '</div>';
+
+    var note = '<p class="t-body-sm muted" style="margin:0">' +
+      (draft.searchSame
+        ? 'It follows everything above, so changing the rule changes both. Pick the other one to start from a copy of it and edit from there.'
+        : 'It has its own rule now, started as a copy of the one above. Switch back whenever you want.') +
+      '</p>';
+
+    var box = draft.searchSame ? ''
+      : '<div class="subrule"><p class="line" id="manualbox" style="margin:0">' + manualLine() + '</p></div>';
+
+    /* A token inside the box opens its own editor beneath, without taking the
+       two choices or the rule off screen. */
+    var inner = (open === 'searchSame') ? '' : editorFor(open);
+
+    return '<div class="editor">' + head('What the manual search offers') +
+      chips + note + box + inner +
+      (open === 'searchSame' ? done : '') + '</div>';
+  }
+
+  function manualLine() {
     if (draft.searchSame) return '';
 
     var sViews = draft.searchSort === 'Most viewed';
@@ -1094,8 +1117,7 @@
       excludeTokens('manual') +
       '<span class="punc">.</span>';
 
-    return '<div class="subrule"><h4>The manual search</h4>' +
-      '<p class="line" style="margin:0">' + str + '</p></div>';
+    return str;
   }
 
   function countLine(tax, showing, q) {
@@ -1173,17 +1195,25 @@
         esc(rot.interval) + ' does not divide evenly into 24 hours.</p>');
   }
 
+  var head = function (t) { return '<h3>' + t + '</h3>'; };
+  var done = '<button class="btn btn-outlined btn-sm done" type="button" data-close>Done</button>';
+
   function editor() {
     if (!open) return '';
-    var head = function (t) { return '<h3>' + t + '</h3>'; };
-    var done = '<button class="btn btn-outlined btn-sm done" type="button" data-close>Done</button>';
+    if (MANUAL.indexOf(open) > -1) return manualShell();
+    return editorFor(open);
+  }
 
-    if (open === 'count') return '<div class="editor">' + head('How many stories') +
+  /* One editor per token. The manual search ones are wrapped by manualShell. */
+  function editorFor(key) {
+    if (!key) return '';
+
+    if (key === 'count') return '<div class="editor">' + head('How many stories') +
       '<label class="screen-reader-text" for="e-count">How many stories</label>' +
       '<input type="number" id="e-count" min="1" max="50" step="1" value="' + draft.count + '" style="width:120px">' +
       '<p class="t-body-sm muted" style="margin:0" id="e-count-note">1 to 50.</p>' + done + '</div>';
 
-    if (open === 'window') return '<div class="editor">' + head('How far back to look') +
+    if (key === 'window') return '<div class="editor">' + head('How far back to look') +
       '<div style="display:flex;gap:8px;align-items:center">' +
       '<label class="screen-reader-text" for="e-window">How many days back</label>' +
       '<input type="number" id="e-window" min="1" step="1" value="' + draft.windowDays + '" style="width:110px">' +
@@ -1192,41 +1222,31 @@
     /* The route caps a typed search at MAX_SEARCH_RESULTS = 3 and only lets
        the empty-box recent list run to MAX_RECENT_RESULTS = 50, so the field
        takes the schema's range and says where the real ceiling is. */
-    if (open === 'searchSame') return '<div class="editor">' + head('What the manual search offers') +
-      '<div class="chips">' +
-        '<button class="chip' + (draft.searchSame ? ' is-on' : '') + '" type="button" data-same="1">The same stories</button>' +
-        '<button class="chip' + (draft.searchSame ? '' : ' is-on') + '" type="button" data-same="0">Something different</button>' +
-      '</div>' +
-      '<p class="t-body-sm muted" style="margin:0">' +
-        (draft.searchSame
-          ? 'It follows everything above, so changing the rule changes both. Pick the other one to start from a copy of it and edit from there.'
-          : 'It has its own rule now, started as a copy of the one above. Build it in the box underneath, and switch back here whenever you want.') +
-      '</p>' + done + '</div>';
 
-    if (open === 'searchCount') return '<div class="editor">' + head('How many results to offer') +
+    if (key === 'searchCount') return '<div class="editor">' + head('How many results to offer') +
       '<label class="screen-reader-text" for="e-scount">How many results</label>' +
       '<input type="number" id="e-scount" min="1" max="50" step="1" value="' + draft.searchCount + '" style="width:120px">' +
       '<p class="t-body-sm muted" style="margin:0" id="e-scount-note">1 to 50. Once you type a query the route returns at most 3; the rest applies to the recent list.</p>' +
       done + '</div>';
 
-    if (open === 'searchWindow') return '<div class="editor">' + head('How far back the search looks') +
+    if (key === 'searchWindow') return '<div class="editor">' + head('How far back the search looks') +
       '<div style="display:flex;gap:8px;align-items:center">' +
       '<label class="screen-reader-text" for="e-swindow">How many days back</label>' +
       '<input type="number" id="e-swindow" min="1" step="1" value="' + draft.searchWindowDays + '" style="width:110px">' +
       '<span class="t-body-sm muted">days</span></div>' + done + '</div>';
 
-    if (open === 'searchSort') return '<div class="editor">' + head('Order the results come back in') + '<div class="chips">' +
+    if (key === 'searchSort') return '<div class="editor">' + head('Order the results come back in') + '<div class="chips">' +
       ['Newest', 'Most viewed'].map(function (o) {
         return '<button class="chip' + (draft.searchSort === o ? ' is-on' : '') + '" type="button" data-ssort="' + o + '">' + o + '</button>';
       }).join('') + '</div><p class="t-body-sm muted" style="margin:0">Only changes what the picker lists. It does not touch what fills the instance.</p>' +
       done + '</div>';
 
-    if (open === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
+    if (key === 'sort') return '<div class="editor">' + head('Order') + '<div class="chips">' +
       ['Newest', 'Most viewed'].map(function (o) {
         return '<button class="chip' + (draft.sort === o ? ' is-on' : '') + '" type="button" data-sort="' + o + '">' + o + '</button>';
       }).join('') + '</div>' + done + '</div>';
 
-    if (open === 'types') return '<div class="editor">' + head('Where stories come from') + '<div class="chips">' +
+    if (key === 'types') return '<div class="editor">' + head('Where stories come from') + '<div class="chips">' +
       POST_TYPES.map(function (t) {
         return '<button class="chip' + (draft.types.indexOf(t.k) > -1 ? ' is-on' : '') + '" type="button" data-type="' + t.k + '"' +
           (t.tax.length ? '' : ' title="No filterable taxonomies"') + '>' + esc(t.n) +
@@ -1237,7 +1257,7 @@
         : 'Nothing selected, so every type is included. Pick some to narrow it, and to filter by term.') +
       '</p>' + done + '</div>';
 
-    if (open === 'searchTypes') return '<div class="editor">' + head('Types you can pin by hand') +
+    if (key === 'searchTypes') return '<div class="editor">' + head('Types you can pin by hand') +
       '<div class="chips">' + POST_TYPES.map(function (t) {
         return '<button class="chip' + (draft.searchTypes.indexOf(t.k) > -1 ? ' is-on' : '') +
           '" type="button" data-stype="' + t.k + '">' + esc(t.n) + '</button>';
@@ -1247,9 +1267,9 @@
         : 'Nothing selected, so the search offers all ' + POST_TYPES.length + ' types.') +
       '</p>' + done + '</div>';
 
-    if (open === 'include' || open === 'exclude' ||
-        open === 'searchInclude' || open === 'searchExclude') {
-      var isEx = (open === 'exclude' || open === 'searchExclude');
+    if (key === 'include' || key === 'exclude' ||
+        key === 'searchInclude' || key === 'searchExclude') {
+      var isEx = (key === 'exclude' || key === 'searchExclude');
       var manual = scope === 'manual';
       var available = availableTax();
       if (!available.length) return '<div class="editor">' + head('No filters available') +
@@ -1279,7 +1299,7 @@
         done + '</div>';
     }
 
-    if (open === 'rotation') return '<div class="editor">' + head('Rotation') +
+    if (key === 'rotation') return '<div class="editor">' + head('Rotation') +
       '<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="e-rot" ' +
       (draft.rotation.on ? 'checked' : '') + '> <span class="t-label">Rotate automatically</span></label>' +
       (draft.rotation.on ? '' : '<p class="t-body-sm muted" style="margin:0">Turn this on to set an interval.</p>') +
@@ -1316,11 +1336,12 @@
      anything that repaints one has to repaint the other. */
   function paintRule() {
     $('rule').innerHTML = rule();
-    $('manual').innerHTML = manualRule();
+    var box = $('manualbox');
+    if (box) box.innerHTML = manualLine();
   }
 
   function renderSheet() {
-    paintRule();
+    $('rule').innerHTML = rule();
     $('editor').innerHTML = editor();
     refreshSave();
     bindTax();
