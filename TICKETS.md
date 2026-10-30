@@ -1752,3 +1752,25 @@ about.
 Walked end to end: blank state, add, name, slug suggested, create, the dialog
 opens on the new instance, the list and search come back, then delete it and
 the blank state returns.
+
+## Nothing is selected until someone selects it
+
+Xris: "the main page on the prototype defaults to opening 'featured stories'
+but it shouldn't default to any, since none of them are guaranteed to be there.
+it should have a card that guides a user to create a new instance or select an
+existing."
+
+The screen opened on whichever instance happened to be first, which is a guess
+twice over: it is not the one they came for, and on a fresh site it does not
+exist at all. The right pane now says Nothing selected and offers the two ways
+forward, choose one on the left or create one.
+
+Two places quietly put the guess back, and both are fixed:
+
+- Typing in the search box selected the first hit even when nothing had been
+  selected. It now only moves a selection that already exists, when a search
+  filters it out of view.
+- Deleting the selected instance landed on whichever was first. It now goes
+  back to nothing selected.
+
+That closes all six items from the second review round.
