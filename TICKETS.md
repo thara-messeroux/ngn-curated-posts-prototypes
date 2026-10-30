@@ -1711,3 +1711,44 @@ prototypes is that page's job. It did carry "Pick a instance", now fixed.
 
 The earlier settings explorations, 06 and 08, also keep theirs: those pages are
 explorations, so describing the exploration is describing what the page does.
+
+## The screen with no instances on it
+
+Xris: "also (i didn't test this) make sure this can handle having NO instances
+here."
+
+It did not. Zero instances fell through to the search's own empty line, so a
+first run read "Nothing matches that" with a search box above nothing and an
+empty pane beside it. Telling someone who has never made an instance that
+nothing matches reads as a fault in the screen.
+
+They are two different states and they now read differently.
+
+**No instances at all.** The index spans the page, the search box steps out
+since there is nothing to search, and the card says what an instance is and
+offers the one action that ends the state: "An instance is a set of stories the
+site can display, filled by rules you write here. Add one to get started."
+
+**A search with no hits.** Keeps the search box, names what was typed, and
+offers a way back to the list.
+
+Three things surfaced while testing it:
+
+- The blank state sat in the 340px list column with an empty pane beside it.
+  With nothing to list the two-pane layout has no job, so the index spans the
+  page while it is blank.
+- Hiding the right pane hid the naming form with it, because the form lives
+  there. So the one action that ends the state opened something invisible. The
+  pane stays; the detail card inside it is what goes.
+- An empty card still draws its border, which left a hairline under the blank
+  state.
+
+### Seeing it
+
+`?empty=1` starts with none, and the bar links it as "With no instances". The
+seeded export would otherwise mean deleting 47 to reach the state he asked
+about.
+
+Walked end to end: blank state, add, name, slug suggested, create, the dialog
+opens on the new instance, the list and search come back, then delete it and
+the blank state returns.
