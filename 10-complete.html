@@ -1308,9 +1308,15 @@
     if (t) t.addEventListener('change', function () { taxKey = this.value; termQ = {}; renderSheet(); });
   }
 
-  function renderSheet() {
+  /* The sentence and the construction box are two views of the same draft, so
+     anything that repaints one has to repaint the other. */
+  function paintRule() {
     $('rule').innerHTML = rule();
     $('manual').innerHTML = manualRule();
+  }
+
+  function renderSheet() {
+    paintRule();
     $('editor').innerHTML = editor();
     refreshSave();
     bindTax();
@@ -1498,30 +1504,30 @@
       if (ev.target.value !== '' && +ev.target.value !== draft.count) ev.target.value = draft.count;
       var note = $('e-count-note');
       if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.';
-      $('rule').innerHTML = rule();
+      paintRule();
       refreshSave();
     }
     if (ev.target.id === 'e-scount') {
       draft.searchCount = clampWhole(ev.target.value, 1, 50);
       if (ev.target.value !== '' && +ev.target.value !== draft.searchCount) ev.target.value = draft.searchCount;
-      $('rule').innerHTML = rule();
+      paintRule();
       refreshSave();
     }
     if (ev.target.id === 'e-swindow') {
       draft.searchWindowDays = clampWhole(ev.target.value, 1, 3650);
       if (ev.target.value !== '' && +ev.target.value !== draft.searchWindowDays) ev.target.value = draft.searchWindowDays;
-      $('rule').innerHTML = rule();
+      paintRule();
       refreshSave();
     }
     if (ev.target.id === 'e-window') {
       draft.windowDays = clampWhole(ev.target.value, 1, 3650);
       if (ev.target.value !== '' && +ev.target.value !== draft.windowDays) ev.target.value = draft.windowDays;
-      $('rule').innerHTML = rule();
+      paintRule();
       refreshSave();
     }
     if (ev.target.id === 'e-int') {
       draft.rotation.interval = ev.target.value;
-      $('rule').innerHTML = rule(); $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
+      paintRule(); $('e-next').innerHTML = upcoming(draft.rotation); refreshSave();
     }
     if (ev.target.id === 'e-start') {
       draft.rotation.start = ev.target.value;
