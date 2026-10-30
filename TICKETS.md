@@ -1625,3 +1625,31 @@ Showing how many stories a rule matches while you are building it is the standar
 way to stop someone narrowing a query into nothing, and it is the one question
 the current screen cannot answer. It needs a real count from the server, not a
 guess. Proposed, with the endpoint it would need, rather than faked.
+
+## The manual search stops being a one-way door
+
+Xris: "once you set this to 'something different' you can't reset back to
+'search the same stories'. lets have that selection only change between
+'search the same stories' and 'something different' with an outlined box
+below it being where you construct the 'something different'."
+
+He is right, and it was a dead end rather than a preference. Picking the other
+mode replaced the whole clause with the spelled-out manual rule, and the token
+that could switch back only existed in the first branch, so it left the screen
+with the state it had created.
+
+The clause now reads as the toggle in both modes, "search the same stories" or
+"search for something different", so the way back is never taken off screen.
+What the other mode searches is built in an outlined box underneath, titled
+The manual search, whose words and tokens are the same as the first sentence.
+
+Two things fell out of it:
+
+- A live edit repainted the sentence only, so a number changed in the box
+  stayed on its old value. Both are views of one draft, so both repaint
+  through `paintRule()`.
+- Switching is one click now, so looking at the other mode used to throw away
+  a rule someone had just built. The built rule is set aside per dialog and
+  handed back. A first switch with nothing kept still starts from a copy of
+  the automatic query, which is what makes the work removing rather than
+  finding.
