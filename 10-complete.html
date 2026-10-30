@@ -514,9 +514,11 @@
      The index
      ==================================================================== */
 
-  /* A site with no instances is a real state, not just a simulated one, so the
-     selection starts empty rather than reaching into an empty list. */
-  var sel = CURATED.length ? CURATED[0].s : null,
+  /* Nothing is selected on arrival. Picking one for the editor would be
+     guessing, and none of the 47 is guaranteed to be the one they came for,
+     or to exist at all. A site with no instances is a real state too, so the
+     selection never reaches into an empty list. */
+  var sel = null,
       confirming = null, deleted = {}, justSaved = null, naming = null;
   /* editing holds the key of the instance whose title is being edited in place.
      keyTouched stops the key following the name once it has been typed in. */
@@ -633,7 +635,9 @@
     confirming = null;
     $('dscrim').hidden = true;
     document.body.style.overflow = '';
-    if (sel === which) sel = (liveShelves()[0] || {}).s;
+    /* Deleting what was selected goes back to nothing selected, rather than
+       landing on whichever instance happens to be first. */
+    if (sel === which) sel = null;
     editing = null;
     renderIndex();
     var k = document.querySelector('[data-menu]');
@@ -854,7 +858,16 @@
   function renderDetail() {
     var d = liveShelves().filter(function (x) { return x.s === sel; })[0];
     if (!liveShelves().length) { $('detail').innerHTML = ''; return; }
-    if (!d) { $('detail').innerHTML = '<p class="empty">Select an instance to see the rules that fill it.</p>'; return; }
+    if (!d) {
+      $('detail').innerHTML =
+        '<div class="blank">' +
+          '<h2 class="t-title">Nothing selected</h2>' +
+          '<p class="t-body-sm muted">Choose an instance on the left to see how its ' +
+            'stories are chosen, or create a new one.</p>' +
+          '<button class="btn btn-outlined btn-sm" type="button" id="detailnew">Create an instance</button>' +
+        '</div>';
+      return;
+    }
     var s = SETTINGS[d.s];
 
     var html = '<div class="detail-head">' +
@@ -1776,11 +1789,18 @@
 
   $('q').addEventListener('input', function () {
     var list = visible();
-    if (list.length && !list.some(function (d) { return d.s === sel; })) sel = list[0].s;
+    /* A search that filters the selected instance out of view moves the
+       selection to the first hit, but typing while nothing is selected does
+       not choose one: that is the guess the guide card exists to avoid. */
+    if (sel && list.length && !list.some(function (d) { return d.s === sel; })) sel = list[0].s;
     renderIndex();
   });
 
   /* The blank states are redrawn, so their buttons are bound by delegation. */
+  $('detail').addEventListener('click', function (ev) {
+    if (ev.target.closest('#detailnew')) openNamer('new');
+  });
+
   $('list').addEventListener('click', function (ev) {
     if (ev.target.closest('#blanknew')) { openNamer('new'); return; }
     if (ev.target.closest('#clearq'))   { $('q').value = ''; renderIndex(); $('q').focus(); }
