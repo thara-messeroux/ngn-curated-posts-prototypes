@@ -1640,8 +1640,14 @@ with the state it had created.
 
 The clause now reads as the toggle in both modes, "search the same stories" or
 "search for something different", so the way back is never taken off screen.
-What the other mode searches is built in an outlined box underneath, titled
-The manual search, whose words and tokens are the same as the first sentence.
+
+The first attempt put the construction box between the sentence and the editor,
+which stated one decision three times: the sentence said it, the box sat
+between, and the chips said it again. He wrote "below it", meaning below that
+selection, so the box belongs under the two choices inside the same editor.
+That is where it is: one panel, the two choices at the top, the rule being
+built underneath, and a token's own editor stepping down inside it rather than
+replacing it.
 
 Two things fell out of it:
 
