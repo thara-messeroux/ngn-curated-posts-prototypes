@@ -214,6 +214,22 @@
 .rule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
 
 
+/* The manual search is built here rather than spelled out in the sentence, so
+   the sentence keeps the one token that switches between the two modes and the
+   way back is never taken off screen. */
+.subrule {
+  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
+  border: 1px solid var(--ngn-outline-variant); border-radius: var(--ngn-radius-md);
+  padding: var(--ngn-space-4);
+}
+.subrule h4 {
+  margin: 0 0 var(--ngn-space-2); font: inherit; font-size: 11px; font-weight: 500;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ngn-on-surface-variant);
+}
+.subrule .line { font-size: 17px; line-height: 1.9; }
+.subrule .plain { color: var(--ngn-on-surface-variant); }
+.subrule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
+
 .editor {
   margin: 0 var(--ngn-space-5) var(--ngn-space-5);
   border: 1px solid var(--ngn-tertiary); border-radius: var(--ngn-radius-md);
@@ -323,6 +339,7 @@
     <div class="sheet-scroll">
       <p class="rule" id="rule"></p>
 
+      <div id="manual"></div>
 
       <div id="editor"></div>
     </div>
@@ -1042,18 +1059,23 @@
         ? '<br><span class="plain">Rotate them</span> ' + tok('rotation', 'every ' + draft.rotation.interval) + '<span class="punc">.</span>'
         : '<br>' + tok('rotation', 'They never rotate', true) + '<span class="punc">.</span>');
 
-    /* While it follows the automatic query there is nothing to spell out, so
-       the whole half collapses to the one word that can change it. */
-    if (draft.searchSame) {
-      str += '<br><span class="plain">When you choose a story manually,</span> ' +
-        tok('searchSame', 'search the same stories') + '<span class="punc">.</span>';
-      return str;
-    }
+    /* The clause is the same shape in both modes, so the token that switches
+       them is always in the sentence and the way back is never gone. What the
+       other mode actually searches is built in the box underneath. */
+    str += '<br><span class="plain">When you choose a story manually,</span> ' +
+      tok('searchSame', draft.searchSame ? 'search the same stories' : 'search for something different') +
+      '<span class="punc">.</span>';
 
-    /* Same shape as the first sentence, because it is the same kind of rule:
-       how many, in what order, of what, narrowed how. */
+    return str;
+  }
+
+  /* The manual rule, in the same words as the first sentence because it is the
+     same kind of rule: how many, in what order, of what, narrowed how. */
+  function manualRule() {
+    if (draft.searchSame) return '';
+
     var sViews = draft.searchSort === 'Most viewed';
-    str += '<br><span class="plain">When you choose a story manually, the search offers the</span> ' +
+    var str = '<span class="plain">Offer the</span> ' +
       tok('searchCount', draft.searchCount === 1 ? 'single' : draft.searchCount) + ' ' +
       tok('searchSort', sViews ? 'most viewed' : 'newest') + ' ' +
       tok('searchTypes', draft.searchTypes.length
@@ -1068,7 +1090,8 @@
       excludeTokens('manual') +
       '<span class="punc">.</span>';
 
-    return str;
+    return '<div class="subrule"><h4>The manual search</h4>' +
+      '<p class="line" style="margin:0">' + str + '</p></div>';
   }
 
   function countLine(tax, showing, q) {
@@ -1173,7 +1196,7 @@
       '<p class="t-body-sm muted" style="margin:0">' +
         (draft.searchSame
           ? 'It follows everything above, so changing the rule changes both. Pick the other one to start from a copy of it and edit from there.'
-          : 'It has its own rule now, started as a copy of the one above.') +
+          : 'It has its own rule now, started as a copy of the one above. Build it in the box underneath, and switch back here whenever you want.') +
       '</p>' + done + '</div>';
 
     if (open === 'searchCount') return '<div class="editor">' + head('How many results to offer') +
@@ -1287,6 +1310,7 @@
 
   function renderSheet() {
     $('rule').innerHTML = rule();
+    $('manual').innerHTML = manualRule();
     $('editor').innerHTML = editor();
     refreshSave();
     bindTax();
