@@ -1681,3 +1681,33 @@ so the accessible name is unchanged and nothing new reaches a screen reader.
 
 Both pages that have the button: 10 and 11. The earlier directions, 01, 02 and
 03, keep their own markup since they are superseded explorations.
+
+## The page text describes the page
+
+Xris: "this text makes no sense being on it. if we have any text there it
+should describe what the page does."
+
+The paragraph opened with "Direction D and Settings C on one screen", which are
+the names we gave two design explorations, and then described the prototype's
+plumbing: which dialog opens over what, and that the instances are seeded from
+an export. Every word of it was about how the prototype was made.
+
+The prototype framing already has a home: the dark bar at the top of every page,
+which names the ticket and links the other designs. That leaves the page text
+free to describe the product, which is what an editor opening the real screen
+would need.
+
+    Each instance is a set of stories the site can display. Select one to see
+    the rules that fill it, or add a new one.
+
+Page 11 had the same problem and now reads as its own screen:
+
+    The stories this instance is publishing, in the order they appear. Pinned
+    stories stay where they are; the rest are filled by the rule, which you can
+    change from here.
+
+The directions index keeps its prototype language, because describing the
+prototypes is that page's job. It did carry "Pick a instance", now fixed.
+
+The earlier settings explorations, 06 and 08, also keep theirs: those pages are
+explorations, so describing the exploration is describing what the page does.
