@@ -1659,3 +1659,25 @@ Two things fell out of it:
   handed back. A first switch with nothing kept still starts from a copy of
   the automatic query, which is what makes the work removing rather than
   finding.
+
+## The menu button becomes an icon button
+
+Xris: "this needs to be an icon button using ellipsis vertical. right now it's
+a text button with the text '...'"
+
+It was literally the character U+22EF in the button's text. Three reasons that
+is wrong beyond the obvious one. Typed dots sit on the text baseline rather
+than centred in the button. Their spacing comes from the font, so they drift
+with the type. And horizontal dots are the wrong glyph for a row menu, which is
+what he caught: vertical is the convention.
+
+Now `ellipsis-vertical-micro.svg` from `themes/ngn-theme/assets/images/icons`,
+inlined the same way the warning icon in these pages already is, with the
+source path in a comment above it. The button is square at 32px with the glyph
+at 16, centred by flex rather than by padding.
+
+The `aria-label` already named the button, and the SVG carries `aria-hidden`,
+so the accessible name is unchanged and nothing new reaches a screen reader.
+
+Both pages that have the button: 10 and 11. The earlier directions, 01, 02 and
+03, keep their own markup since they are superseded explorations.
