@@ -52,7 +52,6 @@
   display: flex; align-items: baseline; gap: var(--ngn-space-2); flex-wrap: wrap;
 }
 .result b { font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.result .note { font-size: 12px; color: var(--ngn-on-surface-variant); margin-left: auto; }
 
 .editor {
   margin: 0 var(--ngn-space-5) var(--ngn-space-5);
@@ -110,6 +109,8 @@
   <p class="t-body-sm muted" style="margin:0 0 var(--ngn-space-4);max-width:74ch">
     The rule reads as one plain sentence. Click any underlined word to change it. The
     instance list stays on screen the whole time, and unsaved work is kept per instance.
+    Match counts are worked out in the browser rather than queried, so treat them as
+    indicative.
   </p>
 
   <div class="panes">
@@ -140,7 +141,6 @@
       <div class="result">
         <b id="count">&ndash;</b>
         <span class="t-body-sm muted">stories match this rule right now</span>
-        <span class="note">prototype figure</span>
       </div>
 
       <div id="editor"></div>
