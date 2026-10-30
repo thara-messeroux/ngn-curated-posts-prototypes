@@ -500,7 +500,10 @@
      The index
      ==================================================================== */
 
-  var sel = CURATED[0].s, confirming = null, deleted = {}, justSaved = null, naming = null;
+  /* A site with no instances is a real state, not just a simulated one, so the
+     selection starts empty rather than reaching into an empty list. */
+  var sel = CURATED.length ? CURATED[0].s : null,
+      confirming = null, deleted = {}, justSaved = null, naming = null;
   /* editing holds the key of the instance whose title is being edited in place.
      keyTouched stops the key following the name once it has been typed in. */
   var editing = null, keyTouched = false;
