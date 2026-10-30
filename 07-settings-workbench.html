@@ -40,13 +40,6 @@
 }
 .summary .sentence { flex: 1 1 340px; min-width: 0; font-size: 14px; line-height: 1.65; margin: 0; }
 .summary .sentence b { font-weight: 500; }
-.count-pill {
-  display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap;
-  background: var(--ngn-tertiary-container); color: var(--ngn-tertiary);
-  border-radius: var(--ngn-radius-full); padding: 5px 14px;
-}
-.count-pill b { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.count-pill span { font-size: 12px; }
 
 .body { padding: var(--ngn-space-5); display: flex; flex-direction: column; gap: var(--ngn-space-5); flex: 1 1 auto; }
 
@@ -157,7 +150,6 @@
 
       <div class="summary">
         <p class="sentence" id="sentence"></p>
-        <span class="count-pill"><b id="count">—</b><span>stories match</span></span>
       </div>
 
       <div class="body">
@@ -323,7 +315,6 @@
     $('slug').textContent = SHELVES[sel].k;
     renderList(); renderTypes(); renderFilters();
     $('sentence').innerHTML = sentence();
-    $('count').textContent = draft.types.length ? matchCount(draft).toLocaleString() : '0';
     $('count-in').value = draft.count;
     $('sort-in').value = draft.sort;
     $('rot-on').checked = draft.rotation.on;

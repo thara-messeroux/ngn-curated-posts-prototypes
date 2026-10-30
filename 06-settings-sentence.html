@@ -33,14 +33,6 @@
    or full stop that follows it. Pull the punctuation back onto the word. */
 .rule .punc { color: var(--ngn-on-surface-variant); margin-left: -5px; }
 
-.result {
-  margin: 0 var(--ngn-space-5) var(--ngn-space-5);
-  padding: var(--ngn-space-3) var(--ngn-space-4);
-  background: var(--ngn-surface-container-low);
-  border-radius: var(--ngn-radius-sm);
-  display: flex; align-items: center; gap: var(--ngn-space-3); flex-wrap: wrap;
-}
-.result b { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
 
 .editor {
   margin: 0 var(--ngn-space-5) var(--ngn-space-5);
@@ -110,10 +102,6 @@
     <div class="sheet-scroll">
       <p class="rule" id="rule"></p>
 
-      <div class="result">
-        <b id="count">&ndash;</b>
-        <span class="t-body-sm muted">stories match this rule right now</span>
-      </div>
 
       <div id="editor"></div>
     </div>
@@ -241,15 +229,6 @@
     }).join(' <span class="plain">and also in</span> ');
   }
 
-  function flat(d) {
-    var groups = [], exclude = [];
-    Object.keys(d.filters).forEach(function (tax) {
-      d.filters[tax].groups.forEach(function (g) { if (g.length) groups.push(g); });
-      d.filters[tax].exclude.forEach(function (t) { exclude.push(t); });
-    });
-    return { types: d.types, groups: groups, include: groups.reduce(function (a, g) { return a.concat(g); }, []),
-             exclude: exclude, sort: d.sort, windowDays: d.windowDays };
-  }
 
   function rule() {
     var views = draft.sort === 'Most viewed';
@@ -469,7 +448,6 @@
   function render() {
     $('rule').innerHTML = rule();
     $('editor').innerHTML = editor();
-    $('count').textContent = matchCount(flat(draft)).toLocaleString();
     refreshSave();
     bindTax();
   }
@@ -546,14 +524,12 @@
       var note = $('e-count-note');
       if (note) note.textContent = ev.target.value === '' ? 'Enter a number from 1 to 50.' : '1 to 50.';
       $('rule').innerHTML = rule();
-      $('count').textContent = matchCount(flat(draft)).toLocaleString();
       refreshSave();
     }
     if (ev.target.id === 'e-window') {
       draft.windowDays = clampWhole(ev.target.value, 1, 3650);
       if (ev.target.value !== '' && +ev.target.value !== draft.windowDays) ev.target.value = draft.windowDays;
       $('rule').innerHTML = rule();
-      $('count').textContent = matchCount(flat(draft)).toLocaleString();
       refreshSave();
     }
     if (ev.target.id === 'e-int') {

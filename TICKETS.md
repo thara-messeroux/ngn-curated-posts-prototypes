@@ -1600,3 +1600,28 @@ Two consequences worth saying out loud:
   rankings is what this screen calls rotation.
 - Serendipity cannot apply to a Curated Posts instance. It needs one reader's
   history, and an instance shows the same stories to everyone.
+
+## The match count comes out
+
+Xris asked what "prototype figure" meant. The honest answer is that the whole
+number was invented:
+
+```js
+var base = { newspost: 4120, post: 9800, ... };          // made up
+n = Math.round(n * (1 - Math.pow(1 - 0.18, g.length)));  // made up
+```
+
+It is also not a field the current screen has. The live export carries stories,
+post types, include terms, exclude terms, search post types, rotation interval,
+rotation start and upcoming rotations. No match count. I added it.
+
+So rewording the label would have kept a fabricated number on a screen a manager
+reviews. It is removed from every page that showed it: 04, 06, 07, 08, 10 and 11,
+along with the styles and the now-dead `flat()` helper that only fed it.
+
+### The idea is still worth having
+
+Showing how many stories a rule matches while you are building it is the standard
+way to stop someone narrowing a query into nothing, and it is the one question
+the current screen cannot answer. It needs a real count from the server, not a
+guess. Proposed, with the endpoint it would need, rather than faked.
