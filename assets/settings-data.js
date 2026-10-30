@@ -326,31 +326,6 @@ window.SHELF = {
   rotation: { on: true, interval: '1h', start: '00:00' }
 };
 
-/* A stand-in for "how many stories match these rules right now". Real
-   screens should ask the server; the point is that the number exists. */
-window.matchCount = function (s) {
-  var base = { newspost: 4120, post: 9800, 'magazine-article': 310, 'eight-oh-five': 95 };
-
-  // An empty list means every type, which is the widest the shelf can be.
-  var types = s.types.length ? s.types : POST_TYPES.map(function (p) { return p.k; });
-  var n = types.reduce(function (t, k) { return t + (base[k] || 140); }, 0);
-
-  // Terms inside a group are OR, so each extra one can only widen the group.
-  // Separate groups are AND, so each group narrows what is left.
-  (s.groups || (s.include.length ? [ s.include ] : [])).forEach(function (g) {
-    if (!g.length) return;
-    n = Math.round(n * (1 - Math.pow(1 - 0.18, g.length)));
-  });
-
-  // Excludes only remove, never add.
-  s.exclude.forEach(function () { n = Math.round(n * 0.86); });
-
-  // A most-viewed window is a date filter, so a shorter window matches less.
-  if (s.sort === 'Most viewed' && s.windowDays) {
-    n = Math.round(n * Math.min(1, s.windowDays / 365));
-  }
-  return Math.max(0, n);
-};
 
 /* --------------------------------------------------------------------------
    When does this shelf next rotate?
