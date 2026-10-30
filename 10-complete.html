@@ -910,6 +910,10 @@
 
   var slug = null, SAVED = null, draft = null, open = null, lastTok = null, taxKey = null, termQ = {};
 
+  /* A manual rule set aside while the sentence is on "the same stories", so
+     switching back and forth does not quietly discard it. Per dialog. */
+  var kept = null;
+
   /* The /search route takes its own terms_include and terms_exclude, so the
      manual search can filter by term independently of the automatic fill.
      Today the panel sends the automatic query's terms to both, which is why
@@ -1357,7 +1361,7 @@
     slug = which;
     SAVED = clone(SETTINGS[which]);
     draft = clone(SAVED);
-    open = null; lastTok = null; taxKey = null; termQ = {}; scope = 'auto';
+    open = null; lastTok = null; taxKey = null; termQ = {}; scope = 'auto'; kept = null;
     if (!draft.searchFilters) draft.searchFilters = {};
     if (draft.searchCount === undefined) draft.searchCount = 3;
     if (draft.searchSort === undefined) draft.searchSort = 'Newest';
@@ -1422,15 +1426,39 @@
       if (sso) { draft.searchSort = sso.dataset.ssort; return renderSheet(); }
       var sm = ev.target.closest('[data-same]');
       if (sm) {
-        draft.searchSame = sm.dataset.same === '1';
-        /* Customising starts from a copy of the automatic query, so everything
-           is already selected and the work is removing rather than finding. */
+        var toSame = sm.dataset.same === '1';
+
+        /* Switching is one click now, so a rule someone built has to survive a
+           look at the other mode. It is kept aside and handed back. */
+        if (toSame && !draft.searchSame) {
+          kept = {
+            types:   draft.searchTypes.slice(),
+            count:   draft.searchCount,
+            sort:    draft.searchSort,
+            days:    draft.searchWindowDays,
+            filters: JSON.parse(JSON.stringify(draft.searchFilters))
+          };
+        }
+
+        draft.searchSame = toSame;
+
         if (!draft.searchSame) {
-          draft.searchTypes      = draft.types.slice();
-          draft.searchCount      = draft.count;
-          draft.searchSort       = draft.sort;
-          draft.searchWindowDays = draft.windowDays;
-          draft.searchFilters    = JSON.parse(JSON.stringify(draft.filters));
+          if (kept) {
+            draft.searchTypes      = kept.types.slice();
+            draft.searchCount      = kept.count;
+            draft.searchSort       = kept.sort;
+            draft.searchWindowDays = kept.days;
+            draft.searchFilters    = JSON.parse(JSON.stringify(kept.filters));
+          } else {
+            /* Nothing built yet, so start from a copy of the automatic query:
+               everything is already selected and the work is removing rather
+               than finding. */
+            draft.searchTypes      = draft.types.slice();
+            draft.searchCount      = draft.count;
+            draft.searchSort       = draft.sort;
+            draft.searchWindowDays = draft.windowDays;
+            draft.searchFilters    = JSON.parse(JSON.stringify(draft.filters));
+          }
         }
         return renderSheet();
       }
