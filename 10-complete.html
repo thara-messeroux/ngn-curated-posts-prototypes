@@ -64,6 +64,13 @@
 .clause .join { font-size: 12px; color: var(--ngn-on-surface-variant); }
 
 .empty { padding: var(--ngn-space-6) var(--ngn-space-5); color: var(--ngn-on-surface-variant); font-size: 13.5px; }
+/* A screen with nothing on it still has to say what the thing is and offer the
+   one action that ends the state. */
+.blank {
+  padding: var(--ngn-space-7) var(--ngn-space-5);
+  display: flex; flex-direction: column; align-items: center; gap: var(--ngn-space-3);
+  text-align: center;
+}
 
 /* Naming happens in the right pane, where an instance's own details are read,
    rather than on top of the list of names. The detail card steps aside while
@@ -274,6 +281,8 @@
   <a href="06-settings-sentence.html">Settings C on its own</a>
   <span class="sep">|</span>
   <a href="11-curation.html">The curation interface</a>
+  <span class="sep">|</span>
+  <a href="10-complete.html?empty=1">With no instances</a>
 </div>
 
 <div class="wrap">
@@ -289,7 +298,7 @@
   <div class="panes">
 
     <div class="card index">
-      <div class="tools">
+      <div class="tools" id="tools">
         <label class="screen-reader-text" for="q">Search instances</label>
         <input type="search" id="q" placeholder="Search name or slug">
       </div>
@@ -730,10 +739,38 @@
   }
 
   function renderList() {
-    var list = visible();
-    $('num').textContent = list.length + ' of ' + liveShelves().length + ' instances';
+    var list = visible(), all = liveShelves();
 
-    if (!list.length) { $('list').innerHTML = '<p class="empty">Nothing matches that.</p>'; return; }
+    /* Two different empties. A site with no instances yet is a first run and
+       needs to know what one is; a search with no hits is a dead end and needs
+       a way out. Saying "nothing matches that" to someone who has never made
+       one reads as a fault in the screen. */
+    if (!all.length) {
+      $('num').textContent = '';
+      $('tools').hidden = true;
+      $('list').innerHTML =
+        '<div class="blank">' +
+          '<h2 class="t-title" style="margin:0">No instances yet</h2>' +
+          '<p class="t-body-sm muted" style="margin:0;max-width:44ch">' +
+            'An instance is a set of stories the site can display, filled by rules you ' +
+            'write here. Add one to get started.' +
+          '</p>' +
+          '<button class="btn btn-filled btn-sm" type="button" id="blanknew">Add your first instance</button>' +
+        '</div>';
+      return;
+    }
+
+    $('tools').hidden = false;
+    $('num').textContent = list.length + ' of ' + all.length + ' instances';
+
+    if (!list.length) {
+      $('list').innerHTML =
+        '<div class="blank">' +
+          '<p class="t-body-sm" style="margin:0">Nothing matches \u201c' + esc($('q').value.trim()) + '\u201d.</p>' +
+          '<button class="btn btn-text btn-sm" type="button" id="clearq">Clear the search</button>' +
+        '</div>';
+      return;
+    }
 
     $('list').innerHTML = list.slice().sort(function (a, b) { return a.n.localeCompare(b.n); })
       .map(function (d) {
@@ -788,7 +825,8 @@
 
   function renderDetail() {
     var d = liveShelves().filter(function (x) { return x.s === sel; })[0];
-    if (!d) { $('detail').innerHTML = '<p class="empty">Pick an instance on the left to see its settings.</p>'; return; }
+    if (!liveShelves().length) { $('detail').innerHTML = ''; return; }
+    if (!d) { $('detail').innerHTML = '<p class="empty">Select an instance to see the rules that fill it.</p>'; return; }
     var s = SETTINGS[d.s];
 
     var html = '<div class="detail-head">' +
@@ -1713,6 +1751,20 @@
     if (list.length && !list.some(function (d) { return d.s === sel; })) sel = list[0].s;
     renderIndex();
   });
+
+  /* The blank states are redrawn, so their buttons are bound by delegation. */
+  $('list').addEventListener('click', function (ev) {
+    if (ev.target.closest('#blanknew')) { openNamer('new'); return; }
+    if (ev.target.closest('#clearq'))   { $('q').value = ''; renderIndex(); $('q').focus(); }
+  });
+
+  /* Xris asked whether the screen copes with no instances at all, and the
+     seeded export means you would have to delete 47 to find out. ?empty=1
+     starts with none, so the state is one click away. */
+  if (/[?&]empty=1/.test(location.search)) {
+    CURATED.forEach(function (d) { deleted[d.s] = true; });
+    sel = null;
+  }
 
   renderIndex();
 })();
