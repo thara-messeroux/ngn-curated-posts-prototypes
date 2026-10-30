@@ -1364,6 +1364,18 @@
 
   function closeEditor() {
     var back = lastTok;
+
+    /* Done inside the manual search steps back up to the two choices rather
+       than closing the lot, so finishing one part does not shut the panel
+       you were working in. */
+    if (open !== 'searchSame' && MANUAL.indexOf(open) > -1) {
+      open = 'searchSame'; termQ = {};
+      renderSheet();
+      var up = document.querySelector('.editor [data-same]');
+      if (up) up.focus();
+      return;
+    }
+
     open = null; termQ = {};
     renderSheet();
     var el = back && document.querySelector('[data-tok="' + back + '"]');
