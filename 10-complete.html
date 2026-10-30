@@ -74,12 +74,26 @@
 
 .empty { padding: var(--ngn-space-6) var(--ngn-space-5); color: var(--ngn-on-surface-variant); font-size: 13.5px; }
 /* A screen with nothing on it still has to say what the thing is and offer the
-   one action that ends the state. */
+   one action that ends the state.
+
+   The padding is off the 4 to 32 token scale on purpose. An empty state is
+   mostly space: at 32px it reads as a cramped card rather than a deliberate
+   state. 48 and 64 are 1.5x and 2x the largest token, so the rhythm still
+   comes from the scale. More below the button than above the heading, because
+   the button is the last thing read and needs somewhere to sit. */
 .blank {
-  padding: var(--ngn-space-7) var(--ngn-space-5);
-  display: flex; flex-direction: column; align-items: center; gap: var(--ngn-space-3);
+  padding: 48px var(--ngn-space-5) 64px;
+  display: flex; flex-direction: column; align-items: center;
   text-align: center;
 }
+/* Tighter between the heading and its own sentence than between the sentence
+   and the action, so the two belong together and the button reads as separate. */
+.blank h2 { margin: 0 0 var(--ngn-space-2); }
+.blank p  { margin: 0 0 var(--ngn-space-5); max-width: 42ch; line-height: 1.6; }
+
+/* The count line is empty while the screen is blank, and an empty row still
+   draws its top border: a stray strip under the button. */
+.panes.is-blank .index .foot { display: none; }
 
 /* Naming happens in the right pane, where an instance's own details are read,
    rather than on top of the list of names. The detail card steps aside while
@@ -763,8 +777,8 @@
       $('panes').classList.add('is-blank');
       $('list').innerHTML =
         '<div class="blank">' +
-          '<h2 class="t-title" style="margin:0">No instances yet</h2>' +
-          '<p class="t-body-sm muted" style="margin:0;max-width:44ch">' +
+          '<h2 class="t-title">No instances yet</h2>' +
+          '<p class="t-body-sm muted">' +
             'An instance is a group of stories that can appear on the site. You write ' +
             'the rules that choose them. Create one to get started.' +
           '</p>' +
@@ -780,7 +794,7 @@
     if (!list.length) {
       $('list').innerHTML =
         '<div class="blank">' +
-          '<p class="t-body-sm" style="margin:0">Nothing matches \u201c' + esc($('q').value.trim()) + '\u201d.</p>' +
+          '<p class="t-body-sm">Nothing matches \u201c' + esc($('q').value.trim()) + '\u201d.</p>' +
           '<button class="btn btn-text btn-sm" type="button" id="clearq">Clear the search</button>' +
         '</div>';
       return;
