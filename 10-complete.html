@@ -12,9 +12,11 @@
    the blank state has the room to explain itself. */
 .panes.is-blank { grid-template-columns: minmax(0, 1fr); }
 .panes.is-blank .index { max-height: none; position: static; }
-/* The right pane holds the naming form as well as the detail card, so it
-   stays in the flow: hidden, it would swallow the form the blank state's own
-   button opens. With no detail to draw it takes no height anyway. */
+/* The right pane holds the naming form as well as the detail card, so it stays
+   in the flow: hidden, it would swallow the form the blank state's own button
+   opens. The card itself goes, or its border draws a stray line under the
+   blank state. */
+.panes.is-blank .detail { display: none; }
 @media (max-width: 980px) { .panes { grid-template-columns: minmax(0, 1fr); } .index { max-height: 320px; position: static; } }
 
 .index { overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 48px); position: sticky; top: var(--ngn-space-4); }
